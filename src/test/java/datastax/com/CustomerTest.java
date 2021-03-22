@@ -6,9 +6,6 @@ import com.datastax.driver.core.UDTValue;
 import com.datastax.driver.dse.DseCluster;
 import com.datastax.driver.dse.DseSession;
 import com.google.common.reflect.TypeToken;
-//import datastax.com.customerDataLoader.CustomerContactLoader;
-//import datastax.com.customerDataLoader.CustomerFileLoader;
-//import datastax.com.dataLoader.DataFileLoader;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -53,6 +50,7 @@ public class CustomerTest {
 //                        .build()
 //                    )
 //                    .withCompression(ProtocolOptions.Compression.LZ4) //LZ4 jar needs to be in class path
+                    //auth information may also be needed
                     .build();
 
             session = cluster.connect();
@@ -80,15 +78,6 @@ public class CustomerTest {
             session.execute(keyspaceCreate);
 
             runScrpt(schemaScriptPath);//TODO get resource path programmatically
-//            ProcessBuilder processBuild = new ProcessBuilder(schemaScriptPath);
-//            Process process = processBuild.start();
-//
-//            int exitValue = process.waitFor();
-//            if (exitValue != 0) {
-//                // check for errors
-//                new BufferedInputStream(process.getErrorStream());
-//                throw new RuntimeException("execution of script failed!");
-//            }
         }
     }
 
@@ -108,35 +97,7 @@ public class CustomerTest {
         if(!skipDataLoad){
             System.out.println("Running " + productName + " data load");
 
-            runScrpt(dataScriptPath);
-//            String keyspace = "customer";
-//
-//            String dataFile = "/Users/michaeldownie/Desktop/cusomter_test_data.xlsx";
-//            CustomerFileLoader custData = new CustomerFileLoader();
-//            custData.runDataLoad(keyspace, dataFile, session);
-//
-//            String dataFileContacts = "/Users/michaeldownie/Downloads/sampleContactData.xlsx";
-//            DataFileLoader contactFileData = new DataFileLoader();
-//
-//            CustomerContactLoader fxLoader = new CustomerContactLoader();
-//            fxLoader.setSheetName("FX");
-//            contactFileData.addDataTable(fxLoader);
-//
-//            CustomerContactLoader fdfrLoader = new CustomerContactLoader();
-//            fdfrLoader.setSheetName("FDFR");
-//            contactFileData.addDataTable(fdfrLoader);
-//
-//            CustomerContactLoader fxkLoader = new CustomerContactLoader();
-//            fxkLoader.setSheetName("FXK");
-//            contactFileData.addDataTable(fxkLoader);
-//
-//            CustomerContactLoader multiContactLoader = new CustomerContactLoader();
-//            multiContactLoader.setSheetName("MultipleSameContactType");
-//            contactFileData.addDataTable(multiContactLoader);
-//
-//            contactFileData.runDataLoad(keyspace, dataFileContacts, session);
-
-
+            runScrpt(dataScriptPath); //TODO get resource path programmatically
         }
     }
 
@@ -397,30 +358,6 @@ public class CustomerTest {
                     assert(false);
                 }
             }
-
-
-//            ResultSet res = session.execute(curQuery.query);
-//
-//            if(null != res){
-//                int retCount = res.all().size();
-//
-//                if(retCount == curQuery.expectedReturnCount){
-//                    System.out.println(("Query " + curQuery.queryID + " executed successfully."));
-//                    assert(true);
-//                }
-//                else{
-//                    System.out.println("Failure running query " + curQuery.queryID + "." +
-//                            "\n\tReturned count - " + retCount +
-//                            "\n\tExpected count - " + curQuery.expectedReturnCount);
-//                    assert(false);
-//                }
-//            }
-//            else{
-//                System.out.println("Failure running query " + curQuery.queryID + ".  Result set is NULL.");
-//                assert(false);
-//            }
         }
-
-
     }
 }
