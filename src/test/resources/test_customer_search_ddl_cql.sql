@@ -1,0 +1,3 @@
+USE customer;
+CREATE SEARCH INDEX IF NOT EXISTS ON enterprise_assoc_accounts;
+CREATE SEARCH INDEX IF NOT EXISTS ON contact;

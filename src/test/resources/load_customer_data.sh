@@ -1,0 +1,2 @@
+/Users/michaeldownie/dse/dse-5.1.14/bin/cqlsh 127.0.0.1 -e"COPY customer.contact FROM '/Users/michaeldownie/Documents/DataStax/Projects/FedEx/code/fedex_customer/src/test/testData/contactData.csv' WITH HEADER=TRUE;"
+/Users/michaeldownie/dse/dse-5.1.14/bin/cqlsh 127.0.0.1 -e"COPY customer.enterprise_profile FROM '/Users/michaeldownie/Documents/DataStax/Projects/FedEx/code/fedex_customer/src/test/testData/entProfile.csv' WITH HEADER=TRUE;"

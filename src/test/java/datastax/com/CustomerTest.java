@@ -1,0 +1,426 @@
+package datastax.com;
+
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.Row;
+import com.datastax.driver.core.UDTValue;
+import com.datastax.driver.dse.DseCluster;
+import com.datastax.driver.dse.DseSession;
+import com.google.common.reflect.TypeToken;
+//import datastax.com.customerDataLoader.CustomerContactLoader;
+//import datastax.com.customerDataLoader.CustomerFileLoader;
+//import datastax.com.dataLoader.DataFileLoader;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+
+public class CustomerTest {
+
+    private static DseCluster cluster = null;
+    private static DseSession session = null;
+    private static boolean skipSchemaCreation = false;
+    private static boolean skipDataLoad = false;
+    private static boolean skipKeyspaceDrop = true;
+    private static String keyspaceName = "customer";
+    private static String productName = "Customer" ;
+
+    //** paths needs to be updated or revised to use relative project path
+    private static String schemaScriptPath = "/Users/michaeldownie/Documents/DataStax/Projects/FedEx/code/fedex_customer/src/test/resources/create_customer_schema.sh" ;
+    private static String dataScriptPath = "/Users/michaeldownie/Documents/DataStax/Projects/FedEx/code/fedex_customer/src/test/resources/load_customer_data.sh" ;
+
+    @BeforeClass
+    public static void init() {
+        System.out.println(productName + " - before init() method called");
+
+        try{
+            cluster = DseCluster.builder()
+                    .addContactPoints("127.0.0.1") //should have multiple (2+) contactpoints listed
+//                    .withQueryOptions(new QueryOptions().setConsistencyLevel(ConsistencyLevel.LOCAL_QUORUM))
+//                    .withLoadBalancingPolicy(
+//                            new TokenAwarePolicy(
+//                                    LatencyAwarePolicy.builder(
+//                                            DCAwareRoundRobinPolicy.builder()
+//                                                    .withLocalDc("dc1")
+//                                                    .build()
+//                                    )
+//                            )
+//                        .withExclusionThreshold(2.0)
+//                        .build()
+//                    )
+//                    .withCompression(ProtocolOptions.Compression.LZ4) //LZ4 jar needs to be in class path
+                    .build();
+
+            session = cluster.connect();
+            dropTestKeyspace();
+            loadSchema();
+            session.execute("USE " + keyspaceName + ";");
+            loadData();
+
+        }
+        catch(Exception e){
+            System.out.println(e.getMessage());
+        }
+    }
+
+    static void dropTestKeyspace(){
+        String keyspaceDrop = "DROP KEYSPACE IF EXISTS " + keyspaceName + ";";
+        if(!skipKeyspaceDrop) {session.execute(keyspaceDrop); }
+    }
+
+    static void loadSchema() throws IOException, InterruptedException {
+        if (!skipSchemaCreation) {
+            System.out.println("Running " + productName + " loadSchema");
+
+            String keyspaceCreate = "CREATE KEYSPACE If NOT EXISTS " + keyspaceName + " WITH replication = {'class': 'NetworkTopologyStrategy', 'SearchGraphAnalytics': '1'}  AND durable_writes = true;";
+            session.execute(keyspaceCreate);
+
+            runScrpt(schemaScriptPath);//TODO get resource path programmatically
+//            ProcessBuilder processBuild = new ProcessBuilder(schemaScriptPath);
+//            Process process = processBuild.start();
+//
+//            int exitValue = process.waitFor();
+//            if (exitValue != 0) {
+//                // check for errors
+//                new BufferedInputStream(process.getErrorStream());
+//                throw new RuntimeException("execution of script failed!");
+//            }
+        }
+    }
+
+    static void runScrpt(String scriptPath) throws InterruptedException, IOException {
+        ProcessBuilder processBuild = new ProcessBuilder(scriptPath); //TODO get resource path programmatically
+        Process process = processBuild.start();
+
+        int exitValue = process.waitFor();
+        if (exitValue != 0) {
+            // check for errors
+            new BufferedInputStream(process.getErrorStream());
+            throw new RuntimeException("execution of script failed!");
+        }
+    }
+
+    static void loadData() throws Exception {
+        if(!skipDataLoad){
+            System.out.println("Running " + productName + " data load");
+
+            runScrpt(dataScriptPath);
+//            String keyspace = "customer";
+//
+//            String dataFile = "/Users/michaeldownie/Desktop/cusomter_test_data.xlsx";
+//            CustomerFileLoader custData = new CustomerFileLoader();
+//            custData.runDataLoad(keyspace, dataFile, session);
+//
+//            String dataFileContacts = "/Users/michaeldownie/Downloads/sampleContactData.xlsx";
+//            DataFileLoader contactFileData = new DataFileLoader();
+//
+//            CustomerContactLoader fxLoader = new CustomerContactLoader();
+//            fxLoader.setSheetName("FX");
+//            contactFileData.addDataTable(fxLoader);
+//
+//            CustomerContactLoader fdfrLoader = new CustomerContactLoader();
+//            fdfrLoader.setSheetName("FDFR");
+//            contactFileData.addDataTable(fdfrLoader);
+//
+//            CustomerContactLoader fxkLoader = new CustomerContactLoader();
+//            fxkLoader.setSheetName("FXK");
+//            contactFileData.addDataTable(fxkLoader);
+//
+//            CustomerContactLoader multiContactLoader = new CustomerContactLoader();
+//            multiContactLoader.setSheetName("MultipleSameContactType");
+//            contactFileData.addDataTable(multiContactLoader);
+//
+//            contactFileData.runDataLoad(keyspace, dataFileContacts, session);
+
+
+        }
+    }
+
+    @AfterClass
+    public static void close(){
+        System.out.println("Running " + productName + " close");
+
+        dropTestKeyspace();
+        if (session != null) session.close();
+        if (cluster != null) cluster.close();
+    }
+
+    @Test
+    public void verifyEnterpriseProfile(){
+        List<TestQuery> entProfileQueries = new ArrayList<>();
+
+        entProfileQueries.add(new TestQuery("qEntProf1",
+                "enterprise_profile", "account_number", "acctNum1",
+                "profile__enterprise_source","source1"));
+
+
+        entProfileQueries.add(new TestQuery("qEntProf2",
+                "enterprise_profile", "account_number", "acctNum2",
+                "profile__account_status__status_code","ARCHIVE"));
+
+        runQueryList(entProfileQueries);
+    }
+
+    @Test
+    public void verifyContacts(){
+        List<TestQuery> contactQueries = new ArrayList<>();
+
+        contactQueries.add(new TestQuery("qContactFX1",
+                "contact", "contact_document_id", "76",
+                "company_name","OSRAM SYLVANIA INC",
+                true));
+
+        contactQueries.add(new TestQuery("qContactFDFR1",
+                "contact", "contact_document_id", "984",
+                "address__street_line","1999 MARCUS AVE",
+                true));
+
+        contactQueries.add(new TestQuery("qContactFXK1",
+                "contact", "contact_document_id", "1022",
+                "address__geo_political_subdivision2","THE WOODLANDS",
+                true));
+
+        contactQueries.add(new TestQuery("qContactMultiCont1",
+                "contact", "contact_document_id", "1519",
+                "address__additional_line1","TANISTOR ELECTRONICS",
+                true));
+
+        runQueryList(contactQueries);
+    }
+    @Test
+    public void verifyContactUDTsKeyQuery(){
+
+        String addreSecondaryQuery = "select * from contact where contact_document_id = 83";
+        ResultSet resCheck = session.execute(addreSecondaryQuery);
+
+        if(null != resCheck) {
+            Row rowVal = resCheck.one();
+
+            Set<UDTValue> setAddrSecondary= rowVal.getSet("address__secondary", new TypeToken<UDTValue>(){});
+
+            //check only one result
+            assert(setAddrSecondary.size() ==1);
+
+            //verify udt values
+            UDTValue udt = setAddrSecondary.iterator().next();
+            assert(udt.getString("unit").equals("BLDG"));
+            assert(udt.getString("value").equals("5"));
+        }
+    }
+
+    @Test
+    public void verifyContactUDTsSolrQuery(){
+
+        String solrQuery = "select * from contact\n" +
+                "where\n" +
+                "    solr_query = '" +
+                "{\"q\": \"{!tuple}address__secondary.unit:BLDG\"," +
+                "\"sort\": \"contact_document_id asc\"}'";
+
+        ResultSet resCheck = session.execute(solrQuery);
+
+        if(null != resCheck) {
+
+            //check first entry
+            Row rowVal1 = resCheck.one();
+
+            assert(rowVal1.getLong("contact_document_id") == (long)83);
+
+            Set<UDTValue> setAddrSecondary1 = rowVal1.getSet("address__secondary", new TypeToken<UDTValue>(){});
+
+            //check only one result
+            assert(setAddrSecondary1.size() ==1);
+
+            //verify udt values
+            UDTValue udt = setAddrSecondary1.iterator().next();
+            assert(udt.getString("unit").equals("BLDG"));
+            assert(udt.getString("value").equals("5"));
+
+            //check next entry
+            Row rowVal2 = resCheck.one();
+            assert(rowVal2.getLong("contact_document_id") == (long)337);
+
+            Set<UDTValue> setAddrSecondary2 = rowVal2.getSet("address__secondary", new TypeToken<UDTValue>(){});
+
+            //check only one result
+            assert(setAddrSecondary2.size() ==1);
+
+            //verify udt values
+            UDTValue udt2 = setAddrSecondary2.iterator().next();
+            assert(udt2.getString("unit").equals("BLDG"));
+            assert(udt2.getString("value").equals("A"));
+
+            //check next entry
+            Row rowVal3 = resCheck.one();
+            assert(rowVal3.getLong("contact_document_id") == (long)363);
+
+            Set<UDTValue> setAddrSecondary3 = rowVal3.getSet("address__secondary", new TypeToken<UDTValue>(){});
+
+            //check only one result
+            assert(setAddrSecondary3.size() ==1);
+
+            //verify udt values
+            UDTValue udt3 = setAddrSecondary3.iterator().next();
+            assert(udt3.getString("unit").equals("BLDG"));
+            assert(udt3.getString("value").equals("1"));
+
+            //check next entry
+            Row rowVal4 = resCheck.one();
+            assert(rowVal4.getLong("contact_document_id") == (long)433);
+
+            Set<UDTValue> setAddrSecondary4 = rowVal4.getSet("address__secondary", new TypeToken<UDTValue>(){});
+
+            //check only one result
+            assert(setAddrSecondary4.size() ==1);
+
+            //verify udt values
+            UDTValue udt4 = setAddrSecondary4.iterator().next();
+            assert(udt4.getString("unit").equals("BLDG"));
+            assert(udt4.getString("value").equals("2"));
+
+
+            //check last entry
+            Row rowVal5 = resCheck.one();
+            assert(rowVal5.getLong("contact_document_id") == (long)2000);
+
+            Set<UDTValue> setAddrSecondary5 = rowVal5.getSet("address__secondary", new TypeToken<UDTValue>(){});
+
+            //check only one result
+            assert(setAddrSecondary5.size() == 2);
+
+            //verify udt values
+            UDTValue udt5a = setAddrSecondary5.iterator().next();
+            assert(udt5a.getString("unit").equals("BLDG"));
+            assert(udt5a.getString("value").equals("7"));
+        }
+
+    }
+    @Test
+    public void verifyContactUDTInsertUpdate(){
+        String cleanupQuery = "DELETE from customer.contact where contact_document_id = 2001;";
+        session.execute(cleanupQuery);
+
+        String checkQuery = "select * from customer.contact where contact_document_id = 2001;";
+        ResultSet rsInitialCheck = session.execute(checkQuery);
+
+        assert(rsInitialCheck != null && rsInitialCheck.all().size() == 0);
+
+        String insertStmt = "insert into contact\n" +
+                "(\n" +
+                "    contact_document_id,\n" +
+                "    address__secondary\n" +
+                ")\n" +
+                "values\n" +
+                "(\n" +
+                "    2001,\n" +
+                "    {\n" +
+                "        {unit:'STE', value:'S2001'},\n" +
+                "        {unit:'BLDG', value:'NE2001'}\n" +
+                "    }\n" +
+                ")\n" +
+                ";";
+
+        //add new record
+        session.execute(insertStmt);
+
+        //verify record exists
+        ResultSet rsDataCheck = session.execute(checkQuery);
+
+        Row dataRow = rsDataCheck.one();
+        assert(dataRow.getLong("contact_document_id") == (long)2001);
+
+        Set<UDTValue> setAddrSecondary = dataRow.getSet("address__secondary", new TypeToken<UDTValue>(){});
+
+        //check only one result
+        assert(setAddrSecondary.size() == 2);
+
+        String updateStmt = "update contact\n" +
+                "set \n" +
+                "    address__secondary = address__secondary + {{unit:'FL', value:'20'}}\n" +
+                "where\n" +
+                "    contact_document_id = 2001\n" +
+                "    ;";
+
+        //update set of UDTs
+        session.execute(updateStmt);
+
+        //verify record updated
+        ResultSet rsDataCheckUpdate = session.execute(checkQuery);
+
+        Row dataRowUpdated = rsDataCheckUpdate.one();
+        assert(dataRowUpdated.getLong("contact_document_id") == (long)2001);
+
+        Set<UDTValue> setAddrSecondaryUpdated = dataRowUpdated.getSet("address__secondary", new TypeToken<UDTValue>(){});
+
+        //check only one result
+        assert(setAddrSecondaryUpdated.size() == 3);
+    }
+
+    private void runQueryList(List<TestQuery> queries){
+
+        for(TestQuery curQuery : queries){
+            if(curQuery.queryType == TestQuery.QueryType.READ_PROP){
+                String checkQuery = "select * from " +
+                        curQuery.table + " where " +
+                        curQuery.recordIDProp + " = ";
+                if(curQuery.numericKey){
+                    checkQuery += curQuery.recordIDval;
+                }
+                else {
+                    checkQuery += "'" + curQuery.recordIDval + "'";
+                }
+
+                ResultSet resCheck = session.execute(checkQuery);
+
+                if(null != resCheck){
+                    Row rowVal = resCheck.one();
+                    String checkedVal = rowVal.getString(curQuery.checkProp);
+                    if(checkedVal.equals(curQuery.expectedResult)){
+                        System.out.println(("Verification query " + curQuery.queryID + " executed successfully."));
+                        assert(true);
+                    }
+                    else{
+                        System.out.println("Failure running query " + curQuery.queryID + "." +
+                                "\n\tID property - " + curQuery.recordIDProp +
+                                "\n\tReturned value  - " + checkedVal +
+                                "\n\tExpected value - " + curQuery.expectedResult +
+                                "\n\tExecute check query - " + checkQuery);
+                        assert(false);
+                    }
+                }
+                else{
+                    System.out.println("Failure running query " + curQuery.queryID + ".  Result set is NULL.");
+                    assert(false);
+                }
+            }
+
+
+//            ResultSet res = session.execute(curQuery.query);
+//
+//            if(null != res){
+//                int retCount = res.all().size();
+//
+//                if(retCount == curQuery.expectedReturnCount){
+//                    System.out.println(("Query " + curQuery.queryID + " executed successfully."));
+//                    assert(true);
+//                }
+//                else{
+//                    System.out.println("Failure running query " + curQuery.queryID + "." +
+//                            "\n\tReturned count - " + retCount +
+//                            "\n\tExpected count - " + curQuery.expectedReturnCount);
+//                    assert(false);
+//                }
+//            }
+//            else{
+//                System.out.println("Failure running query " + curQuery.queryID + ".  Result set is NULL.");
+//                assert(false);
+//            }
+        }
+
+
+    }
+}

@@ -1,0 +1,3 @@
+account_number,profile__account_linkage_flag,profile__account_service_level,profile__account_status__reason_code,profile__account_status__status_code,profile__account_status__status_date,profile__account_type,profile__creation_date,profile__customer_type,profile__enterprise_source,profile__fdx_ok_to_call_flag,profile__nasa_id,profile__nasa_key,profile__origin_source,profile__welcome_kit__welcome_kit_flag,profile__welcome_kit__welcome_kit_promo_code
+acctNum2,True,SCR,FDXDIR,ARCHIVE,2021-03-04,EMP,2021-03-02,IND,source2,False,nasa2,nKey2,origSource2,True,welcomeCode2
+acctNum1,True,FOC,OP,ACTIVE,2021-03-01,BUS,2021-03-01,BUS,source1,True,nasa1,nKey1,origSource1,False,welcomeCode1
