@@ -9,6 +9,7 @@ import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 //import com.google.common.reflect.TypeToken;
+import com.datastax.oss.driver.api.core.data.UdtValue;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -166,6 +167,17 @@ public class CustomerTest {
 
         if(null != resCheck) {
             Row rowVal = resCheck.one();
+
+            Set<UdtValue> setAddrSecondary= rowVal.getSet("address__secondary", UdtValue.class);
+
+            //check only one result
+            assert(setAddrSecondary.size() ==1);
+
+            //verify udt values
+            UdtValue udt = setAddrSecondary.iterator().next();
+            assert(udt.getString("unit").equals("BLDG"));
+            assert(udt.getString("value").equals("5"));
+
 
 //            Set<UDTValue> setAddrSecondary= rowVal.getSet("address__secondary", new TypeToken<UDTValue>(){});
 //
