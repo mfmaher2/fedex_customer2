@@ -24,11 +24,6 @@
       <artifactId>java-driver-core</artifactId>
       <version>4.6.1</version>
     </dependency>
-<!--    <dependency>-->
-<!--      <groupId>com.datastax.dse</groupId>-->
-<!--      <artifactId>dse-java-driver-core</artifactId>-->
-<!--      <version>1.8.2</version>-->
-<!--    </dependency>-->
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>

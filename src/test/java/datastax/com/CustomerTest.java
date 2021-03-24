@@ -1,14 +1,8 @@
 package datastax.com;
 
-//import com.datastax.driver.core.ResultSet;
-//import com.datastax.driver.core.Row;
-//import com.datastax.driver.core.UDTValue;
-//import com.datastax.driver.dse.DseCluster;
-//import com.datastax.driver.dse.DseSession;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
-//import com.google.common.reflect.TypeToken;
 import com.datastax.oss.driver.api.core.data.UdtValue;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -24,11 +18,9 @@ import static com.datastax.oss.driver.api.core.CqlSession.*;
 
 public class CustomerTest {
 
-//    private static DseCluster cluster = null;
-//    private static DseSession session = null;
     private static CqlSession session = null;
-    private static boolean skipSchemaCreation = false;
-    private static boolean skipDataLoad = false;
+    private static boolean skipSchemaCreation = true;
+    private static boolean skipDataLoad = true;
     private static boolean skipKeyspaceDrop = true;
     private static String keyspaceName = "customer";
     private static String productName = "Customer" ;
@@ -60,7 +52,6 @@ public class CustomerTest {
                     //auth information may also be needed
                     .build();
 
-//            session = cluster.connect();
             dropTestKeyspace();
             loadSchema();
             session.execute("USE " + keyspaceName + ";");
@@ -114,7 +105,6 @@ public class CustomerTest {
 
         dropTestKeyspace();
         if (session != null) session.close();
-//        if (cluster != null) cluster.close();
     }
 
     @Test
@@ -177,17 +167,6 @@ public class CustomerTest {
             UdtValue udt = setAddrSecondary.iterator().next();
             assert(udt.getString("unit").equals("BLDG"));
             assert(udt.getString("value").equals("5"));
-
-
-//            Set<UDTValue> setAddrSecondary= rowVal.getSet("address__secondary", new TypeToken<UDTValue>(){});
-//
-//            //check only one result
-//            assert(setAddrSecondary.size() ==1);
-//
-//            //verify udt values
-//            UDTValue udt = setAddrSecondary.iterator().next();
-//            assert(udt.getString("unit").equals("BLDG"));
-//            assert(udt.getString("value").equals("5"));
         }
     }
 
@@ -209,72 +188,72 @@ public class CustomerTest {
 
             assert(rowVal1.getLong("contact_document_id") == (long)83);
 
-//            Set<UDTValue> setAddrSecondary1 = rowVal1.getSet("address__secondary", new TypeToken<UDTValue>(){});
-//
-//            //check only one result
-//            assert(setAddrSecondary1.size() ==1);
-//
-//            //verify udt values
-//            UDTValue udt = setAddrSecondary1.iterator().next();
-//            assert(udt.getString("unit").equals("BLDG"));
-//            assert(udt.getString("value").equals("5"));
-//
-//            //check next entry
-//            Row rowVal2 = resCheck.one();
-//            assert(rowVal2.getLong("contact_document_id") == (long)337);
-//
-//            Set<UDTValue> setAddrSecondary2 = rowVal2.getSet("address__secondary", new TypeToken<UDTValue>(){});
-//
-//            //check only one result
-//            assert(setAddrSecondary2.size() ==1);
-//
-//            //verify udt values
-//            UDTValue udt2 = setAddrSecondary2.iterator().next();
-//            assert(udt2.getString("unit").equals("BLDG"));
-//            assert(udt2.getString("value").equals("A"));
-//
-//            //check next entry
-//            Row rowVal3 = resCheck.one();
-//            assert(rowVal3.getLong("contact_document_id") == (long)363);
-//
-//            Set<UDTValue> setAddrSecondary3 = rowVal3.getSet("address__secondary", new TypeToken<UDTValue>(){});
-//
-//            //check only one result
-//            assert(setAddrSecondary3.size() ==1);
-//
-//            //verify udt values
-//            UDTValue udt3 = setAddrSecondary3.iterator().next();
-//            assert(udt3.getString("unit").equals("BLDG"));
-//            assert(udt3.getString("value").equals("1"));
-//
-//            //check next entry
-//            Row rowVal4 = resCheck.one();
-//            assert(rowVal4.getLong("contact_document_id") == (long)433);
-//
-//            Set<UDTValue> setAddrSecondary4 = rowVal4.getSet("address__secondary", new TypeToken<UDTValue>(){});
-//
-//            //check only one result
-//            assert(setAddrSecondary4.size() ==1);
-//
-//            //verify udt values
-//            UDTValue udt4 = setAddrSecondary4.iterator().next();
-//            assert(udt4.getString("unit").equals("BLDG"));
-//            assert(udt4.getString("value").equals("2"));
-//
-//
-//            //check last entry
-//            Row rowVal5 = resCheck.one();
-//            assert(rowVal5.getLong("contact_document_id") == (long)2000);
-//
-//            Set<UDTValue> setAddrSecondary5 = rowVal5.getSet("address__secondary", new TypeToken<UDTValue>(){});
-//
-//            //check only one result
-//            assert(setAddrSecondary5.size() == 2);
-//
-//            //verify udt values
-//            UDTValue udt5a = setAddrSecondary5.iterator().next();
-//            assert(udt5a.getString("unit").equals("BLDG"));
-//            assert(udt5a.getString("value").equals("7"));
+            Set<UdtValue> setAddrSecondary1 = rowVal1.getSet("address__secondary",UdtValue.class);
+
+            //check only one result
+            assert(setAddrSecondary1.size() ==1);
+
+            //verify udt values
+            UdtValue udt = setAddrSecondary1.iterator().next();
+            assert(udt.getString("unit").equals("BLDG"));
+            assert(udt.getString("value").equals("5"));
+
+            //check next entry
+            Row rowVal2 = resCheck.one();
+            assert(rowVal2.getLong("contact_document_id") == (long)337);
+
+            Set<UdtValue> setAddrSecondary2 = rowVal2.getSet("address__secondary",UdtValue.class);
+
+            //check only one result
+            assert(setAddrSecondary2.size() ==1);
+
+            //verify udt values
+            UdtValue udt2 = setAddrSecondary2.iterator().next();
+            assert(udt2.getString("unit").equals("BLDG"));
+            assert(udt2.getString("value").equals("A"));
+
+            //check next entry
+            Row rowVal3 = resCheck.one();
+            assert(rowVal3.getLong("contact_document_id") == (long)363);
+
+            Set<UdtValue> setAddrSecondary3 = rowVal3.getSet("address__secondary",UdtValue.class);
+
+            //check only one result
+            assert(setAddrSecondary3.size() ==1);
+
+            //verify udt values
+            UdtValue udt3 = setAddrSecondary3.iterator().next();
+            assert(udt3.getString("unit").equals("BLDG"));
+            assert(udt3.getString("value").equals("1"));
+
+            //check next entry
+            Row rowVal4 = resCheck.one();
+            assert(rowVal4.getLong("contact_document_id") == (long)433);
+
+            Set<UdtValue> setAddrSecondary4 = rowVal4.getSet("address__secondary",UdtValue.class);
+
+            //check only one result
+            assert(setAddrSecondary4.size() ==1);
+
+            //verify udt values
+            UdtValue udt4 = setAddrSecondary4.iterator().next();
+            assert(udt4.getString("unit").equals("BLDG"));
+            assert(udt4.getString("value").equals("2"));
+
+
+            //check last entry
+            Row rowVal5 = resCheck.one();
+            assert(rowVal5.getLong("contact_document_id") == (long)2000);
+
+            Set<UdtValue> setAddrSecondary5 = rowVal5.getSet("address__secondary",UdtValue.class);
+
+            //check only one result
+            assert(setAddrSecondary5.size() == 2);
+
+            //verify udt values
+            UdtValue udt5a = setAddrSecondary5.iterator().next();
+            assert(udt5a.getString("unit").equals("BLDG"));
+            assert(udt5a.getString("value").equals("7"));
         }
 
     }
@@ -312,31 +291,31 @@ public class CustomerTest {
         Row dataRow = rsDataCheck.one();
         assert(dataRow.getLong("contact_document_id") == (long)2001);
 
-//        Set<UDTValue> setAddrSecondary = dataRow.getSet("address__secondary", new TypeToken<UDTValue>(){});
-//
-//        //check only one result
-//        assert(setAddrSecondary.size() == 2);
-//
-//        String updateStmt = "update contact\n" +
-//                "set \n" +
-//                "    address__secondary = address__secondary + {{unit:'FL', value:'20'}}\n" +
-//                "where\n" +
-//                "    contact_document_id = 2001\n" +
-//                "    ;";
-//
-//        //update set of UDTs
-//        session.execute(updateStmt);
-//
-//        //verify record updated
-//        ResultSet rsDataCheckUpdate = session.execute(checkQuery);
-//
-//        Row dataRowUpdated = rsDataCheckUpdate.one();
-//        assert(dataRowUpdated.getLong("contact_document_id") == (long)2001);
-//
-//        Set<UDTValue> setAddrSecondaryUpdated = dataRowUpdated.getSet("address__secondary", new TypeToken<UDTValue>(){});
-//
-//        //check only one result
-//        assert(setAddrSecondaryUpdated.size() == 3);
+        Set<UdtValue> setAddrSecondary = dataRow.getSet("address__secondary",UdtValue.class);
+
+        //check only one result
+        assert(setAddrSecondary.size() == 2);
+
+        String updateStmt = "update contact\n" +
+                "set \n" +
+                "    address__secondary = address__secondary + {{unit:'FL', value:'20'}}\n" +
+                "where\n" +
+                "    contact_document_id = 2001\n" +
+                "    ;";
+
+        //update set of UDTs
+        session.execute(updateStmt);
+
+        //verify record updated
+        ResultSet rsDataCheckUpdate = session.execute(checkQuery);
+
+        Row dataRowUpdated = rsDataCheckUpdate.one();
+        assert(dataRowUpdated.getLong("contact_document_id") == (long)2001);
+
+        Set<UdtValue> setAddrSecondaryUpdated = dataRowUpdated.getSet("address__secondary",UdtValue.class);
+
+        //check only one result
+        assert(setAddrSecondaryUpdated.size() == 3);
     }
 
     private void runQueryList(List<TestQuery> queries){
