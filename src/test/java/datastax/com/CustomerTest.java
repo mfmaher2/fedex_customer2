@@ -110,25 +110,43 @@ public class CustomerTest {
     }
 
     @Test
-    public void contactMapperTest(){
+    public void contactUdtMapperReadTest(){
+        CustomerContactDao daoContact  =  contactMapper.customerContactDao(keyspaceName);
 
+        CustomerContact foundContact = daoContact.findByContactDocumentId(83);
+        Set<UdtValue> setAddrSecondary = foundContact.getAddressSecondary();
+
+        //verify size of returned set
+        assert(setAddrSecondary.size() ==1);
+
+        //verify udt values
+        UdtValue udt = setAddrSecondary.iterator().next();
+        assert(udt.getString("unit").equals("BLDG"));
+        assert(udt.getString("value").equals("5"));
+    }
+
+    @Test
+    public void contactMapperTest(){
         CustomerContactDao daoContact  =  contactMapper.customerContactDao(keyspaceName);
 
         long testDocID = 20000;
         String testFirstName = "First20000";
         String testLastName = "Last20000" ;
+        String testMiddleName = "Middle20000" ;
 
         //write test record
         CustomerContact writeContact = new CustomerContact();
         writeContact.setContactDocumentId(testDocID);
         writeContact.setPersonFirstName(testFirstName);
         writeContact.setPerson__last_name(testLastName);
+        writeContact.setPerson_MiddleName(testMiddleName);
         daoContact.save(writeContact);
 
         //test read functionality
         CustomerContact readContact = daoContact.findByContactDocumentId(testDocID);
         assert(readContact.getPersonFirstName().equals(testFirstName));
         assert(readContact.getPerson__last_name().equals(testLastName));
+        assert(readContact.getPerson_MiddleName().equals(testMiddleName));
 
         //test delete capability
         daoContact.delete(writeContact);
