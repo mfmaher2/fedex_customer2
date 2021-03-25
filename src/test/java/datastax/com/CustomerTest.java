@@ -19,6 +19,7 @@ import static com.datastax.oss.driver.api.core.CqlSession.*;
 public class CustomerTest {
 
     private static CqlSession session = null;
+    private static CustomerContactMapper contactMapper = null;
     private static boolean skipSchemaCreation = true;
     private static boolean skipDataLoad = true;
     private static boolean skipKeyspaceDrop = true;
@@ -57,6 +58,7 @@ public class CustomerTest {
             session.execute("USE " + keyspaceName + ";");
             loadData();
 
+            contactMapper = new CustomerContactMapperBuilder(session).build();
         }
         catch(Exception e){
             System.out.println(e.getMessage());
@@ -105,6 +107,19 @@ public class CustomerTest {
 
         dropTestKeyspace();
         if (session != null) session.close();
+    }
+
+    @Test
+    public void contactMapperTest(){
+
+        CustomerContactDao daoContact  =  contactMapper.customerContactDao(keyspaceName, "contact");
+
+        CustomerContact writeContact = new CustomerContact();
+        writeContact.setContactDocumentId(20000);
+        writeContact.setPerson__first_name("First20000");
+        writeContact.setPerson__last_name("Last20000");
+        daoContact.save(writeContact);
+
     }
 
     @Test
