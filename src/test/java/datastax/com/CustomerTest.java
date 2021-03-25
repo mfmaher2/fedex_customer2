@@ -112,14 +112,28 @@ public class CustomerTest {
     @Test
     public void contactMapperTest(){
 
-        CustomerContactDao daoContact  =  contactMapper.customerContactDao(keyspaceName, "contact");
+        CustomerContactDao daoContact  =  contactMapper.customerContactDao(keyspaceName);
 
+        long testDocID = 20000;
+        String testFirstName = "First20000";
+        String testLastName = "Last20000" ;
+
+        //write test record
         CustomerContact writeContact = new CustomerContact();
-        writeContact.setContactDocumentId(20000);
-        writeContact.setPerson__first_name("First20000");
-        writeContact.setPerson__last_name("Last20000");
+        writeContact.setContactDocumentId(testDocID);
+        writeContact.setPersonFirstName(testFirstName);
+        writeContact.setPerson__last_name(testLastName);
         daoContact.save(writeContact);
 
+        //test read functionality
+        CustomerContact readContact = daoContact.findByContactDocumentId(testDocID);
+        assert(readContact.getPersonFirstName().equals(testFirstName));
+        assert(readContact.getPerson__last_name().equals(testLastName));
+
+        //test delete capability
+        daoContact.delete(writeContact);
+        CustomerContact readVerifyDelete = daoContact.findByContactDocumentId(testDocID);
+        assert(null == readVerifyDelete);
     }
 
     @Test

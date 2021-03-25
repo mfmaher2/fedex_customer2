@@ -10,5 +10,5 @@ import com.datastax.oss.driver.api.mapper.annotations.Mapper;
 public interface CustomerContactMapper {
 
     @DaoFactory
-    CustomerContactDao customerContactDao(@DaoKeyspace String keyspace, @DaoTable String table);
+    CustomerContactDao customerContactDao(@DaoKeyspace String keyspace);
 }

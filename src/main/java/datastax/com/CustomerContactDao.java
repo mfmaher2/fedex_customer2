@@ -9,7 +9,7 @@ import com.datastax.oss.driver.api.mapper.annotations.Select;
 public interface CustomerContactDao {
 
     @Select
-    CustomerContact findById(long id);
+    CustomerContact findByContactDocumentId(long id);
 
     @Insert
     void save(CustomerContact contact);
