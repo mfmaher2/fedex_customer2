@@ -11,6 +11,7 @@ import org.junit.Test;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -114,15 +115,61 @@ public class CustomerTest {
         CustomerContactDao daoContact  =  contactMapper.customerContactDao(keyspaceName);
 
         CustomerContact foundContact = daoContact.findByContactDocumentId(83);
-        Set<UdtValue> setAddrSecondary = foundContact.getAddressSecondary();
+        Set<CustomerContactAddressSecondary> setAddrSecondary = foundContact.getAddressSecondary();
 
         //verify size of returned set
         assert(setAddrSecondary.size() ==1);
 
         //verify udt values
-        UdtValue udt = setAddrSecondary.iterator().next();
-        assert(udt.getString("unit").equals("BLDG"));
-        assert(udt.getString("value").equals("5"));
+        CustomerContactAddressSecondary addrSec = setAddrSecondary.iterator().next();
+        assert(addrSec.getUnit().equals("BLDG"));
+        assert(addrSec.getValue().equals("5"));
+    }
+
+    @Test
+    public void contactUdtMapperWriteTest(){
+        long testDocID = 20001;
+        String testFirstName = "First20001";
+        String testLastName = "Last20001" ;
+        String testMiddleName = "Middle20001" ;
+        String addSecUnit = "FL20001";
+        String addSecVal = "001";
+
+        CustomerContactDao daoContact  =  contactMapper.customerContactDao(keyspaceName);
+
+        CustomerContactAddressSecondary writeAddSec = new CustomerContactAddressSecondary();
+        writeAddSec.setUnit(addSecUnit);
+        writeAddSec.setValue(addSecVal);
+
+        Set<CustomerContactAddressSecondary> setAddrSec = new HashSet<>();
+        setAddrSec.add(writeAddSec);
+
+        CustomerContact writeContact = new CustomerContact();
+        writeContact.setContactDocumentId(testDocID);
+        writeContact.setPersonFirstName(testFirstName);
+        writeContact.setPerson__last_name(testLastName);
+        writeContact.setPerson_MiddleName(testMiddleName);
+        writeContact.setAddressSecondary(setAddrSec);
+
+        //write new record to DB
+        daoContact.save(writeContact);
+
+        //verify record written correctly
+        CustomerContact foundContact = daoContact.findByContactDocumentId(testDocID);
+        Set<CustomerContactAddressSecondary> setAddrSecondary = foundContact.getAddressSecondary();
+
+        //verify size of returned set
+        assert(1 == setAddrSecondary.size());
+
+        //verify udt values
+        CustomerContactAddressSecondary addrSec = setAddrSecondary.iterator().next();
+        assert(addrSec.getUnit().equals(addSecUnit));
+        assert(addrSec.getValue().equals(addSecVal));
+
+        //cleanup test UDT record
+        daoContact.delete(writeContact);
+        CustomerContact readVerifyDelete = daoContact.findByContactDocumentId(testDocID);
+        assert(null == readVerifyDelete);
     }
 
     @Test

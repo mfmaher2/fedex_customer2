@@ -19,7 +19,7 @@ public class CustomerContact {
     private String person__last_name;                       //explicit use of table property
     private String person_MiddleName;                       //use default naming strategy mapping, property = person__middle_name
 
-    @CqlName("address__secondary") private Set<UdtValue> addressSecondary;
+    @CqlName("address__secondary") private Set<CustomerContactAddressSecondary> addressSecondary;
 
     public CustomerContact() {};
 
@@ -35,6 +35,6 @@ public class CustomerContact {
     public String getPerson_MiddleName() { return person_MiddleName;}
     public void setPerson_MiddleName(String name) { person_MiddleName = name;}
 
-    public Set<UdtValue> getAddressSecondary() { return addressSecondary; }
-    public void setAddressSecondary(Set<UdtValue> addrSec) { addressSecondary = addrSec; }
+    public Set<CustomerContactAddressSecondary> getAddressSecondary() { return addressSecondary; }
+    public void setAddressSecondary(Set<CustomerContactAddressSecondary> addrSec) { addressSecondary = addrSec; }
 }
