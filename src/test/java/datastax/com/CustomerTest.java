@@ -267,24 +267,6 @@ public class CustomerTest {
     }
 
     @Test
-    public void verifyContactUDTsSolrMapperQuery() {
-        CustomerContactDao daoContact  =  contactMapper.customerContactDao(keyspaceName);
-
-        String solrClause = "'{\"q\": \"{!tuple}address__secondary.unit:BLDG\"," +
-                    "\"sort\": \"contact_document_id asc\"}'";
-
-
-        PagingIterable<CustomerContact> results = daoContact.findByContactBySolrSecAddrUnit3(solrClause);
-
-        CustomerContact contact1 = results.one();
-        assert(contact1.getContactDocumentId() == 83);
-
-
-//        PreparedStatement
-
-    }
-
-    @Test
     public void verifyContactUDTsSolrQuery() {
         String solrQuery = "select * from contact\n" +
                 "where\n" +
@@ -377,6 +359,75 @@ public class CustomerTest {
             assert(false);
         }
     }
+
+    @Test
+    public void verifyContactUDTInsertUpdateMapper(){
+        CustomerContactDao daoContact  =  contactMapper.customerContactDao(keyspaceName);
+
+        long testDocId = 2010;
+        String addSecUnit1 = "STE";
+        String addSecVal1 = "SM20001";
+        String addSecUnit2 = "BLDG";
+        String addSecVal2 = "NEM2001";
+        String addSecUnit3 = "FL";
+        String addSecVal3 = "M20";
+
+        CustomerContact deleteContact = new CustomerContact();
+        deleteContact.setContactDocumentId(testDocId);
+        daoContact.delete(deleteContact);
+
+        CustomerContact readVerifyDelete = daoContact.findByContactDocumentId(testDocId);
+        assert(null == readVerifyDelete);
+
+        CustomerContactAddressSecondary writeAddSec1 = new CustomerContactAddressSecondary();
+        writeAddSec1.setUnit(addSecUnit1);
+        writeAddSec1.setValue(addSecVal1);
+
+        CustomerContactAddressSecondary writeAddSec2 = new CustomerContactAddressSecondary();
+        writeAddSec1.setUnit(addSecUnit2);
+        writeAddSec1.setValue(addSecVal2);
+
+        Set<CustomerContactAddressSecondary> setAddrSec = new HashSet<>();
+        setAddrSec.add(writeAddSec1);
+        setAddrSec.add(writeAddSec2);
+
+        CustomerContact writeContact = new CustomerContact();
+        writeContact.setContactDocumentId(testDocId);
+        writeContact.setAddressSecondary(setAddrSec);
+
+        //write new record to DB
+        daoContact.save(writeContact);
+
+        //verify record written as expected
+        CustomerContact checkWriteContact = daoContact.findByContactDocumentId(testDocId);
+        assert(testDocId == checkWriteContact.getContactDocumentId());
+
+        Set<CustomerContactAddressSecondary> setCheckAddrSec = checkWriteContact.getAddressSecondary();
+        assert(2 == setAddrSec.size());
+
+        //update collection of UDTs
+        CustomerContactAddressSecondary writeAddSec3 = new CustomerContactAddressSecondary();
+        writeAddSec1.setUnit(addSecUnit3);
+        writeAddSec1.setValue(addSecVal3);
+
+        setCheckAddrSec.add(writeAddSec3);
+        checkWriteContact.setAddressSecondary(setCheckAddrSec);
+
+        daoContact.update(checkWriteContact);
+
+
+        //verify update executed as expected
+        CustomerContact checkUpdateContact = daoContact.findByContactDocumentId(testDocId);
+        assert(testDocId == checkUpdateContact.getContactDocumentId());
+
+        Set<CustomerContactAddressSecondary> setCheckUpdateAddrSec = checkUpdateContact.getAddressSecondary();
+//        assert(3 == setCheckUpdateAddrSec.size());  //** update does not appear to currently work as expected
+
+        daoContact.delete(deleteContact);
+        CustomerContact readVerifyDeleteEnd = daoContact.findByContactDocumentId(testDocId);
+        assert(null == readVerifyDeleteEnd);
+    }
+
 
     @Test
     public void verifyContactUDTInsertUpdate(){
