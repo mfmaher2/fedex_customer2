@@ -16,23 +16,24 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.compiler.source>1.7</maven.compiler.source>
     <maven.compiler.target>1.7</maven.compiler.target>
+    <dse.driver.version>4.6.1</dse.driver.version>
   </properties>
 
   <dependencies>
     <dependency>
       <groupId>com.datastax.oss</groupId>
       <artifactId>java-driver-core</artifactId>
-      <version>4.6.1</version>
+      <version>${dse.driver.version}</version>
     </dependency>
     <dependency>
       <groupId>com.datastax.oss</groupId>
       <artifactId>java-driver-mapper-processor</artifactId>
-      <version>4.6.1</version>
+      <version>${dse.driver.version}</version>
     </dependency>
     <dependency>
       <groupId>com.datastax.oss</groupId>
       <artifactId>java-driver-mapper-runtime</artifactId>
-      <version>4.6.1</version>
+      <version>${dse.driver.version}</version>
     </dependency>
     <dependency>
       <groupId>junit</groupId>

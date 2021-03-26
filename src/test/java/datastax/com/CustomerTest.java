@@ -1,6 +1,8 @@
 package datastax.com;
 
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.PagingIterable;
+import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.data.UdtValue;
@@ -265,8 +267,25 @@ public class CustomerTest {
     }
 
     @Test
-    public void verifyContactUDTsSolrQuery(){
+    public void verifyContactUDTsSolrMapperQuery() {
+        CustomerContactDao daoContact  =  contactMapper.customerContactDao(keyspaceName);
 
+        String solrClause = "'{\"q\": \"{!tuple}address__secondary.unit:BLDG\"," +
+                    "\"sort\": \"contact_document_id asc\"}'";
+
+
+        PagingIterable<CustomerContact> results = daoContact.findByContactBySolrSecAddrUnit3(solrClause);
+
+        CustomerContact contact1 = results.one();
+        assert(contact1.getContactDocumentId() == 83);
+
+
+//        PreparedStatement
+
+    }
+
+    @Test
+    public void verifyContactUDTsSolrQuery() {
         String solrQuery = "select * from contact\n" +
                 "where\n" +
                 "    solr_query = '" +
@@ -275,8 +294,12 @@ public class CustomerTest {
 
         ResultSet resCheck = session.execute(solrQuery);
 
-        if(null != resCheck) {
+        //call common verification method
+        verifyExpectedUdtValues(resCheck);
+    }
 
+    private void verifyExpectedUdtValues(ResultSet resCheck){
+        if(null != resCheck) {
             //check first entry
             Row rowVal1 = resCheck.one();
 
@@ -349,8 +372,12 @@ public class CustomerTest {
             assert(udt5a.getString("unit").equals("BLDG"));
             assert(udt5a.getString("value").equals("7"));
         }
-
+        else{
+            //result set should not be null
+            assert(false);
+        }
     }
+
     @Test
     public void verifyContactUDTInsertUpdate(){
         String cleanupQuery = "DELETE from customer.contact where contact_document_id = 2001;";
