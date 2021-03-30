@@ -35,6 +35,39 @@ CREATE TYPE IF NOT EXISTS credit_card_type (
     auto_sched_thresh_amt text
 );
 
+CREATE TYPE IF NOT EXISTS express_credit_card_type (
+    type text,
+    credit_card_id text,
+    exp_date_month int,
+    exp_date_year int,
+    order_of_usage int,
+    additional_credit_card_info__address__street_line text,
+    additional_credit_card_info__address__additional_line1 text,
+    additional_credit_card_info__address__additional_line2 text,
+    additional_credit_card_info__address__geo_political_subdivision1 text,
+    additional_credit_card_info__address__geo_political_subdivision2 text,
+    additional_credit_card_info__address__geo_political_subdivision3 text,
+    additional_credit_card_info__address__postal_code text,
+    additional_credit_card_info__address__country_code text,
+    additional_credit_card_info__holder_company text,
+    additional_credit_card_info__holder_person__first_name text,
+    additional_credit_card_info__holder_person__last_name text,
+    additional_credit_card_info__holder_person__middle_name text,
+    additional_credit_card_info__holder_person__prefix text,
+    additional_credit_card_info__holder_person__suffix text,
+    additional_credit_card_info__holder_person__title text,
+    additional_credit_card_info__holder_person__gender text,
+    additional_credit_card_info__holder_email text,
+    additional_credit_card_info__holder_phone__numeric_country_code text,
+    additional_credit_card_info__holder_phone__alpha_country_code text,
+    additional_credit_card_info__holder_phone__area_code text,
+    additional_credit_card_info__holder_phone__phone_number text,
+    additional_credit_card_info__holder_phone__extension text,
+    additional_credit_card_info__holder_phone__ftc_ok_to_call_flag boolean,
+    last_authentication_date date
+)
+
+
 CREATE TYPE IF NOT EXISTS eft_bank_info_type (
     authorization__person__first_name text,
     authorization__person__last_name text,
@@ -93,6 +126,269 @@ CREATE TYPE IF NOT EXISTS eft_bank_info_type (
     name_on_account text,
     threshhold_amount text
 );
+
+CREATE TABLE IF NOT EXISTS enterprise_tax_info (
+    account_number text,
+    tax_exempt boolean,
+    PRIMARY KEY(account_number))
+WITH bloom_filter_fp_chance = 0.01
+    AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+    AND comment = ''
+    AND compaction = {'class': 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy', 'enabled': 'true', 'sstable_size_in_mb': '160', 'tombstone_compaction_interval': '86400', 'tombstone_threshold': '0.2', 'unchecked_tombstone_compaction': 'false'}
+    AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+    AND crc_check_chance = 1.0
+    AND dclocal_read_repair_chance = 0.0
+    AND default_time_to_live = 0
+    AND gc_grace_seconds = 864000
+    AND max_index_interval = 2048
+    AND memtable_flush_period_in_ms = 0
+    AND min_index_interval = 128
+    AND read_repair_chance = 0.0
+    AND speculative_retry = '99PERCENTILE';
+
+CREATE TABLE IF NOT EXISTS cargo_account_receivables (
+    account_number text,
+    account_receivables__payor_type text,
+    PRIMARY KEY(account_number))
+WITH bloom_filter_fp_chance = 0.01
+    AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+    AND comment = ''
+    AND compaction = {'class': 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy', 'enabled': 'true', 'sstable_size_in_mb': '160', 'tombstone_compaction_interval': '86400', 'tombstone_threshold': '0.2', 'unchecked_tombstone_compaction': 'false'}
+    AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+    AND crc_check_chance = 1.0
+    AND dclocal_read_repair_chance = 0.0
+    AND default_time_to_live = 0
+    AND gc_grace_seconds = 864000
+    AND max_index_interval = 2048
+    AND memtable_flush_period_in_ms = 0
+    AND min_index_interval = 128
+    AND read_repair_chance = 0.0
+    AND speculative_retry = '99PERCENTILE';
+
+
+CREATE TABLE IF NOT EXISTS cargo_account_receivables (
+    account_number text,
+    account_receivables__call_zone_desc text,
+    account_receivables__gsp_write_off text,
+    account_receivables__onlineEligibility boolean,
+    account_receivables__partial_pay_letter_flag boolean,
+    account_receivables__payment_type text,
+    account_receivables__payment_method_code text,
+    account_receivables__arrow_customer_flag text,
+    account_receivables__international_ar_preference int,   --does not follow standard capitalization patterns
+    account_receivables__international_ar_date date,        --does not follow standard capitalization patterns
+    account_receivables__no_refund_flag boolean,
+    account_receivables__debut_company_code text,
+    PRIMARY KEY(account_number))
+WITH bloom_filter_fp_chance = 0.01
+    AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+    AND comment = ''
+    AND compaction = {'class': 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy', 'enabled': 'true', 'sstable_size_in_mb': '160', 'tombstone_compaction_interval': '86400', 'tombstone_threshold': '0.2', 'unchecked_tombstone_compaction': 'false'}
+    AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+    AND crc_check_chance = 1.0
+    AND dclocal_read_repair_chance = 0.0
+    AND default_time_to_live = 0
+    AND gc_grace_seconds = 864000
+    AND max_index_interval = 2048
+    AND memtable_flush_period_in_ms = 0
+    AND min_index_interval = 128
+    AND read_repair_chance = 0.0
+    AND speculative_retry = '99PERCENTILE';
+
+
+CREATE TABLE IF NOT EXISTS cargo_account_receivables (
+    account_number text,
+    aggregations__ed_aggr_code text,
+    aggregations__geo_acct_number text,
+    aggregations__global_account_number text,
+    aggregations__global_subgroup text,
+    aggregations__ss_account_number text,
+    aggregations__bill_to_number text,
+    aggregations__edi_number text,
+    aggregations__copy_master_address,
+    PRIMARY KEY(account_number))
+WITH bloom_filter_fp_chance = 0.01
+    AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+    AND comment = ''
+    AND compaction = {'class': 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy', 'enabled': 'true', 'sstable_size_in_mb': '160', 'tombstone_compaction_interval': '86400', 'tombstone_threshold': '0.2', 'unchecked_tombstone_compaction': 'false'}
+    AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+    AND crc_check_chance = 1.0
+    AND dclocal_read_repair_chance = 0.0
+    AND default_time_to_live = 0
+    AND gc_grace_seconds = 864000
+    AND max_index_interval = 2048
+    AND memtable_flush_period_in_ms = 0
+    AND min_index_interval = 128
+    AND read_repair_chance = 0.0
+    AND speculative_retry = '99PERCENTILE';
+
+
+CREATE TABLE IF NOT EXISTS express_apply_discount_detail (
+    account_number text,
+    apply_discount__discount_flag boolean,
+    apply_discount__effective_date_time timestamp,
+    apply_discount__expiration_date_time timestamp,
+    PRIMARY KEY(account_number))
+WITH bloom_filter_fp_chance = 0.01
+    AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+    AND comment = ''
+    AND compaction = {'class': 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy', 'enabled': 'true', 'sstable_size_in_mb': '160', 'tombstone_compaction_interval': '86400', 'tombstone_threshold': '0.2', 'unchecked_tombstone_compaction': 'false'}
+    AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+    AND crc_check_chance = 1.0
+    AND dclocal_read_repair_chance = 0.0
+    AND default_time_to_live = 0
+    AND gc_grace_seconds = 864000
+    AND max_index_interval = 2048
+    AND memtable_flush_period_in_ms = 0
+    AND min_index_interval = 128
+    AND read_repair_chance = 0.0
+    AND speculative_retry = '99PERCENTILE';
+
+
+
+CREATE TABLE IF NOT EXISTS express_credit_card (
+    account_number text,
+    credit_card set<frozen<express_credit_card_type>>,
+    PRIMARY KEY(account_number))
+WITH bloom_filter_fp_chance = 0.01
+    AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+    AND comment = ''
+    AND compaction = {'class': 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy', 'enabled': 'true', 'sstable_size_in_mb': '160', 'tombstone_compaction_interval': '86400', 'tombstone_threshold': '0.2', 'unchecked_tombstone_compaction': 'false'}
+    AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+    AND crc_check_chance = 1.0
+    AND dclocal_read_repair_chance = 0.0
+    AND default_time_to_live = 0
+    AND gc_grace_seconds = 864000
+    AND max_index_interval = 2048
+    AND memtable_flush_period_in_ms = 0
+    AND min_index_interval = 128
+    AND read_repair_chance = 0.0
+    AND speculative_retry = '99PERCENTILE';
+
+
+CREATE TABLE IF NOT EXISTS express_credit_detail (
+    account_number text,
+    credit_detail__credit_status text,
+    credit_detail__credit_status_reason_code text,
+    credit_detail__denied_flag boolean,
+    credit_detail__bankruptcy_date date,
+    credit_detail__cash_only_date date,
+    credit_detail__cash_only_reason text,
+    credit_detail__credit_alert_detail text,
+    credit_detail__credit_alert_account_number text,
+    credit_detail__credit_alert_parent_type text,
+    credit_detail__credit_limit text,
+    credit_detail__credit_limit_tolerance_pct int,
+    credit_detail__override_date date,
+    credit_detail__credit_rating text,
+    credit_detail__receivership_account_number text,
+    credit_detail__receivership_date date,
+    credit_detail__rev_auth_id text,
+    PRIMARY KEY(account_number))
+WITH bloom_filter_fp_chance = 0.01
+    AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+    AND comment = ''
+    AND compaction = {'class': 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy', 'enabled': 'true', 'sstable_size_in_mb': '160', 'tombstone_compaction_interval': '86400', 'tombstone_threshold': '0.2', 'unchecked_tombstone_compaction': 'false'}
+    AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+    AND crc_check_chance = 1.0
+    AND dclocal_read_repair_chance = 0.0
+    AND default_time_to_live = 0
+    AND gc_grace_seconds = 864000
+    AND max_index_interval = 2048
+    AND memtable_flush_period_in_ms = 0
+    AND min_index_interval = 128
+    AND read_repair_chance = 0.0
+    AND speculative_retry = '99PERCENTILE';
+
+
+CREATE TABLE IF NOT EXISTS express_edi (
+    account_number text,
+    edi__cust_inv_rept_flag boolean,
+    edi__dom_data_frmt text,
+    edi__dom_inv_print_until_date date,
+    edi__intl_data_frmt text,
+    edi__intl_inv_print_until_date date,
+    edi__mm_bill_3rd_party text,
+    edi__mm_bill_recip text,
+    edi__mm_bill_ship text,
+    edi__mm_bill_pwr_ship text,
+    edi__past_due_medium text,
+    edi__past_due_send_to text,
+    remit_frmt_vers text,
+    sep_exp_grnd_file boolean,
+    PRIMARY KEY(account_number))
+WITH bloom_filter_fp_chance = 0.01
+    AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+    AND comment = ''
+    AND compaction = {'class': 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy', 'enabled': 'true', 'sstable_size_in_mb': '160', 'tombstone_compaction_interval': '86400', 'tombstone_threshold': '0.2', 'unchecked_tombstone_compaction': 'false'}
+    AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+    AND crc_check_chance = 1.0
+    AND dclocal_read_repair_chance = 0.0
+    AND default_time_to_live = 0
+    AND gc_grace_seconds = 864000
+    AND max_index_interval = 2048
+    AND memtable_flush_period_in_ms = 0
+    AND min_index_interval = 128
+    AND read_repair_chance = 0.0
+    AND speculative_retry = '99PERCENTILE';
+
+CREATE TABLE IF NOT EXISTS express_electronic_pay (
+    account_number text,
+    credit_card set<frozen<credit_card_type>>,
+    eft_bank_info set<frozen<eft_bank_info_type>>,
+    addl_bank_info__abi_code text,
+    addl_bank_info__addl_bank_id text,
+    bank_number text,
+    cab_code text,
+    giro_account text,
+    domicile_number text,
+    amex_checkout set<frozen<amex_checkout_type>>,
+    alt_payment__alt_payment_type text,
+    alt_payment__billing_agreement_id text,
+    alt_payment__billing_agreement_date date,
+    alt_payment__client_id text,
+    alt_payment__auto_sched_term text,
+    alt_payment__auto_sched_thresh_amt text,
+    PRIMARY KEY(account_number))
+WITH bloom_filter_fp_chance = 0.01
+    AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+    AND comment = ''
+    AND compaction = {'class': 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy', 'enabled': 'true', 'sstable_size_in_mb': '160', 'tombstone_compaction_interval': '86400', 'tombstone_threshold': '0.2', 'unchecked_tombstone_compaction': 'false'}
+    AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+    AND crc_check_chance = 1.0
+    AND dclocal_read_repair_chance = 0.0
+    AND default_time_to_live = 0
+    AND gc_grace_seconds = 864000
+    AND max_index_interval = 2048
+    AND memtable_flush_period_in_ms = 0
+    AND min_index_interval = 128
+    AND read_repair_chance = 0.0
+    AND speculative_retry = '99PERCENTILE';
+
+
+CREATE TABLE IF NOT EXISTS express_gfbo_electronic_pay (
+    account_number text,
+    PRIMARY KEY(account_number))
+WITH bloom_filter_fp_chance = 0.01
+    AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+    AND comment = ''
+    AND compaction = {'class': 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy', 'enabled': 'true', 'sstable_size_in_mb': '160', 'tombstone_compaction_interval': '86400', 'tombstone_threshold': '0.2', 'unchecked_tombstone_compaction': 'false'}
+    AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+    AND crc_check_chance = 1.0
+    AND dclocal_read_repair_chance = 0.0
+    AND default_time_to_live = 0
+    AND gc_grace_seconds = 864000
+    AND max_index_interval = 2048
+    AND memtable_flush_period_in_ms = 0
+    AND min_index_interval = 128
+    AND read_repair_chance = 0.0
+    AND speculative_retry = '99PERCENTILE';
+
+
+
+
+
+
 
 CREATE TYPE IF NOT EXISTS amex_checkout_type (
     credit_card__type text,
@@ -370,40 +666,6 @@ WITH bloom_filter_fp_chance = 0.01
     AND min_index_interval = 128
     AND read_repair_chance = 0.0
     AND speculative_retry = '99PERCENTILE';
-
-CREATE TABLE IF NOT EXISTS expressElectronicPay (
-    account_number text,
-    credit_card set<frozen<credit_card_type>>,
-    eft_bank_info set<frozen<eft_bank_info_type>>,
-    addl_bank_info__abi_code text,
-    addl_bank_info__addl_bank_id text,
-    bank_number text,
-    cab_code text,
-    giro_account text,
-    domicile_number text,
-    amex_checkout set<frozen<amex_checkout_type>>,
-    alt_payment__alt_payment_type text,
-    alt_payment__billing_agreement_id text,
-    alt_payment__billing_agreement_date date,
-    alt_payment__client_id text,
-    alt_payment__auto_sched_term text,
-    alt_payment__auto_sched_thresh_amt text,
-    PRIMARY KEY(account_number))
-WITH bloom_filter_fp_chance = 0.01
-    AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
-    AND comment = ''
-    AND compaction = {'class': 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy', 'enabled': 'true', 'sstable_size_in_mb': '160', 'tombstone_compaction_interval': '86400', 'tombstone_threshold': '0.2', 'unchecked_tombstone_compaction': 'false'}
-    AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
-    AND crc_check_chance = 1.0
-    AND dclocal_read_repair_chance = 0.0
-    AND default_time_to_live = 0
-    AND gc_grace_seconds = 864000
-    AND max_index_interval = 2048
-    AND memtable_flush_period_in_ms = 0
-    AND min_index_interval = 128
-    AND read_repair_chance = 0.0
-    AND speculative_retry = '99PERCENTILE';
-
 
 
 
