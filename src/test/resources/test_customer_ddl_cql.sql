@@ -1,5 +1,20 @@
 USE customer;
 
+CREATE TYPE IF NOT EXISTS amex_checkout_type (
+    credit_card__type text,
+    credit_card__credit_card_id text,
+    credit_card__exp_date_month int,
+    credit_card__exp_date_year int,
+    profile_name text,
+    auto_sched_term text,
+    auto_sched_thresh_amt text,
+    cc_seq text,
+    fpan__first_six_digits text,
+    fpan__last_four_digits text,
+    fpan__exp_date_month int,
+    fpan__exp_date_year int
+);
+
 CREATE TYPE IF NOT EXISTS associate_account_type (
     opco text,
     assoc_account text
@@ -166,7 +181,7 @@ WITH bloom_filter_fp_chance = 0.01
     AND speculative_retry = '99PERCENTILE';
 
 
-CREATE TABLE IF NOT EXISTS cargo_account_receivables (
+CREATE TABLE IF NOT EXISTS express_account_receivables (
     account_number text,
     account_receivables__call_zone_desc text,
     account_receivables__gsp_write_off text,
@@ -196,7 +211,7 @@ WITH bloom_filter_fp_chance = 0.01
     AND speculative_retry = '99PERCENTILE';
 
 
-CREATE TABLE IF NOT EXISTS cargo_account_receivables (
+CREATE TABLE IF NOT EXISTS express_aggregations (
     account_number text,
     aggregations__ed_aggr_code text,
     aggregations__geo_acct_number text,
@@ -205,7 +220,7 @@ CREATE TABLE IF NOT EXISTS cargo_account_receivables (
     aggregations__ss_account_number text,
     aggregations__bill_to_number text,
     aggregations__edi_number text,
-    aggregations__copy_master_address,
+    aggregations__copy_master_address boolean,
     PRIMARY KEY(account_number))
 WITH bloom_filter_fp_chance = 0.01
     AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
@@ -383,27 +398,6 @@ WITH bloom_filter_fp_chance = 0.01
     AND min_index_interval = 128
     AND read_repair_chance = 0.0
     AND speculative_retry = '99PERCENTILE';
-
-
-
-
-
-
-
-CREATE TYPE IF NOT EXISTS amex_checkout_type (
-    credit_card__type text,
-    credit_card__credit_card_id text,
-    credit_card__exp_date_month int,
-    credit_card__exp_date_year int,
-    profile_name text,
-    auto_sched_term text,
-    auto_sched_thresh_amt text,
-    cc_seq text,
-    fpan__first_six_digits text,
-    fpan__last_four_digits text,
-    fpan__exp_date_month int,
-    fpan__exp_date_year int
-);
 
 
 CREATE TABLE IF NOT EXISTS account_contact (
