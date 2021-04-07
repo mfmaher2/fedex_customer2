@@ -45,17 +45,10 @@ CREATE TYPE IF NOT EXISTS credit_card_type (
     credit_card_id text,
     exp_date_month int,
     exp_date_year int,
+    order_of_usage int,
     profile_type text,
     profile_name text,
-    auto_sched_thresh_amt text
-);
-
-CREATE TYPE IF NOT EXISTS express_credit_card_type (
-    type text,
-    credit_card_id text,
-    exp_date_month int,
-    exp_date_year int,
-    order_of_usage int,
+    auto_sched_thresh_amt text,
     additional_credit_card_info__address__street_line text,
     additional_credit_card_info__address__additional_line1 text,
     additional_credit_card_info__address__additional_line2 text,
@@ -148,6 +141,11 @@ CREATE TYPE IF NOT EXISTS tax_exempt_detail_type (
     tax_exempt_flag boolean
 );
 
+CREATE TYPE IF NOT EXISTS tax_exempt_code_type (
+    type text,
+    value text
+);
+
 CREATE TYPE IF NOT EXISTS tax_data_type (
     tax_id text,
     tax_id_desc text
@@ -187,7 +185,7 @@ CREATE TABLE IF NOT EXISTS cics (
     claims_preference text,
 
     --express_credit_card
-    credit_card set<frozen<express_credit_card_type>>,
+    credit_card set<frozen<credit_card_type>>,
 
     --express_credit_detail
     express_credit_detail__credit_status text,
@@ -341,6 +339,9 @@ CREATE TABLE IF NOT EXISTS cics (
     swipe__decline_count int,
     swipe__swipe_lockout_date_time timestamp,
 
+    --freightCreditCard
+    freight_credit_card set<frozen<credit_card_type>>,
+
     --freightCreditDetail
     freight_credit_detail__credit_status text,
     freight_credit_detail__credit_status_reason_code text,
@@ -354,6 +355,9 @@ CREATE TABLE IF NOT EXISTS cics (
     freight_tax_exempt_detail set<frozen<tax_exempt_detail_type>>,
     freight_tax_data set<frozen<tax_data_type>>,
 
+    --officeCreditCard
+    office_credit_card set<frozen<credit_card_type>>,
+
     --officeCreditDetail
     office_credit_detail__credit_status text,
     office_credit_detail__credit_status_reason_code text,
@@ -363,20 +367,60 @@ CREATE TABLE IF NOT EXISTS cics (
     --officeInoivcePreference
     office_invoice_preference__currency_code text,
 
+    --recipientServicesCreditCard
+    recipient_services_credit_card set<frozen<credit_card_type>>,
+
     --supplyChainTaxInfo
     supply_chain_tax_info__tax_data set<frozen<tax_data_type>>,
     supply_chain_tax_info__vat__type text,
     supply_chain_tax_info__vat_number text,
 
+    --techConnectInvoicePreference
+    tech_connect_invoice_preference__invoice_preference__currencyCode text,
 
+    --techConnectTaxInfo
+    tech_connect_tax_info__tax_exempt_code set<frozen<tax_exempt_code_type>>,
+    tech_connect_tax_info__tax_data set<frozen<tax_data_type>>,
+    tech_connect_tax_info__codice_fiscale text,
+    tech_connect_tax_info__mdb_eff_date date,
+    tech_connect_tax_info__mdb_exp_date date,
+    tech_connect_tax_info__tax_exempt_number int,
+    tech_connect_tax_info__vat__number text,
+    tech_connect_tax_info__vat__exemption_code text,
+    tech_connect_tax_info__vat__exeption_ref text,
+    tech_connect_tax_info__vat__eff_date date,
+    tech_connect_tax_info__vat__exp_date date,
+    tech_connect_tax_info__vat__response_code int,
+    tech_connect_tax_info__vat__category_code int,
+    tech_connect_tax_info__vat__threshold_amount float,
 
+    --tradeNetworksTaxInfo
+    trade_networks_tax_info__tax_exempt_code set<frozen<tax_exempt_code_type>>,
+    trade_networks_tax_info__tax_data set<frozen<tax_data_type>>,
+    trade_networks_tax_info__codice_fiscale text,
+    trade_networks_tax_info__mdb_eff_date date,
+    trade_networks_tax_info__mdb_exp_date date,
+    trade_networks_tax_info__tax_exempt_number int,
+    trade_networks_tax_info__vat__number text,
+    trade_networks_tax_info__vat__exemption_code text,
+    trade_networks_tax_info__vat__exeption_ref text,
+    trade_networks_tax_info__vat__eff_date date,
+    trade_networks_tax_info__vat__exp_date date,
+    trade_networks_tax_info__vat__response_code int,
+    trade_networks_tax_info__vat__category_code int,
+    trade_networks_tax_info__vat__threshold_amount float,
 
+    --ukDomesticCreditCard
+    uk_domestic__credit_card set<frozen<credit_card_type>>,
 
+    --ukDomesticCreditCardDetail
+    uk_domestic__credit_detail__credit_status text,
+    uk_domestic__credit_detail__credit_status_reason_code text,
+    uk_domestic__credit_detail__denied_flag boolean,
+    uk_domestic__credit_detail__cash_only_flag boolean,
 
-
-
-
-
+    --ukDomesticInvoicePreference
+    uk_domestic__invoice_preference__currency_code text,
 
     PRIMARY KEY(account_number))
 WITH bloom_filter_fp_chance = 0.01
