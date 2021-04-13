@@ -786,6 +786,225 @@ WITH bloom_filter_fp_chance = 0.01
     AND speculative_retry = '99PERCENTILE';
 
 
+--additional streams
+CREATE TYPE IF NOT EXISTS ftbd_svc_type (
+    type text,
+    value text
+);
+
+CREATE TABLE IF NOT EXISTS opco_operations_combined_v1 (
+    account_number text,
+    opco text,
+    lastUpdateTimestamp timestamp,
+
+    -- ***** OPERATIONS STREAM  *****
+    -- smart_post_operations_profile
+    profile__distribution_id int,
+    profile__mailer_id int,
+    profile__pickup_carrier text,
+    profile__return_eligibility_flag boolean,
+    profile__return_svc_flag text,
+    profile__hub_id set<text>, -- -- QUESTION. TODO ARRAY 100
+    profile__usps_bound_printed_matter_flag int,
+    profile__usps_media_mail_flag int,
+    profile__usps_parcel_select_flag int,
+    profile__usps_standard_mail_flag int,
+    profile__smartpost_enabled_flag boolean,
+    profile__delivery_confirmation boolean,
+    profile__zone_indicator text,
+
+    -- express_operations_profile
+    profile__multiplier_ref_exp text,
+    profile__mulitiplier_ref_grnd text,
+    profile__agent_flag text,
+    profile__alcohol_flag boolean,
+    profile__cut_flowers_flag boolean,
+    profile__declared_value_exception boolean,
+    profile__derived_station int,
+    profile__drop_ship_flag boolean,
+    profile__emerge_flag boolean,
+    profile__doc_prep_service_flag boolean,
+    profile__ftbd_flag text,
+    profile__ftbd_svc map<text,text>,
+    profile__hazardous_shipper_flag boolean,  --is this type correct?
+    profile__high_value_accept_cd text,
+    profile__interline_cd text,
+    profile__idf_elig_flag text,
+    profile__ifs_flag boolean,
+    profile__ipd_flag text,
+    profile__money_back_guarantee text,
+    profile__notify_ship_delay_cd boolean,
+    profile__overnight_frgt_ship_flag boolean,
+    profile__pak_isrt_flag text,
+    profile__power_of_attorney_date date,
+    profile__power_of_attorney_flag boolean,
+    profile__regular_stop_flag boolean,
+    profile__reroutes_allowed_flag boolean,
+    profile__signature_on_file boolean,
+    profile__signature_required boolean,
+    profile__tpc_flag boolean,
+    profile__emp_ship_emp_number text,
+    profile__supply_no_cut_flag text,
+    profile__starter_kit int,
+    profile__starter_kit_quantity int,
+    profile__exception_flag boolean,
+    profile__international_shipper text,
+    profile__special_dist_flag text,
+    profile__transmart_flag boolean,
+    profile__special_comment_cd text,
+    profile__contact_flag boolean,
+
+    -- express_geographic_info
+    geographic_info__alpha_id text,
+    geographic_info__station_number text,
+
+    -- tnt_operations_profile
+    profile__source_name text,
+    profile__tnt_customer_number int,
+    profile__migration_date date,
+    profile__deactivation_date date,
+
+    -- ground_operations_profile
+    profile__grnd_barcode_type text,
+    profile__grnd_hazmat_flag boolean,
+    profile__grnd_pickup_type text,
+    profile__grnd_collect_flag boolean,
+    profile__national_account_number text,
+    profile__grnd_lbl_hazmat_flag boolean,
+    profile__grnd_lbl_p_r_pFlag boolean,
+    profile__grnd_lbl_univ_waste_flag boolean,
+
+    -- freight_operations_profile
+    profile__svc_center_code text,
+
+    -- cargo_operations_profile
+    profile__airport_code text,
+    profile__business_mode text,
+    profile__coding_instructions text,
+    profile__synonym_name_1 text,
+    profile__synonym_name_2 text,
+
+    -- ***** AUTOMATION STREAM  *****
+    -- expressAutomationInfo
+    automation_info__insight_flag boolean,
+    automation_info__meter_zone_flag boolean,
+    automation_info__device_type_code text,
+
+    -- ***** CLEARANCE STREAM  *****
+    -- cargoRegulatory
+    account_regulatory__fdc_broker_nbr text,
+    account_regulatory__fdc_broker_type_cd text,
+
+    -- expressConsignor
+    consignor__contactDocumentId bigint,  -- WILL BE TIED TO A CONTACT STANZA
+    consignor__natureOfBusiness text,
+    consignor__signedDate date,
+    consignor__vatNumber text,
+    consignor__accountConsignor boolean,
+    consignor__name text,
+
+    -- expressCustomerId
+    customer_id__iata_number text,
+    customer_id__custom_importer_id text,
+    customer_id__customer_id_doc_nbr text,
+
+    -- expressRegulatory AND freightRegulatory
+    account_regulatory__regulated_agentRegimeEffYearMonth date,  -- QUESTION . FORMAT IS YEAR/MONTH , is date type correct.
+    account_regulatory__regulated_agentRegimeExpYearMonth date,
+    account_regulatory__bus_registration_id text,
+    account_regulatory__broker_date date,
+    account_regulatory__canadian_broker_id text,
+    account_regulatory__employer_id text,  -- ## expressRegulatory AND freightRegulatory
+    account_regulatory__employer_id_type text,
+    account_regulatory__forwd_brkr_cd text,
+    account_regulatory__gaa_flag boolean,
+    account_regulatory__import_declaration_cd set<text>,  -- QUESTION . This is an array of 3.
+    account_regulatory__nri_cd text,
+    account_regulatory__shipper_export_declaration_flag boolean,
+
+    -- ***** PRICING STREAM  *****
+    -- expressPricingProfile
+    profile__spot_rate_ind boolean,
+    profile__express_plan_flag text,
+    profile__express_plan_activity_date date,
+    profile__catalog_remail_service_cd text,
+    profile__middle_man_cd text,
+    profile__gratuity_flag boolean,
+
+    -- expressPricingPreference
+    profile__bonus_weight_envelope_flag text,
+    profile__priority_alert_flag text,
+    profile__domestic_max_declared_value_flag text,
+    profile__international_max_declared_value_flag text,
+    profile__linehaul_charge_flag text,
+
+    -- freightPricingProfile
+    profile__pricing_flag boolean,
+    profile__blind_shipper_flag boolean,
+    profile__pricing_code text,
+
+    -- nationalAccount   -- QUESTION . We need another table...... ?
+    PRIMARY KEY(account_number, opco))
+WITH CLUSTERING ORDER BY (opco AsC)
+    AND bloom_filter_fp_chance = 0.01
+    AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+    AND comment = ''
+    AND compaction = {'class': 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy', 'enabled': 'true', 'sstable_size_in_mb': '160', 'tombstone_compaction_interval': '86400', 'tombstone_threshold': '0.2', 'unchecked_tombstone_compaction': 'false'}
+    AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+    AND crc_check_chance = 1.0
+    AND dclocal_read_repair_chance = 0.0
+    AND default_time_to_live = 0
+    AND gc_grace_seconds = 864000
+    AND max_index_interval = 2048
+    AND memtable_flush_period_in_ms = 0
+    AND min_index_interval = 128
+    AND read_repair_chance = 0.0
+    AND speculative_retry = '99PERCENTILE';
+
+CREATE TABLE IF NOT EXISTS opco_customer_combined_v1 (
+    account_number text,
+    opco text,
+    lastUpdateTimestamp timestamp,
+    profile__customer_request_name text,
+    profile__creation_date date,
+    profile__employee_requester__opco text,
+    profile__employee_requester__number text,
+    profile__source_group text,
+    profile__source_dept text,
+    profile__source_system text,
+    profile__employee_creator_opco text,
+    profile__employee_creator_number text,
+    profile__account_type text,
+    profile_account_sub_type text,
+    profile__customer_account_status text,
+    profile__duplicate_account_flag boolean,
+    profile__fdx_ok_to_call_flag boolean,
+    profile__archive_date date,
+    profile__archive_reason_code text,
+    profile__archive_options text,
+    profile__cargo_ind text,
+    profile__pref_cust_flag boolean,
+    profile__sales_rep__opco text,
+    profile__sales_rep__number text,
+    profile__service_level text,
+    profile__scac_code text,
+    PRIMARY KEY(account_number, opco))
+WITH CLUSTERING ORDER BY (opco ASC)
+    AND bloom_filter_fp_chance = 0.01
+    AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+    AND comment = ''
+    AND compaction = {'class': 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy', 'enabled': 'true', 'sstable_size_in_mb': '160', 'tombstone_compaction_interval': '86400', 'tombstone_threshold': '0.2', 'unchecked_tombstone_compaction': 'false'}
+    AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+    AND crc_check_chance = 1.0
+    AND dclocal_read_repair_chance = 0.0
+    AND default_time_to_live = 0
+    AND gc_grace_seconds = 864000
+    AND max_index_interval = 2048
+    AND memtable_flush_period_in_ms = 0
+    AND min_index_interval = 128
+    AND read_repair_chance = 0.0
+    AND speculative_retry = '99PERCENTILE';
+
 
 --additional tables used for testing/demonstration
 
