@@ -1,29 +1,5 @@
 USE customer;
 
---CREATE TYPE IF NOT EXISTS amex_checkout_type (
---    credit_card__type text,
---    credit_card__credit_card_id text,
---    credit_card__exp_date_month int,
---    credit_card__exp_date_year int,
---    profile_name text,
---    auto_sched_term text,
---    auto_sched_thresh_amt text,
---    cc_seq text,
---    fpan__first_six_digits text,
---    fpan__last_four_digits text,
---    fpan__exp_date_month int,
---    fpan__exp_date_year int
---);
-
-CREATE TYPE IF NOT EXISTS associate_account_type (
-    opco text,
-    assoc_account text
-);
-CREATE TYPE IF NOT EXISTS address_secondary_type (
-    unit text,
-    value text
-);
-
 CREATE TYPE IF NOT EXISTS telecom_details_type (
     telecom_method text,
     numeric_country_code text,
@@ -40,101 +16,6 @@ CREATE TYPE IF NOT EXISTS social_media_type (
     type_code text,
     value text
 );
-
---CREATE TYPE IF NOT EXISTS credit_card_type (
---    type text,
---    credit_card_id text,
---    exp_date_month int,
---    exp_date_year int,
---    order_of_usage int,
---    profile_type text,
---    profile_name text,
---    auto_sched_thresh_amt text,
---    additional_credit_card_info__address__street_line text,
---    additional_credit_card_info__address__additional_line1 text,
---    additional_credit_card_info__address__additional_line2 text,
---    additional_credit_card_info__address__geo_political_subdivision1 text,
---    additional_credit_card_info__address__geo_political_subdivision2 text,
---    additional_credit_card_info__address__geo_political_subdivision3 text,
---    additional_credit_card_info__address__postal_code text,
---    additional_credit_card_info__address__country_code text,
---    additional_credit_card_info__holder_company text,
---    additional_credit_card_info__holder_person__first_name text,
---    additional_credit_card_info__holder_person__last_name text,
---    additional_credit_card_info__holder_person__middle_name text,
---    additional_credit_card_info__holder_person__prefix text,
---    additional_credit_card_info__holder_person__suffix text,
---    additional_credit_card_info__holder_person__title text,
---    additional_credit_card_info__holder_person__gender text,
---    additional_credit_card_info__holder_email text,
---    additional_credit_card_info__holder_phone__numeric_country_code text,
---    additional_credit_card_info__holder_phone__alpha_country_code text,
---    additional_credit_card_info__holder_phone__area_code text,
---    additional_credit_card_info__holder_phone__phone_number text,
---    additional_credit_card_info__holder_phone__extension text,
---    additional_credit_card_info__holder_phone__ftc_ok_to_call_flag boolean,
---    last_authentication_date date
---);
-
-
---CREATE TYPE IF NOT EXISTS eft_bank_info_type (
---    authorization__person__first_name text,
---    authorization__person__last_name text,
---    authorization__person__middle_name text,
---    authorization__person__prefix text,
---    authorization__person__suffix text,
---    authorization__person__title text,
---    authorization__company_name text,
---    authorization__address__street_line text,
---    authorization__address__additional_line1 text,
---    authorization__address__additional_line2 text,
---    authorization__address__secondary_unit1 text,
---    authorization__address__secondary_value1 text,
---    authorization__address__secondary_unit2 text,
---    authorization__address__secondary_value2 text,
---    authorization__address__secondary_unit3 text,
---    authorization__address__secondary_value3 text,
---    authorization__address__secondary_unit4 text,
---    authorization__address__secondary_value4 text,
---    authorization__address__geo_political_subdivision1 text,
---    authorization__address__geo_political_subdivision2 text,
---    authorization__address__geo_political_subdivision3 text,
---    authorization__address__postal_code text,
---    authorization__address__country_code text,
---    authorization__phone__tele_com_method text,
---    authorization__phone__numeric_country_code text,
---    authorization__phone__alpha_country_code text,
---    authorization__phone__area_code text,
---    authorization__phone__extension text,
---    authorization__phone__pin text,
---    authorization__phone__ftc_ok_to_call_flag boolean,
---    authorization__phone__text_message_flag boolean,
---    bank__account text,
---    bank__address__street_line text,
---    bank__address__additional_line1 text,
---    bank__address__additional_line2 text,
---    bank__address__secondary_unit1 text,
---    bank__address__secondary_value1 text,
---    bank__address__secondary_unit2 text,
---    bank__address__secondary_value2 text,
---    bank__address__secondary_unit3 text,
---    bank__address__secondary_value3 text,
---    bank__address__secondary_unit4 text,
---    bank__address__secondary_value4 text,
---    bank__address__geo_political_subdivision1 text,
---    bank__address__geo_political_subdivision2 text,
---    bank__address__geo_political_subdivision3 text,
---    bank__address__postal_code text,
---    bank__address__country_code text,
---    bank__bank_name text,
---    bank__routing_number text,
---    days_to_debit int,
---    eft_alias_name text,
---    eft_seq int,
---    eft_type text,
---    name_on_account text,
---    threshhold_amount text
---);
 
 CREATE TYPE IF NOT EXISTS tax_data_type (
     tax_id text,
@@ -214,14 +95,14 @@ CREATE TABLE IF NOT EXISTS cics (
     direct_debit_detail__address__street_line text,
     direct_debit_detail__address__additional_line1 text,
     direct_debit_detail__address__additional_line2 text,
-    direct_debit_detail__address__secondary_unit1 text,
-    direct_debit_detail__address__secondary_value1 text,
-    direct_debit_detail__address__secondary_unit2 text,
-    direct_debit_detail__address__secondary_value2 text,
-    direct_debit_detail__address__secondary_unit3 text,
-    direct_debit_detail__address__secondary_value3 text,
-    direct_debit_detail__address__secondary_unit4 text,
-    direct_debit_detail__address__secondary_value4 text,
+    direct_debit_detail__address__secondary__unit1 text,
+    direct_debit_detail__address__secondary__value1 text,
+    direct_debit_detail__address__secondary__unit2 text,
+    direct_debit_detail__address__secondary__value2 text,
+    direct_debit_detail__address__secondary__unit3 text,
+    direct_debit_detail__address__secondary__value3 text,
+    direct_debit_detail__address__secondary__unit4 text,
+    direct_debit_detail__address__secondary__value4 text,
     direct_debit_detail__address__geo_political_subdivision1 text,
     direct_debit_detail__address__geo_political_subdivision2 text,
     direct_debit_detail__address__geo_political_subdivision3 text,
@@ -508,14 +389,14 @@ CREATE TABLE IF NOT EXISTS eft_bank_info_type (
     authorization__address__street_line text,
     authorization__address__additional_line1 text,
     authorization__address__additional_line2 text,
-    authorization__address__secondary_unit1 text,
-    authorization__address__secondary_value1 text,
-    authorization__address__secondary_unit2 text,
-    authorization__address__secondary_value2 text,
-    authorization__address__secondary_unit3 text,
-    authorization__address__secondary_value3 text,
-    authorization__address__secondary_unit4 text,
-    authorization__address__secondary_value4 text,
+    authorization__address__secondary__unit1 text,
+    authorization__address__secondary__value1 text,
+    authorization__address__secondary__unit2 text,
+    authorization__address__secondary__value2 text,
+    authorization__address__secondary__unit3 text,
+    authorization__address__secondary__value3 text,
+    authorization__address__secondary__unit4 text,
+    authorization__address__secondary__value4 text,
     authorization__address__geo_political_subdivision1 text,
     authorization__address__geo_political_subdivision2 text,
     authorization__address__geo_political_subdivision3 text,
@@ -533,14 +414,14 @@ CREATE TABLE IF NOT EXISTS eft_bank_info_type (
     bank__address__street_line text,
     bank__address__additional_line1 text,
     bank__address__additional_line2 text,
-    bank__address__secondary_unit1 text,
-    bank__address__secondary_value1 text,
-    bank__address__secondary_unit2 text,
-    bank__address__secondary_value2 text,
-    bank__address__secondary_unit3 text,
-    bank__address__secondary_value3 text,
-    bank__address__secondary_unit4 text,
-    bank__address__secondary_value4 text,
+    bank__address__secondary__unit1 text,
+    bank__address__secondary__value1 text,
+    bank__address__secondary__unit2 text,
+    bank__address__secondary__value2 text,
+    bank__address__secondary__unit3 text,
+    bank__address__secondary__value3 text,
+    bank__address__secondary__unit4 text,
+    bank__address__secondary__value4 text,
     bank__address__geo_political_subdivision1 text,
     bank__address__geo_political_subdivision2 text,
     bank__address__geo_political_subdivision3 text,
@@ -645,7 +526,14 @@ CREATE TABLE IF NOT EXISTS contact (
     address__street_line text,
     address__additional_line1 text,
     address__additional_line2 text,
-    address__secondary set<frozen<address_secondary_type>>,
+    address__secondary__unit1 text,
+    address__secondary__value1 text,
+    address__secondary__unit2 text,
+    address__secondary__value2 text,
+    address__secondary__unit3 text,
+    address__secondary__value3 text,
+    address__secondary__unit4 text,
+    address__secondary__value4 text,
     address__geo_political_subdivision1 text,
     address__geo_political_subdivision2 text,
     address__geo_political_subdivision3 text,
@@ -1028,24 +916,3 @@ WITH CLUSTERING ORDER BY(associated_account__opco ASC, associated_account__numbe
     AND min_index_interval = 128
     AND read_repair_chance = 0.0
     AND speculative_retry = '99PERCENTILE';
-
-CREATE TABLE IF NOT EXISTS enterprise_assoc_accounts_udt (
-    account_number text,
-    assoc_accounts set<frozen<associate_account_type>>,
-    PRIMARY KEY(account_number))
-WITH bloom_filter_fp_chance = 0.01
-    AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
-    AND comment = ''
-    AND compaction = {'class': 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy', 'enabled': 'true', 'sstable_size_in_mb': '160', 'tombstone_compaction_interval': '86400', 'tombstone_threshold': '0.2', 'unchecked_tombstone_compaction': 'false'}
-    AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
-    AND crc_check_chance = 1.0
-    AND dclocal_read_repair_chance = 0.0
-    AND default_time_to_live = 0
-    AND gc_grace_seconds = 864000
-    AND max_index_interval = 2048
-    AND memtable_flush_period_in_ms = 0
-    AND min_index_interval = 128
-    AND read_repair_chance = 0.0
-    AND speculative_retry = '99PERCENTILE';
-
-
