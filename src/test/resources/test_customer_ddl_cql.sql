@@ -166,8 +166,8 @@ CREATE TABLE IF NOT EXISTS cics (
     account_receivables__payment_method_code text,
     account_receivables__payor_type text,
     account_receivables__arrow_customer_flag_cd text,
-    account_receivables__international~ar_preference int,
-    account_receivables__international~ar_date date,
+    account_receivables__international___ar_preference int,
+    account_receivables__international___ar_date date,
     account_receivables__no_refund_flag boolean,
     account_receivables__debut_company_code text,
 
@@ -285,7 +285,7 @@ CREATE TABLE IF NOT EXISTS cics (
     invoice_preference__electronic_data_record_proof_of_delivery boolean,
     invoice_preference__fax_flag boolean,
     invoice_preference__fec_discount_card_flag_cd text,
-    invoice_preference__ground_auto~pod boolean,
+    invoice_preference__ground_auto___pod boolean,
     invoice_preference__ground_duty_tax_billing_cycle text,
     invoice_preference__ground_print_weight_indicator text,
     invoice_preference__international_billing_cycle text,
@@ -324,7 +324,7 @@ CREATE TABLE IF NOT EXISTS cics (
     invoice_preference__statement_type_date date,
     invoice_preference__viewed_statement_type text,
     invoice_preference__direct_link_flag boolean,
-    invoice_preference__no~pod_flag_cd text,
+    invoice_preference__no___pod_flag_cd text,
     invoice_preference__settlement_level_indicator text,
     invoice_preference__direct_debit_indicator text,
     invoice_preference__fbo_eft_flag boolean,
@@ -445,7 +445,7 @@ WITH CLUSTERING ORDER BY (opco ASC)
 CREATE TABLE IF NOT EXISTS credit_card (
     account_number text,
     opco text,
-    record_type_cd text,  //account, express electronic, etc.
+    record_type_cd text,  --account, express electronic, etc.
     type text,
     credit_card_id text,
     exp_date_month int,
@@ -477,7 +477,7 @@ CREATE TABLE IF NOT EXISTS credit_card (
     additional_credit_card_info__holder_phone__phone_number text,
     additional_credit_card_info__holder_phone__extension text,
     additional_credit_card_info__holder_phone__ftc_ok_to_call_flag boolean,
-    last_authentication_date date
+    last_authentication_date date,
     PRIMARY KEY(account_number, opco, record_type_cd, credit_card_id))
 WITH CLUSTERING ORDER BY(opco ASC, record_type_cd ASC, credit_card_id ASC)
     AND bloom_filter_fp_chance = 0.01
@@ -553,7 +553,7 @@ CREATE TABLE IF NOT EXISTS eft_bank_info_type (
     eft_seq int,
     eft_type text,
     name_on_account text,
-    threshhold_amount text
+    threshhold_amount text,
     PRIMARY KEY(account_number, opco, bank__account, bank__routing_number))
 WITH CLUSTERING ORDER BY(opco ASC, bank__account ASC, bank__routing_number ASC)
     AND bloom_filter_fp_chance = 0.01
@@ -585,9 +585,9 @@ CREATE TABLE IF NOT EXISTS amex_checkout_type (
     fpan__first_six_digits text,
     fpan__last_four_digits text,
     fpan__exp_date_month int,
-    fpan__exp_date_year int
-    PRIMARY KEY(account_number, opco, bank__account, bank__routing_number))
-WITH CLUSTERING ORDER BY(opco ASC, bank__account ASC, bank__routing_number ASC)
+    fpan__exp_date_year int,
+    PRIMARY KEY(account_number, opco, credit_card__type, credit_card__credit_card_id))
+WITH CLUSTERING ORDER BY(opco ASC, credit_card__type ASC, credit_card__credit_card_id ASC)
     AND bloom_filter_fp_chance = 0.01
     AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
     AND comment = ''
