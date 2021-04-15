@@ -33,10 +33,28 @@ CREATE TYPE IF NOT EXISTS tax_exempt_data_type (
     tax_exempt_flag boolean
 );
 
-CREATE TABLE IF NOT EXISTS opco_operations_combined_v1 (
+CREATE TABLE IF NOT EXISTS cust_acct_v1 (
     account_number text,
     opco text,
     lastUpdateTimestamp timestamp,
+
+    --enterpriseProfile
+    profile__customer_type text,
+    profile__account_service_level text,
+    profile__account_type text,
+    profile__account_status__status_code text,
+    profile__account_status__status_date date,
+    profile__account_status__reason_code text,
+    profile__fdx_ok_to_call_flag boolean,
+    profile__enterprise_source text,
+    profile__nasa_id text,
+    profile__nasa_key text,
+    profile__creation_date date,
+    profile__origin_source text,
+    profile__account_linkage_flag boolean,
+    profile__welcome_kit__welcome_kit_flag boolean,
+    profile__welcome_kit__welcome_kit_promo_code text,
+
 
     --cargoAccountReceivables
     --express_account_receivables
@@ -246,6 +264,21 @@ CREATE TABLE IF NOT EXISTS opco_operations_combined_v1 (
     tax_info__vat__category_code int,
     tax_info__vat__threshold_amount float,
 
+    --expressElectronicPay
+    addl_bank_info__abi_code text,
+    addl_bank_info__addl_bank_id text,
+    bank_number text,
+    cab_code text,
+    giro_account text,
+    domicile_number text,
+    alt_payment__alt_payment_type text,
+    alt_payment__billing_agreement_id text,
+    alt_payment__billing_agreement_date date,
+    alt_payment__client_id text,
+    alt_payment__auto_sched_term text,
+    alt_payment__auto_sched_thresh_amt text,
+
+
     -- ***** OPERATIONS STREAM  *****
     -- smart_post_operations_profile
     profile__distribution_id int,
@@ -253,7 +286,7 @@ CREATE TABLE IF NOT EXISTS opco_operations_combined_v1 (
     profile__pickup_carrier text,
     profile__return_eligibility_flag boolean,
     profile__return_svc_flag text,
-    profile__hub_id set<text>, -- -- QUESTION. TODO ARRAY 100
+    profile__hub_id set<text>,
     profile__usps_bound_printed_matter_flag int,
     profile__usps_media_mail_flag int,
     profile__usps_parcel_select_flag int,
@@ -275,7 +308,7 @@ CREATE TABLE IF NOT EXISTS opco_operations_combined_v1 (
     profile__doc_prep_service_flag boolean,
     profile__ftbd_flag text,
     profile__ftbd_svc map<text,text>,
-    profile__hazardous_shipper_flag boolean,  --is this type correct?
+    profile__hazardous_shipper_flag boolean,
     profile__high_value_accept_cd text,
     profile__interline_cd text,
     profile__idf_elig_flag text,
@@ -433,48 +466,18 @@ WITH CLUSTERING ORDER BY(apply_discount__effective_date_time DESC, apply_discoun
     AND read_repair_chance = 0.0
     AND speculative_retry = '99PERCENTILE';
 
-CREATE TABLE IF NOT EXISTS express_electronic_pay (
-    account_number text,
-    opco text,
-    addl_bank_info__abi_code text,
-    addl_bank_info__addl_bank_id text,
-    bank_number text,
-    cab_code text,
-    giro_account text,
-    domicile_number text,
-    alt_payment__alt_payment_type text,
-    alt_payment__billing_agreement_id text,
-    alt_payment__billing_agreement_date date,
-    alt_payment__client_id text,
-    alt_payment__auto_sched_term text,
-    alt_payment__auto_sched_thresh_amt text,
-    PRIMARY KEY(account_number, opco))
-WITH CLUSTERING ORDER BY (opco ASC)
-    AND bloom_filter_fp_chance = 0.01
-    AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
-    AND comment = ''
-    AND compaction = {'class': 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy', 'enabled': 'true', 'sstable_size_in_mb': '160', 'tombstone_compaction_interval': '86400', 'tombstone_threshold': '0.2', 'unchecked_tombstone_compaction': 'false'}
-    AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
-    AND crc_check_chance = 1.0
-    AND dclocal_read_repair_chance = 0.0
-    AND default_time_to_live = 0
-    AND gc_grace_seconds = 864000
-    AND max_index_interval = 2048
-    AND memtable_flush_period_in_ms = 0
-    AND min_index_interval = 128
-    AND read_repair_chance = 0.0
-    AND speculative_retry = '99PERCENTILE';
-
-
---express_credit_card
---freightCreditCard
---officeCreditCard
---recipientServicesCreditCard
---ukDomesticCreditCard
-CREATE TABLE IF NOT EXISTS credit_card (
+CREATE TABLE IF NOT EXISTS payment_info (
     account_number text,
     opco text,
     record_type_cd text,  --account, express electronic, etc.
+    record_key text,
+    record_seq int,
+
+    --express_credit_card
+    --freightCreditCard
+    --officeCreditCard
+    --recipientServicesCreditCard
+    --ukDomesticCreditCard
     type text,
     credit_card_id text,
     exp_date_month int,
@@ -507,26 +510,9 @@ CREATE TABLE IF NOT EXISTS credit_card (
     additional_credit_card_info__holder_phone__extension text,
     additional_credit_card_info__holder_phone__ftc_ok_to_call_flag boolean,
     last_authentication_date date,
-    PRIMARY KEY(account_number, opco, record_type_cd, credit_card_id))
-WITH CLUSTERING ORDER BY(opco ASC, record_type_cd ASC, credit_card_id ASC)
-    AND bloom_filter_fp_chance = 0.01
-    AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
-    AND comment = ''
-    AND compaction = {'class': 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy', 'enabled': 'true', 'sstable_size_in_mb': '160', 'tombstone_compaction_interval': '86400', 'tombstone_threshold': '0.2', 'unchecked_tombstone_compaction': 'false'}
-    AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
-    AND crc_check_chance = 1.0
-    AND dclocal_read_repair_chance = 0.0
-    AND default_time_to_live = 0
-    AND gc_grace_seconds = 864000
-    AND max_index_interval = 2048
-    AND memtable_flush_period_in_ms = 0
-    AND min_index_interval = 128
-    AND read_repair_chance = 0.0
-    AND speculative_retry = '99PERCENTILE';
 
-CREATE TABLE IF NOT EXISTS eft_bank_info_type (
-    account_number text,
-    opco text,
+
+    --eftBankInfo
     authorization__person__first_name text,
     authorization__person__last_name text,
     authorization__person__middle_name text,
@@ -583,26 +569,8 @@ CREATE TABLE IF NOT EXISTS eft_bank_info_type (
     eft_type text,
     name_on_account text,
     threshhold_amount text,
-    PRIMARY KEY(account_number, opco, bank__account, bank__routing_number))
-WITH CLUSTERING ORDER BY(opco ASC, bank__account ASC, bank__routing_number ASC)
-    AND bloom_filter_fp_chance = 0.01
-    AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
-    AND comment = ''
-    AND compaction = {'class': 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy', 'enabled': 'true', 'sstable_size_in_mb': '160', 'tombstone_compaction_interval': '86400', 'tombstone_threshold': '0.2', 'unchecked_tombstone_compaction': 'false'}
-    AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
-    AND crc_check_chance = 1.0
-    AND dclocal_read_repair_chance = 0.0
-    AND default_time_to_live = 0
-    AND gc_grace_seconds = 864000
-    AND max_index_interval = 2048
-    AND memtable_flush_period_in_ms = 0
-    AND min_index_interval = 128
-    AND read_repair_chance = 0.0
-    AND speculative_retry = '99PERCENTILE';
 
-CREATE TABLE IF NOT EXISTS amex_checkout_type (
-    account_number text,
-    opco text,
+    --amexCheckout
     credit_card__type text,
     credit_card__credit_card_id text,
     credit_card__exp_date_month int,
@@ -615,8 +583,9 @@ CREATE TABLE IF NOT EXISTS amex_checkout_type (
     fpan__last_four_digits text,
     fpan__exp_date_month int,
     fpan__exp_date_year int,
-    PRIMARY KEY(account_number, opco, credit_card__type, credit_card__credit_card_id))
-WITH CLUSTERING ORDER BY(opco ASC, credit_card__type ASC, credit_card__credit_card_id ASC)
+
+    PRIMARY KEY(account_number, opco, record_type_cd, credit_card_id))
+WITH CLUSTERING ORDER BY(opco ASC, record_type_cd ASC, credit_card_id ASC)
     AND bloom_filter_fp_chance = 0.01
     AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
     AND comment = ''
@@ -726,39 +695,6 @@ WITH bloom_filter_fp_chance = 0.01
     AND read_repair_chance = 0.0
     AND speculative_retry = '99PERCENTILE';
 
-
-CREATE TABLE IF NOT EXISTS enterprise_profile (
-    account_number text,
-    profile__customer_type text,
-    profile__account_service_level text,
-    profile__account_type text,
-    profile__account_status__status_code text,
-    profile__account_status__status_date date,
-    profile__account_status__reason_code text,
-    profile__fdx_ok_to_call_flag boolean,
-    profile__enterprise_source text,
-    profile__nasa_id text,
-    profile__nasa_key text,
-    profile__creation_date date,
-    profile__origin_source text,
-    profile__account_linkage_flag boolean,
-    profile__welcome_kit__welcome_kit_flag boolean,
-    profile__welcome_kit__welcome_kit_promo_code text,
-    PRIMARY KEY(account_number))
-WITH bloom_filter_fp_chance = 0.01
-    AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
-    AND comment = ''
-    AND compaction = {'class': 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy', 'enabled': 'true', 'sstable_size_in_mb': '160', 'tombstone_compaction_interval': '86400', 'tombstone_threshold': '0.2', 'unchecked_tombstone_compaction': 'false'}
-    AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
-    AND crc_check_chance = 1.0
-    AND dclocal_read_repair_chance = 0.0
-    AND default_time_to_live = 0
-    AND gc_grace_seconds = 864000
-    AND max_index_interval = 2048
-    AND memtable_flush_period_in_ms = 0
-    AND min_index_interval = 128
-    AND read_repair_chance = 0.0
-    AND speculative_retry = '99PERCENTILE';
 
 CREATE TABLE IF NOT EXISTS account_creation_profile (
     account_number text,
