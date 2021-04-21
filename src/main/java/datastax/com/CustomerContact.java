@@ -1,6 +1,5 @@
 package datastax.com;
 
-import com.datastax.oss.driver.api.core.data.UdtValue;
 import com.datastax.oss.driver.api.mapper.annotations.CqlName;
 import com.datastax.oss.driver.api.mapper.annotations.Entity;
 import com.datastax.oss.driver.api.mapper.annotations.PartitionKey;
@@ -13,13 +12,13 @@ public class CustomerContact {
 
     @PartitionKey private long contactDocumentId;
 
-    //multiple options of mapping variable names to table properties demonsrated
+    //multiple options of mapping variable names to table properties demonstrated
     //
     @CqlName("person__first_name") String personFirstName;  //annotated defition of table property
     private String person__last_name;                       //explicit use of table property
     private String person_MiddleName;                       //use default naming strategy mapping, property = person__middle_name
 
-    @CqlName("address__secondary") private Set<CustomerContactAddressSecondary> addressSecondary;
+    @CqlName("tele_com") private Set<CustomerContactTelecomDetails> teleCom;
 
     public CustomerContact() {};
 
@@ -35,6 +34,6 @@ public class CustomerContact {
     public String getPerson_MiddleName() { return person_MiddleName;}
     public void setPerson_MiddleName(String name) { person_MiddleName = name;}
 
-    public Set<CustomerContactAddressSecondary> getAddressSecondary() { return addressSecondary; }
-    public void setAddressSecondary(Set<CustomerContactAddressSecondary> addrSec) { addressSecondary = addrSec; }
+    public Set<CustomerContactTelecomDetails> getTeleCom() { return teleCom; }
+    public void setTeleCom(Set<CustomerContactTelecomDetails> tc) { teleCom = tc; }
 }

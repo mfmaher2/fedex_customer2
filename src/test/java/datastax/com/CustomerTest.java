@@ -1,8 +1,6 @@
 package datastax.com;
 
 import com.datastax.oss.driver.api.core.CqlSession;
-import com.datastax.oss.driver.api.core.PagingIterable;
-import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.data.UdtValue;
@@ -101,6 +99,11 @@ public class CustomerTest {
             System.out.println("Running " + productName + " data load");
 
             runScrpt(dataScriptPath); //TODO get resource path programmatically
+
+
+            //sleep for a time to allow Solr indexes to update completely
+            System.out.println("Completed " + productName + " data load.  Pausing to allow indexes to update...");
+            Thread.sleep(11000);
         }
     }
 
@@ -117,15 +120,16 @@ public class CustomerTest {
         CustomerContactDao daoContact  =  contactMapper.customerContactDao(keyspaceName);
 
         CustomerContact foundContact = daoContact.findByContactDocumentId(83);
-        Set<CustomerContactAddressSecondary> setAddrSecondary = foundContact.getAddressSecondary();
+        Set<CustomerContactTelecomDetails> setTeleCom = foundContact.getTeleCom();
 
         //verify size of returned set
-        assert(setAddrSecondary.size() ==1);
+        assert(setTeleCom.size() == 1);
 
         //verify udt values
-        CustomerContactAddressSecondary addrSec = setAddrSecondary.iterator().next();
-        assert(addrSec.getUnit().equals("BLDG"));
-        assert(addrSec.getValue().equals("5"));
+        CustomerContactTelecomDetails addrSec = setTeleCom.iterator().next();
+        assert(addrSec.getTelecomMethod().equals("PV"));
+        assert(addrSec.getAreaCode().equals("123"));
+        assert(addrSec.getPhoneNumber().equals("456-7890"));
     }
 
     @Test
@@ -134,39 +138,41 @@ public class CustomerTest {
         String testFirstName = "First20001";
         String testLastName = "Last20001" ;
         String testMiddleName = "Middle20001" ;
-        String addSecUnit = "FL20001";
-        String addSecVal = "001";
+        String telComMethod = "SV";
+        String areaCode = "000";
+        String phoneNum = "111-2222";
 
         CustomerContactDao daoContact  =  contactMapper.customerContactDao(keyspaceName);
 
-        CustomerContactAddressSecondary writeAddSec = new CustomerContactAddressSecondary();
-        writeAddSec.setUnit(addSecUnit);
-        writeAddSec.setValue(addSecVal);
+        CustomerContactTelecomDetails writeTeleCom = new CustomerContactTelecomDetails();
+        writeTeleCom.setTelecomMethod(telComMethod);
+        writeTeleCom.setAreaCode(areaCode);
+        writeTeleCom.setPhoneNumber(phoneNum);
 
-        Set<CustomerContactAddressSecondary> setAddrSec = new HashSet<>();
-        setAddrSec.add(writeAddSec);
+        Set<CustomerContactTelecomDetails> setTelecom = new HashSet<>();
+        setTelecom.add(writeTeleCom);
 
         CustomerContact writeContact = new CustomerContact();
         writeContact.setContactDocumentId(testDocID);
         writeContact.setPersonFirstName(testFirstName);
         writeContact.setPerson__last_name(testLastName);
         writeContact.setPerson_MiddleName(testMiddleName);
-        writeContact.setAddressSecondary(setAddrSec);
+        writeContact.setTeleCom(setTelecom);
 
         //write new record to DB
         daoContact.save(writeContact);
 
         //verify record written correctly
         CustomerContact foundContact = daoContact.findByContactDocumentId(testDocID);
-        Set<CustomerContactAddressSecondary> setAddrSecondary = foundContact.getAddressSecondary();
+        Set<CustomerContactTelecomDetails> setReadTelecom = foundContact.getTeleCom();
 
         //verify size of returned set
-        assert(1 == setAddrSecondary.size());
+        assert(1 == setReadTelecom.size());
 
         //verify udt values
-        CustomerContactAddressSecondary addrSec = setAddrSecondary.iterator().next();
-        assert(addrSec.getUnit().equals(addSecUnit));
-        assert(addrSec.getValue().equals(addSecVal));
+        CustomerContactTelecomDetails addrSec = setReadTelecom.iterator().next();
+//        assert(addrSec.getUnit().equals(addSecUnit));
+//        assert(addrSec.getValue().equals(addSecVal));
 
         //cleanup test UDT record
         daoContact.delete(writeContact);
@@ -208,15 +214,15 @@ public class CustomerTest {
         List<TestQuery> entProfileQueries = new ArrayList<>();
 
         entProfileQueries.add(new TestQuery("qEntProf1",
-                "enterprise_profile", "account_number", "acctNum1",
+                "cust_acct_v1", "account_number", "acctNum1",
                 "profile__enterprise_source","source1"));
 
 
         entProfileQueries.add(new TestQuery("qEntProf2",
-                "enterprise_profile", "account_number", "acctNum2",
+                "cust_acct_v1", "account_number", "acctNum2",
                 "profile__account_status__status_code","ARCHIVE"));
 
-        runQueryList(entProfileQueries);
+//        runQueryList(entProfileQueries);  //table no longer exisits //TODO - update to use cust_acct_v1 table, needs to account for clustering key(s)
     }
 
     @Test
@@ -248,21 +254,21 @@ public class CustomerTest {
     @Test
     public void verifyContactUDTsKeyQuery(){
 
-        String addreSecondaryQuery = "select * from contact where contact_document_id = 83";
-        ResultSet resCheck = session.execute(addreSecondaryQuery);
+        String telecomQuery = "select * from contact where contact_document_id = 83";
+        ResultSet resCheck = session.execute(telecomQuery);
 
         if(null != resCheck) {
             Row rowVal = resCheck.one();
 
-            Set<UdtValue> setAddrSecondary= rowVal.getSet("address__secondary", UdtValue.class);
+            Set<UdtValue> setTelecomDetails= rowVal.getSet("tele_com", UdtValue.class);
 
             //check only one result
-            assert(setAddrSecondary.size() ==1);
+            assert(setTelecomDetails.size() ==1);
 
             //verify udt values
-            UdtValue udt = setAddrSecondary.iterator().next();
-            assert(udt.getString("unit").equals("BLDG"));
-            assert(udt.getString("value").equals("5"));
+            UdtValue udt = setTelecomDetails.iterator().next();
+            assert(udt.getString("telecom_method").equals("PV"));
+            assert(udt.getString("area_code").equals("123"));
         }
     }
 
@@ -271,7 +277,7 @@ public class CustomerTest {
         String solrQuery = "select * from contact\n" +
                 "where\n" +
                 "    solr_query = '" +
-                "{\"q\": \"{!tuple}address__secondary.unit:BLDG\"," +
+                "{\"q\": \"{!tuple}tele_com.area_code:123\"," +
                 "\"sort\": \"contact_document_id asc\"}'";
 
         ResultSet resCheck = session.execute(solrQuery);
@@ -287,72 +293,46 @@ public class CustomerTest {
 
             assert(rowVal1.getLong("contact_document_id") == (long)83);
 
-            Set<UdtValue> setAddrSecondary1 = rowVal1.getSet("address__secondary",UdtValue.class);
+            Set<UdtValue> setTelecom1 = rowVal1.getSet("tele_com",UdtValue.class);
 
             //check only one result
-            assert(setAddrSecondary1.size() ==1);
+            assert(setTelecom1.size() == 1);
 
             //verify udt values
-            UdtValue udt = setAddrSecondary1.iterator().next();
-            assert(udt.getString("unit").equals("BLDG"));
-            assert(udt.getString("value").equals("5"));
+            UdtValue udt = setTelecom1.iterator().next();
+            assert(udt.getString("telecom_method").equals("PV"));
+            assert(udt.getString("area_code").equals("123"));
+            assert(udt.getString("phone_number").equals("456-7890"));
 
             //check next entry
             Row rowVal2 = resCheck.one();
             assert(rowVal2.getLong("contact_document_id") == (long)337);
 
-            Set<UdtValue> setAddrSecondary2 = rowVal2.getSet("address__secondary",UdtValue.class);
+            Set<UdtValue> setTelecom2 = rowVal2.getSet("tele_com",UdtValue.class);
 
             //check only one result
-            assert(setAddrSecondary2.size() ==1);
+            assert(setTelecom2.size() == 1);
 
             //verify udt values
-            UdtValue udt2 = setAddrSecondary2.iterator().next();
-            assert(udt2.getString("unit").equals("BLDG"));
-            assert(udt2.getString("value").equals("A"));
+            UdtValue udt2 = setTelecom2.iterator().next();
+            assert(udt2.getString("telecom_method").equals("SV"));
+            assert(udt2.getString("area_code").equals("123"));
+            assert(udt2.getString("phone_number").equals("333-3337"));
 
             //check next entry
             Row rowVal3 = resCheck.one();
             assert(rowVal3.getLong("contact_document_id") == (long)363);
 
-            Set<UdtValue> setAddrSecondary3 = rowVal3.getSet("address__secondary",UdtValue.class);
+            Set<UdtValue> setTelecom3 = rowVal3.getSet("tele_com",UdtValue.class);
 
             //check only one result
-            assert(setAddrSecondary3.size() ==1);
+            assert(setTelecom3.size() == 1);
 
             //verify udt values
-            UdtValue udt3 = setAddrSecondary3.iterator().next();
-            assert(udt3.getString("unit").equals("BLDG"));
-            assert(udt3.getString("value").equals("1"));
-
-            //check next entry
-            Row rowVal4 = resCheck.one();
-            assert(rowVal4.getLong("contact_document_id") == (long)433);
-
-            Set<UdtValue> setAddrSecondary4 = rowVal4.getSet("address__secondary",UdtValue.class);
-
-            //check only one result
-            assert(setAddrSecondary4.size() ==1);
-
-            //verify udt values
-            UdtValue udt4 = setAddrSecondary4.iterator().next();
-            assert(udt4.getString("unit").equals("BLDG"));
-            assert(udt4.getString("value").equals("2"));
-
-
-            //check last entry
-            Row rowVal5 = resCheck.one();
-            assert(rowVal5.getLong("contact_document_id") == (long)2000);
-
-            Set<UdtValue> setAddrSecondary5 = rowVal5.getSet("address__secondary",UdtValue.class);
-
-            //check only one result
-            assert(setAddrSecondary5.size() == 2);
-
-            //verify udt values
-            UdtValue udt5a = setAddrSecondary5.iterator().next();
-            assert(udt5a.getString("unit").equals("BLDG"));
-            assert(udt5a.getString("value").equals("7"));
+            UdtValue udt3 = setTelecom3.iterator().next();
+            assert(udt3.getString("telecom_method").equals("MB"));
+            assert(udt3.getString("area_code").equals("123"));
+            assert(udt3.getString("phone_number").equals("636-3636"));
         }
         else{
             //result set should not be null
@@ -372,6 +352,17 @@ public class CustomerTest {
         String addSecUnit3 = "FL";
         String addSecVal3 = "M20";
 
+
+        String method1 = "PV-1";
+        String areaCode1 = "111";
+        String phone1 = "111-1111";
+        String method2 = "PV-2";
+        String areaCode2 = "222";
+        String phone2 = "222-2222";
+        String method3 = "PV-3";
+        String areaCode3 = "333";
+        String phone3 = "333-3333";
+
         CustomerContact deleteContact = new CustomerContact();
         deleteContact.setContactDocumentId(testDocId);
         daoContact.delete(deleteContact);
@@ -379,21 +370,23 @@ public class CustomerTest {
         CustomerContact readVerifyDelete = daoContact.findByContactDocumentId(testDocId);
         assert(null == readVerifyDelete);
 
-        CustomerContactAddressSecondary writeAddSec1 = new CustomerContactAddressSecondary();
-        writeAddSec1.setUnit(addSecUnit1);
-        writeAddSec1.setValue(addSecVal1);
+        CustomerContactTelecomDetails writeTelecom1 = new CustomerContactTelecomDetails();
+        writeTelecom1.setTelecomMethod(method1);
+        writeTelecom1.setTelecomMethod(areaCode1);
+        writeTelecom1.setPhoneNumber(phone1);
 
-        CustomerContactAddressSecondary writeAddSec2 = new CustomerContactAddressSecondary();
-        writeAddSec1.setUnit(addSecUnit2);
-        writeAddSec1.setValue(addSecVal2);
+        CustomerContactTelecomDetails writeTelecom2 = new CustomerContactTelecomDetails();
+        writeTelecom2.setTelecomMethod(method2);
+        writeTelecom2.setTelecomMethod(areaCode2);
+        writeTelecom2.setPhoneNumber(phone2);
 
-        Set<CustomerContactAddressSecondary> setAddrSec = new HashSet<>();
-        setAddrSec.add(writeAddSec1);
-        setAddrSec.add(writeAddSec2);
+        Set<CustomerContactTelecomDetails> setTelecom = new HashSet<>();
+        setTelecom.add(writeTelecom1);
+        setTelecom.add(writeTelecom2);
 
         CustomerContact writeContact = new CustomerContact();
         writeContact.setContactDocumentId(testDocId);
-        writeContact.setAddressSecondary(setAddrSec);
+        writeContact.setTeleCom(setTelecom);
 
         //write new record to DB
         daoContact.save(writeContact);
@@ -402,16 +395,17 @@ public class CustomerTest {
         CustomerContact checkWriteContact = daoContact.findByContactDocumentId(testDocId);
         assert(testDocId == checkWriteContact.getContactDocumentId());
 
-        Set<CustomerContactAddressSecondary> setCheckAddrSec = checkWriteContact.getAddressSecondary();
-        assert(2 == setAddrSec.size());
+        Set<CustomerContactTelecomDetails> setCheckTelecom = checkWriteContact.getTeleCom();
+        assert(2 == setTelecom.size());
 
         //update collection of UDTs
-        CustomerContactAddressSecondary writeAddSec3 = new CustomerContactAddressSecondary();
-        writeAddSec1.setUnit(addSecUnit3);
-        writeAddSec1.setValue(addSecVal3);
+        CustomerContactTelecomDetails writeTelecom3 = new CustomerContactTelecomDetails();
+        writeTelecom3.setTelecomMethod(method3);
+        writeTelecom3.setTelecomMethod(areaCode3);
+        writeTelecom3.setPhoneNumber(phone3);
 
-        setCheckAddrSec.add(writeAddSec3);
-        checkWriteContact.setAddressSecondary(setCheckAddrSec);
+        setCheckTelecom.add(writeTelecom3);
+        checkWriteContact.setTeleCom(setCheckTelecom);
 
         daoContact.update(checkWriteContact);
 
@@ -420,7 +414,7 @@ public class CustomerTest {
         CustomerContact checkUpdateContact = daoContact.findByContactDocumentId(testDocId);
         assert(testDocId == checkUpdateContact.getContactDocumentId());
 
-        Set<CustomerContactAddressSecondary> setCheckUpdateAddrSec = checkUpdateContact.getAddressSecondary();
+        Set<CustomerContactTelecomDetails> setCheckUpdateAddrSec = checkUpdateContact.getTeleCom();
 //        assert(3 == setCheckUpdateAddrSec.size());  //** update does not appear to currently work as expected
 
         daoContact.delete(deleteContact);
@@ -431,6 +425,7 @@ public class CustomerTest {
 
     @Test
     public void verifyContactUDTInsertUpdate(){
+        //cleanup any existing records and verify
         String cleanupQuery = "DELETE from customer.contact where contact_document_id = 2001;";
         session.execute(cleanupQuery);
 
@@ -442,14 +437,14 @@ public class CustomerTest {
         String insertStmt = "insert into contact\n" +
                 "(\n" +
                 "    contact_document_id,\n" +
-                "    address__secondary\n" +
+                "    tele_com\n" +
                 ")\n" +
                 "values\n" +
                 "(\n" +
                 "    2001,\n" +
                 "    {\n" +
-                "        {unit:'STE', value:'S2001'},\n" +
-                "        {unit:'BLDG', value:'NE2001'}\n" +
+                "        {telecom_method:'PV', area_code:'111', phone_number:'111-2001'},\n" +
+                "        {telecom_method:'SV', area_code:'222', phone_number:'222-2001'}\n" +
                 "    }\n" +
                 ")\n" +
                 ";";
@@ -463,14 +458,14 @@ public class CustomerTest {
         Row dataRow = rsDataCheck.one();
         assert(dataRow.getLong("contact_document_id") == (long)2001);
 
-        Set<UdtValue> setAddrSecondary = dataRow.getSet("address__secondary",UdtValue.class);
+        Set<UdtValue> setCheckTelecom = dataRow.getSet("tele_com",UdtValue.class);
 
         //check only one result
-        assert(setAddrSecondary.size() == 2);
+        assert(setCheckTelecom.size() == 2);
 
         String updateStmt = "update contact\n" +
                 "set \n" +
-                "    address__secondary = address__secondary + {{unit:'FL', value:'20'}}\n" +
+                "    tele_com = tele_com + {{telecom_method:'MB', area_code:'333', phone_number:'333-2001'}}\n" +
                 "where\n" +
                 "    contact_document_id = 2001\n" +
                 "    ;";
@@ -484,10 +479,10 @@ public class CustomerTest {
         Row dataRowUpdated = rsDataCheckUpdate.one();
         assert(dataRowUpdated.getLong("contact_document_id") == (long)2001);
 
-        Set<UdtValue> setAddrSecondaryUpdated = dataRowUpdated.getSet("address__secondary",UdtValue.class);
+        Set<UdtValue> setCheckTelecomUpdated = dataRowUpdated.getSet("tele_com",UdtValue.class);
 
         //check only one result
-        assert(setAddrSecondaryUpdated.size() == 3);
+        assert(setCheckTelecomUpdated.size() == 3);
     }
 
     private void runQueryList(List<TestQuery> queries){
