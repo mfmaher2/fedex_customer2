@@ -36,7 +36,7 @@ CREATE TYPE IF NOT EXISTS tax_exempt_data_type (
 CREATE TABLE IF NOT EXISTS cust_acct_v1 (
     account_number text,
     opco text,
-    lastUpdateTimestamp timestamp,
+    last_update_timestamp timestamp,
 
     --enterpriseProfile
     profile__customer_type text,
@@ -466,7 +466,7 @@ WITH CLUSTERING ORDER BY(apply_discount__effective_date_time DESC, apply_discoun
     AND read_repair_chance = 0.0
     AND speculative_retry = '99PERCENTILE';
 
-CREATE TABLE IF NOT EXISTS payment_info (
+CREATE TABLE IF NOT EXISTS payment_info_v1 (
     account_number text,
     opco text,
     record_type_cd text,  --account, express electronic, etc.
@@ -577,6 +577,7 @@ CREATE TABLE IF NOT EXISTS payment_info (
     credit_card__exp_date_year int,
     -- profile_name text,
     auto_sched_term text,
+
     -- auto_sched_thresh_amt text,
     cc_seq text,
     fpan__first_six_digits text,
@@ -695,79 +696,10 @@ WITH bloom_filter_fp_chance = 0.01
     AND read_repair_chance = 0.0
     AND speculative_retry = '99PERCENTILE';
 
-
-CREATE TABLE IF NOT EXISTS account_creation_profile (
-    account_number text,
-    opco text,
-    profile__customer_request_name text,
-    profile__creation_date date,
-    profile__employee_requester__opco text,
-    profile__employee_requester__number text,
-    profile__source_group text,
-    profile__source_dept text,
-    profile__source_system text,
-    profile__employee_creator_opco text,
-    profile__employee_creator_number text,
-    PRIMARY KEY(account_number))
-WITH bloom_filter_fp_chance = 0.01
-    AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
-    AND comment = ''
-    AND compaction = {'class': 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy', 'enabled': 'true', 'sstable_size_in_mb': '160', 'tombstone_compaction_interval': '86400', 'tombstone_threshold': '0.2', 'unchecked_tombstone_compaction': 'false'}
-    AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
-    AND crc_check_chance = 1.0
-    AND dclocal_read_repair_chance = 0.0
-    AND default_time_to_live = 0
-    AND gc_grace_seconds = 864000
-    AND max_index_interval = 2048
-    AND memtable_flush_period_in_ms = 0
-    AND min_index_interval = 128
-    AND read_repair_chance = 0.0
-    AND speculative_retry = '99PERCENTILE';
-
-CREATE TABLE IF NOT EXISTS account_profile (
-    account_number text,
-    opco text,
-    profile__account_type text,
-    profile_account_sub_type text,
-    profile__customer_account_status text,
-    profile__duplicate_account_flag boolean,
-    profile__fdx_ok_to_call_flag boolean,
-    profile__archive_date date,
-    profile__archive_reason_code text,
-    profile__archive_options text,
-    profile__sales_rep__opco text,
-    profile__sales_rep__number text,
-    profile__cargo_ind text,
-    profile__pref_cust_flag boolean,
-    profile__service_level text,
-    profile__scac_code text,
-    PRIMARY KEY(account_number))
-WITH bloom_filter_fp_chance = 0.01
-    AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
-    AND comment = ''
-    AND compaction = {'class': 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy', 'enabled': 'true', 'sstable_size_in_mb': '160', 'tombstone_compaction_interval': '86400', 'tombstone_threshold': '0.2', 'unchecked_tombstone_compaction': 'false'}
-    AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
-    AND crc_check_chance = 1.0
-    AND dclocal_read_repair_chance = 0.0
-    AND default_time_to_live = 0
-    AND gc_grace_seconds = 864000
-    AND max_index_interval = 2048
-    AND memtable_flush_period_in_ms = 0
-    AND min_index_interval = 128
-    AND read_repair_chance = 0.0
-    AND speculative_retry = '99PERCENTILE';
-
-
---additional streams
-CREATE TYPE IF NOT EXISTS ftbd_svc_type (
-    type text,
-    value text
-);
-
 CREATE TABLE IF NOT EXISTS opco_customer_combined_v1 (
     account_number text,
     opco text,
-    lastUpdateTimestamp timestamp,
+    last_update_timestamp timestamp,
     profile__customer_request_name text,
     profile__creation_date date,
     profile__employee_requester__opco text,
@@ -808,10 +740,7 @@ WITH CLUSTERING ORDER BY (opco ASC)
     AND read_repair_chance = 0.0
     AND speculative_retry = '99PERCENTILE';
 
-
---additional tables used for testing/demonstration
-
-CREATE TABLE IF NOT EXISTS enterprise_assoc_accounts (
+CREATE TABLE IF NOT EXISTS assoc_accounts_v1 (
     account_number text,
     associated_account__opco text,
     associated_account__number text,
