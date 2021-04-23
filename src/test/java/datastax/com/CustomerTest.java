@@ -14,6 +14,9 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutionException;
 
 import static com.datastax.oss.driver.api.core.CqlSession.*;
 
@@ -21,8 +24,9 @@ public class CustomerTest {
 
     private static CqlSession session = null;
     private static CustomerContactMapper contactMapper = null;
-    private static boolean skipSchemaCreation = false;
-    private static boolean skipDataLoad = false;
+    private static CustomerAccountMapper accountMapper = null;
+    private static boolean skipSchemaCreation = true;
+    private static boolean skipDataLoad = true;
     private static boolean skipKeyspaceDrop = true;
     private static String keyspaceName = "customer";
     private static String productName = "Customer" ;
@@ -60,6 +64,7 @@ public class CustomerTest {
             loadData();
 
             contactMapper = new CustomerContactMapperBuilder(session).build();
+            accountMapper = new CustomerAccountMapperBuilder(session).build();
         }
         catch(Exception e){
             System.out.println(e.getMessage());
@@ -100,7 +105,6 @@ public class CustomerTest {
 
             runScrpt(dataScriptPath); //TODO get resource path programmatically
 
-
             //sleep for a time to allow Solr indexes to update completely
             System.out.println("Completed " + productName + " data load.  Pausing to allow indexes to update...");
             Thread.sleep(11000);
@@ -114,6 +118,23 @@ public class CustomerTest {
         dropTestKeyspace();
         if (session != null) session.close();
     }
+
+    @Test
+    public void customerAccountMapperReadTest(){
+        CustomerAccountDao daoAccount = accountMapper.customerAccountDao(keyspaceName);
+
+        String acctID = "1111";
+        String expectedOpco = "A";
+        String expectedCustomerType = "custType1";
+        String expectedAccountType = "acctType1";
+
+        CustomerAccount foundAccount = daoAccount.findByAccountNumber(acctID);
+
+        assert(foundAccount.getOpco().equals(expectedOpco));
+        assert(foundAccount.getProfileCustomerType().equals(expectedCustomerType));
+        assert(foundAccount.getProfileAccountType().equals(expectedAccountType));
+    }
+
 
     @Test
     public void contactUdtMapperReadTest(){
@@ -131,6 +152,8 @@ public class CustomerTest {
         assert(addrSec.getAreaCode().equals("123"));
         assert(addrSec.getPhoneNumber().equals("456-7890"));
     }
+
+
 
     @Test
     public void contactUdtMapperWriteTest(){
@@ -210,6 +233,27 @@ public class CustomerTest {
     }
 
     @Test
+    public void contactMapperAsyncTest() throws ExecutionException, InterruptedException {
+        CustomerContactDao daoContact  =  contactMapper.customerContactDao(keyspaceName);
+
+        CompletableFuture<CustomerContact> cfFoundContact = daoContact.findByContactDocumentIdAsync(83);
+        cfFoundContact.join();
+
+        CustomerContact foundContact = cfFoundContact.get();
+
+        Set<CustomerContactTelecomDetails> setTeleCom = foundContact.getTeleCom();
+
+        //verify size of returned set
+        assert(setTeleCom.size() == 1);
+
+        //verify udt values
+        CustomerContactTelecomDetails addrSec = setTeleCom.iterator().next();
+        assert(addrSec.getTelecomMethod().equals("PV"));
+        assert(addrSec.getAreaCode().equals("123"));
+        assert(addrSec.getPhoneNumber().equals("456-7890"));
+    }
+
+    @Test
     public void verifyEnterpriseProfile(){
         List<TestQuery> entProfileQueries = new ArrayList<>();
 
@@ -263,7 +307,7 @@ public class CustomerTest {
             Set<UdtValue> setTelecomDetails= rowVal.getSet("tele_com", UdtValue.class);
 
             //check only one result
-            assert(setTelecomDetails.size() ==1);
+            assert(setTelecomDetails.size() == 1);
 
             //verify udt values
             UdtValue udt = setTelecomDetails.iterator().next();
