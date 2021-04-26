@@ -25,8 +25,10 @@ public class CustomerTest {
     private static CqlSession session = null;
     private static CustomerContactMapper contactMapper = null;
     private static CustomerAccountMapper accountMapper = null;
-    private static boolean skipSchemaCreation = true;
-    private static boolean skipDataLoad = true;
+    private static CustomerPaymentInfoMapper paymentMapper = null;
+    private static CustomerAssocAccountMapper assocMapper = null;
+    private static boolean skipSchemaCreation = false;
+    private static boolean skipDataLoad = false;
     private static boolean skipKeyspaceDrop = true;
     private static String keyspaceName = "customer";
     private static String productName = "Customer" ;
@@ -65,6 +67,8 @@ public class CustomerTest {
 
             contactMapper = new CustomerContactMapperBuilder(session).build();
             accountMapper = new CustomerAccountMapperBuilder(session).build();
+            paymentMapper = new CustomerPaymentInfoMapperBuilder(session).build();
+            assocMapper = new CustomerAssocAccountMapperBuilder(session).build();
         }
         catch(Exception e){
             System.out.println(e.getMessage());
@@ -120,6 +124,139 @@ public class CustomerTest {
     }
 
     @Test
+    public void combineAsyncQueryTest() throws ExecutionException, InterruptedException {
+
+        CustomerAccountDao daoAccount = accountMapper.customerAccountDao(keyspaceName);
+        CustomerPaymentInfoDao daoPayment = paymentMapper.customerPaymentInfoDao(keyspaceName);
+        CustomerAssocAccountDao daoAssoc = assocMapper.customerAssocAccountDao(keyspaceName);
+
+        //execute async queries
+        String acctID = "1111";
+        CompletableFuture<CustomerAccount> cfFoundAccount = daoAccount.findByAccountNumberAsync(acctID);
+        CompletableFuture<CustomerPaymentInfo> cfFoundPayment = daoPayment.findByAccountNumberAsync(acctID);
+        CompletableFuture<CustomerAssocAccount> cfFoundAssoc = daoAssoc.findByAccountNumberAsync(acctID);
+
+        //allow all async calls to complete
+        CompletableFuture.allOf(cfFoundAccount, cfFoundPayment, cfFoundAssoc);
+
+        //** check account details
+        String expectedOpco = "A";
+        String expectedCustomerType = "custType1";
+        String expectedAccountType = "acctType1";
+
+        //assign account data object
+        CustomerAccount foundAccount = cfFoundAccount.get();
+
+        assert(foundAccount.getOpco().equals(expectedOpco));
+        assert(foundAccount.getProfileCustomerType().equals(expectedCustomerType));
+        assert(foundAccount.getProfileAccountType().equals(expectedAccountType));
+
+
+        //** check payment details
+        String expectedPaymentOpco = "A";
+        String expectedType = "type1";
+        String expectedKey = "key1";
+        int expectedSeq = 1;
+        String expectedCCId = "ccID1";
+
+        //assign payment data object
+        CustomerPaymentInfo foundPayment = cfFoundPayment.get();
+
+        assert(foundPayment.getOpco().equals(expectedPaymentOpco));
+        assert(foundPayment.getRecordType().equals(expectedType));
+        assert(foundPayment.getRecordKey().equals(expectedKey));
+        assert(foundPayment.getCreditCardID().equals(expectedCCId));
+
+
+        //** check associated account details
+        String expectedAssocOpco = "B";
+        String expectedAssocAcct = "2222";
+
+        //assign assoc data object
+        CustomerAssocAccount foundAssoc = cfFoundAssoc.get();
+
+        assert(foundAssoc.getOpco().equals(expectedAssocOpco));
+        assert(foundAssoc.getAssociatedAccountNumber().equals(expectedAssocAcct));
+    }
+
+    @Test
+    public void customerAssocAccountMapperReadTest(){
+        CustomerAssocAccountDao daoAssoc = assocMapper.customerAssocAccountDao(keyspaceName);
+
+        String acctID = "1111";
+        String expectedOpco = "B";
+        String expectedAssocAcct = "2222";
+
+        CustomerAssocAccount foundAssoc = daoAssoc.findByAccountNumber(acctID);
+
+        assert(foundAssoc.getOpco().equals(expectedOpco));
+        assert(foundAssoc.getAssociatedAccountNumber().equals(expectedAssocAcct));
+    }
+
+    @Test
+    public void customerAssocAccountMapperReadTestAsync() throws ExecutionException, InterruptedException {
+        CustomerAssocAccountDao daoAssoc = assocMapper.customerAssocAccountDao(keyspaceName);
+
+        String acctID = "1111";
+        String expectedOpco = "B";
+        String expectedAssocAcct = "2222";
+
+        CompletableFuture<CustomerAssocAccount> cfFoundAssoc = daoAssoc.findByAccountNumberAsync(acctID);
+        cfFoundAssoc.join();
+        CustomerAssocAccount foundAssoc = cfFoundAssoc.get();
+
+        assert(foundAssoc.getOpco().equals(expectedOpco));
+        assert(foundAssoc.getAssociatedAccountNumber().equals(expectedAssocAcct));
+    }
+
+
+    @Test
+    public void customerPaymentMapperReadTest(){
+        CustomerPaymentInfoDao daoPayment = paymentMapper.customerPaymentInfoDao(keyspaceName);
+
+        String acctID = "1111";
+        String expectedOpco = "A";
+        String expectedType = "type1";
+        String expectedKey = "key1";
+        int expectedSeq = 1;
+        String expectedCCId = "ccID1";
+
+        CustomerPaymentInfo foundPayment = daoPayment.findByAccountNumber(acctID);
+
+        assert(foundPayment.getOpco().equals(expectedOpco));
+        assert(foundPayment.getRecordType().equals(expectedType));
+        assert(foundPayment.getRecordKey().equals(expectedKey));
+
+        int foundSeq = foundPayment.getRecordSeq();
+//        String foundSeq = foundPayment.getRecordSeq();
+        System.out.println("Found record_seq - " + foundSeq);
+//        assert(foundPayment.getRecordSeq() == expectedSeq);
+        assert(foundPayment.getCreditCardID().equals(expectedCCId));
+    }
+
+    @Test
+    public void customerPaymentMapperReadTestAsync() throws ExecutionException, InterruptedException {
+        CustomerPaymentInfoDao daoPayment = paymentMapper.customerPaymentInfoDao(keyspaceName);
+
+        String acctID = "1111";
+        String expectedOpco = "A";
+        String expectedType = "type1";
+        String expectedKey = "key1";
+        int expectedSeq = 1;
+        String expectedCCId = "ccID1";
+
+        CompletableFuture<CustomerPaymentInfo> cfFoundPayment = daoPayment.findByAccountNumberAsync(acctID);
+        cfFoundPayment.join();
+        CustomerPaymentInfo foundPayment = cfFoundPayment.get();
+
+        assert(foundPayment.getOpco().equals(expectedOpco));
+        assert(foundPayment.getRecordType().equals(expectedType));
+        assert(foundPayment.getRecordKey().equals(expectedKey));
+//        assert(foundPayment.getRecordSeq() == expectedSeq);
+        assert(foundPayment.getCreditCardID().equals(expectedCCId));
+    }
+
+    @Test
     public void customerAccountMapperReadTest(){
         CustomerAccountDao daoAccount = accountMapper.customerAccountDao(keyspaceName);
 
@@ -129,6 +266,24 @@ public class CustomerTest {
         String expectedAccountType = "acctType1";
 
         CustomerAccount foundAccount = daoAccount.findByAccountNumber(acctID);
+
+        assert(foundAccount.getOpco().equals(expectedOpco));
+        assert(foundAccount.getProfileCustomerType().equals(expectedCustomerType));
+        assert(foundAccount.getProfileAccountType().equals(expectedAccountType));
+    }
+
+    @Test
+    public void customerAccountMapperReadTestAsync() throws ExecutionException, InterruptedException {
+        CustomerAccountDao daoAccount = accountMapper.customerAccountDao(keyspaceName);
+
+        String acctID = "1111";
+        String expectedOpco = "A";
+        String expectedCustomerType = "custType1";
+        String expectedAccountType = "acctType1";
+
+        CompletableFuture<CustomerAccount> cfFoundAccount = daoAccount.findByAccountNumberAsync(acctID);
+        cfFoundAccount.join();
+        CustomerAccount foundAccount = cfFoundAccount.get();
 
         assert(foundAccount.getOpco().equals(expectedOpco));
         assert(foundAccount.getProfileCustomerType().equals(expectedCustomerType));

@@ -585,8 +585,8 @@ CREATE TABLE IF NOT EXISTS payment_info_v1 (
     fpan__exp_date_month int,
     fpan__exp_date_year int,
 
-    PRIMARY KEY(account_number, opco, record_type_cd, credit_card_id))
-WITH CLUSTERING ORDER BY(opco ASC, record_type_cd ASC, credit_card_id ASC)
+    PRIMARY KEY(account_number, opco, record_type_cd, record_key, record_seq))
+WITH CLUSTERING ORDER BY(opco ASC, record_type_cd ASC, record_key ASC, record_seq ASC)
     AND bloom_filter_fp_chance = 0.01
     AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
     AND comment = ''
