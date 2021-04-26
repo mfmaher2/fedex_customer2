@@ -55,6 +55,27 @@ CREATE TABLE IF NOT EXISTS cust_acct_v1 (
     profile__welcome_kit__welcome_kit_flag boolean,
     profile__welcome_kit__welcome_kit_promo_code text,
 
+    profile__customer_request_name text,
+    profile__employee_requester__opco text,
+    profile__employee_requester__number text,
+    profile__source_group text,
+    profile__source_dept text,
+    profile__source_system text,
+    profile__employee_creator_opco text,
+    profile__employee_creator_number text,
+    profile__account_sub_type text,
+    profile__customer_account_status text,
+    profile__duplicate_account_flag boolean,
+    profile__archive_date date,
+    profile__archive_reason_code text,
+    profile__archive_options text,
+    profile__cargo_ind text,
+    profile__pref_cust_flag boolean,
+    profile__sales_rep__opco text,
+    profile__sales_rep__number text,
+    profile__service_level text,
+    profile__scac_code text,
+
 
     --cargoAccountReceivables
     --express_account_receivables
@@ -682,50 +703,6 @@ CREATE TABLE IF NOT EXISTS contact (
     social_media set<frozen<social_media_type>>,
     PRIMARY KEY(contact_document_id))
 WITH bloom_filter_fp_chance = 0.01
-    AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
-    AND comment = ''
-    AND compaction = {'class': 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy', 'enabled': 'true', 'sstable_size_in_mb': '160', 'tombstone_compaction_interval': '86400', 'tombstone_threshold': '0.2', 'unchecked_tombstone_compaction': 'false'}
-    AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
-    AND crc_check_chance = 1.0
-    AND dclocal_read_repair_chance = 0.0
-    AND default_time_to_live = 0
-    AND gc_grace_seconds = 864000
-    AND max_index_interval = 2048
-    AND memtable_flush_period_in_ms = 0
-    AND min_index_interval = 128
-    AND read_repair_chance = 0.0
-    AND speculative_retry = '99PERCENTILE';
-
-CREATE TABLE IF NOT EXISTS opco_customer_combined_v1 (
-    account_number text,
-    opco text,
-    last_update_timestamp timestamp,
-    profile__customer_request_name text,
-    profile__creation_date date,
-    profile__employee_requester__opco text,
-    profile__employee_requester__number text,
-    profile__source_group text,
-    profile__source_dept text,
-    profile__source_system text,
-    profile__employee_creator_opco text,
-    profile__employee_creator_number text,
-    profile__account_type text,
-    profile_account_sub_type text,
-    profile__customer_account_status text,
-    profile__duplicate_account_flag boolean,
-    profile__fdx_ok_to_call_flag boolean,
-    profile__archive_date date,
-    profile__archive_reason_code text,
-    profile__archive_options text,
-    profile__cargo_ind text,
-    profile__pref_cust_flag boolean,
-    profile__sales_rep__opco text,
-    profile__sales_rep__number text,
-    profile__service_level text,
-    profile__scac_code text,
-    PRIMARY KEY(account_number, opco))
-WITH CLUSTERING ORDER BY (opco ASC)
-    AND bloom_filter_fp_chance = 0.01
     AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
     AND comment = ''
     AND compaction = {'class': 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy', 'enabled': 'true', 'sstable_size_in_mb': '160', 'tombstone_compaction_interval': '86400', 'tombstone_threshold': '0.2', 'unchecked_tombstone_compaction': 'false'}
