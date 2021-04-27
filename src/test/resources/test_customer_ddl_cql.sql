@@ -783,3 +783,31 @@ CREATE TABLE IF NOT EXISTS group_info_v1 (
      AND read_repair_chance = 0.0
      AND speculative_retry = '99PERCENTILE';
 
+--comments
+CREATE TABLE IF NOT EXISTS group_info_v1 (
+     acount_id__number text,
+     acount_id__opco text,
+     comment__type text,
+     comment__comment_id text,
+     comment__comment_description text,
+     comment__requester text,
+     comment__department_number int,
+     comment__employee__opco text,
+     comment__employee__number text,
+     comment__comment_date_time timestamp,
+    PRIMARY KEY(acount_id__number, acount_id__opco, comment__type, comment__comment_id))
+ WITH CLUSTERING ORDER BY(acount_id__opco ASC, comment__type ASC, comment__comment_id ASC)
+     AND bloom_filter_fp_chance = 0.01
+     AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+     AND comment = ''
+     AND compaction = {'class': 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy', 'enabled': 'true', 'sstable_size_in_mb': '160', 'tombstone_compaction_interval': '86400', 'tombstone_threshold': '0.2', 'unchecked_tombstone_compaction': 'false'}
+     AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+     AND crc_check_chance = 1.0
+     AND dclocal_read_repair_chance = 0.0
+     AND default_time_to_live = 0
+     AND gc_grace_seconds = 864000
+     AND max_index_interval = 2048
+     AND memtable_flush_period_in_ms = 0
+     AND min_index_interval = 128
+     AND read_repair_chance = 0.0
+     AND speculative_retry = '99PERCENTILE';
