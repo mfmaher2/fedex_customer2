@@ -5,8 +5,19 @@ import com.datastax.oss.driver.api.mapper.annotations.DaoKeyspace;
 import com.datastax.oss.driver.api.mapper.annotations.Mapper;
 
 @Mapper
-public interface CustomerPaymentInfoMapper {
+public interface CustomerMapper {
+
+    @DaoFactory
+    CustomerContactDao customerContactDao(@DaoKeyspace String keyspace);
 
     @DaoFactory
     CustomerPaymentInfoDao customerPaymentInfoDao(@DaoKeyspace String keyspace);
+
+    @DaoFactory
+    CustomerAccountDao customerAccountDao(@DaoKeyspace String keyspace);
+
+    @DaoFactory
+    CustomerAssocAccountDao customerAssocAccountDao(@DaoKeyspace String keyspace);
+
+
 }

@@ -15,7 +15,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 
 import static com.datastax.oss.driver.api.core.CqlSession.*;
@@ -23,12 +22,14 @@ import static com.datastax.oss.driver.api.core.CqlSession.*;
 public class CustomerTest {
 
     private static CqlSession session = null;
-    private static CustomerContactMapper contactMapper = null;
-    private static CustomerAccountMapper accountMapper = null;
-    private static CustomerPaymentInfoMapper paymentMapper = null;
-    private static CustomerAssocAccountMapper assocMapper = null;
-    private static boolean skipSchemaCreation = false;
-    private static boolean skipDataLoad = false;
+    private static CustomerMapper customerMapper = null;
+    static CustomerAccountDao daoAccount = null;
+    static CustomerPaymentInfoDao daoPayment = null;
+    static CustomerAssocAccountDao daoAssoc = null;
+    static CustomerContactDao daoContact = null;
+
+    private static boolean skipSchemaCreation = true;
+    private static boolean skipDataLoad = true;
     private static boolean skipKeyspaceDrop = true;
     private static String keyspaceName = "customer";
     private static String productName = "Customer" ;
@@ -65,10 +66,11 @@ public class CustomerTest {
             session.execute("USE " + keyspaceName + ";");
             loadData();
 
-            contactMapper = new CustomerContactMapperBuilder(session).build();
-            accountMapper = new CustomerAccountMapperBuilder(session).build();
-            paymentMapper = new CustomerPaymentInfoMapperBuilder(session).build();
-            assocMapper = new CustomerAssocAccountMapperBuilder(session).build();
+            customerMapper = new CustomerMapperBuilder(session).build();
+            daoAccount = customerMapper.customerAccountDao(keyspaceName);
+            daoPayment = customerMapper.customerPaymentInfoDao(keyspaceName);
+            daoAssoc = customerMapper.customerAssocAccountDao(keyspaceName);
+            daoContact  =  customerMapper.customerContactDao(keyspaceName);
         }
         catch(Exception e){
             System.out.println(e.getMessage());
@@ -125,11 +127,6 @@ public class CustomerTest {
 
     @Test
     public void combineAsyncQueryTest() throws ExecutionException, InterruptedException {
-
-        CustomerAccountDao daoAccount = accountMapper.customerAccountDao(keyspaceName);
-        CustomerPaymentInfoDao daoPayment = paymentMapper.customerPaymentInfoDao(keyspaceName);
-        CustomerAssocAccountDao daoAssoc = assocMapper.customerAssocAccountDao(keyspaceName);
-
         //execute async queries
         String acctID = "1111";
         CompletableFuture<CustomerAccount> cfFoundAccount = daoAccount.findByAccountNumberAsync(acctID);
@@ -181,8 +178,6 @@ public class CustomerTest {
 
     @Test
     public void customerAssocAccountMapperReadTest(){
-        CustomerAssocAccountDao daoAssoc = assocMapper.customerAssocAccountDao(keyspaceName);
-
         String acctID = "1111";
         String expectedOpco = "B";
         String expectedAssocAcct = "2222";
@@ -195,8 +190,6 @@ public class CustomerTest {
 
     @Test
     public void customerAssocAccountMapperReadTestAsync() throws ExecutionException, InterruptedException {
-        CustomerAssocAccountDao daoAssoc = assocMapper.customerAssocAccountDao(keyspaceName);
-
         String acctID = "1111";
         String expectedOpco = "B";
         String expectedAssocAcct = "2222";
@@ -212,8 +205,6 @@ public class CustomerTest {
 
     @Test
     public void customerPaymentMapperReadTest(){
-        CustomerPaymentInfoDao daoPayment = paymentMapper.customerPaymentInfoDao(keyspaceName);
-
         String acctID = "1111";
         String expectedOpco = "A";
         String expectedType = "type1";
@@ -236,8 +227,6 @@ public class CustomerTest {
 
     @Test
     public void customerPaymentMapperReadTestAsync() throws ExecutionException, InterruptedException {
-        CustomerPaymentInfoDao daoPayment = paymentMapper.customerPaymentInfoDao(keyspaceName);
-
         String acctID = "1111";
         String expectedOpco = "A";
         String expectedType = "type1";
@@ -258,8 +247,6 @@ public class CustomerTest {
 
     @Test
     public void customerAccountMapperReadTest(){
-        CustomerAccountDao daoAccount = accountMapper.customerAccountDao(keyspaceName);
-
         String acctID = "1111";
         String expectedOpco = "A";
         String expectedCustomerType = "custType1";
@@ -274,8 +261,6 @@ public class CustomerTest {
 
     @Test
     public void customerAccountMapperReadTestAsync() throws ExecutionException, InterruptedException {
-        CustomerAccountDao daoAccount = accountMapper.customerAccountDao(keyspaceName);
-
         String acctID = "1111";
         String expectedOpco = "A";
         String expectedCustomerType = "custType1";
@@ -293,8 +278,6 @@ public class CustomerTest {
 
     @Test
     public void contactUdtMapperReadTest(){
-        CustomerContactDao daoContact  =  contactMapper.customerContactDao(keyspaceName);
-
         CustomerContact foundContact = daoContact.findByContactDocumentId(83);
         Set<CustomerContactTelecomDetails> setTeleCom = foundContact.getTeleCom();
 
@@ -319,8 +302,6 @@ public class CustomerTest {
         String telComMethod = "SV";
         String areaCode = "000";
         String phoneNum = "111-2222";
-
-        CustomerContactDao daoContact  =  contactMapper.customerContactDao(keyspaceName);
 
         CustomerContactTelecomDetails writeTeleCom = new CustomerContactTelecomDetails();
         writeTeleCom.setTelecomMethod(telComMethod);
@@ -360,8 +341,6 @@ public class CustomerTest {
 
     @Test
     public void contactMapperTest(){
-        CustomerContactDao daoContact  =  contactMapper.customerContactDao(keyspaceName);
-
         long testDocID = 20000;
         String testFirstName = "First20000";
         String testLastName = "Last20000" ;
@@ -389,8 +368,6 @@ public class CustomerTest {
 
     @Test
     public void contactMapperAsyncTest() throws ExecutionException, InterruptedException {
-        CustomerContactDao daoContact  =  contactMapper.customerContactDao(keyspaceName);
-
         CompletableFuture<CustomerContact> cfFoundContact = daoContact.findByContactDocumentIdAsync(83);
         cfFoundContact.join();
 
@@ -541,8 +518,6 @@ public class CustomerTest {
 
     @Test
     public void verifyContactUDTInsertUpdateMapper(){
-        CustomerContactDao daoContact  =  contactMapper.customerContactDao(keyspaceName);
-
         long testDocId = 2010;
         String addSecUnit1 = "STE";
         String addSecVal1 = "SM20001";
