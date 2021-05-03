@@ -1,4 +1,4 @@
-﻿account_type__acount_id__opco,account_type__acount_id__number,national_account_detail__membership_eff_date_time,national_account_detail__national_account_nbr,national_account_detail__national_subgroup_nbr,national_account_detail__national_priority_cd,national_account_detail__membership_exp_date_time,last_update_tmstp,national_account_detail__national_account_company_cd
+﻿opco,account_number,national_account_detail__membership_eff_date_time,national_account_detail__national_account_nbr,national_account_detail__national_subgroup_nbr,national_account_detail__national_priority_cd,national_account_detail__membership_exp_date_time,last_update_tmstp,national_account_detail__national_account_company_cd
 FX,000100005,2015-12-08 06:01:11.447,00099,000,1,2099-12-31 00:00:00.000,2015-12-08 06:01:11.447170,FX  
 FX,000700002,2015-12-17 09:06:35.099,99998,000,1,2099-12-31 00:00:00.000,2015-12-17 09:06:35.099143,FX  
 FX,000900320,1900-01-01 00:00:00.000,02037,000,1,2099-12-31 00:00:00.000,2007-10-29 00:00:00.000000,FX  

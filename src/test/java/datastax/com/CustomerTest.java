@@ -1,21 +1,24 @@
 package datastax.com;
 
 import com.datastax.oss.driver.api.core.CqlSession;
-import com.datastax.oss.driver.api.core.cql.ResultSet;
-import com.datastax.oss.driver.api.core.cql.Row;
+import com.datastax.oss.driver.api.core.PagingIterable;
+import com.datastax.oss.driver.api.core.cql.*;
 import com.datastax.oss.driver.api.core.data.UdtValue;
+import com.datastax.oss.protocol.internal.util.Bytes;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Function;
 
 import static com.datastax.oss.driver.api.core.CqlSession.*;
 
@@ -27,6 +30,7 @@ public class CustomerTest {
     static CustomerPaymentInfoDao daoPayment = null;
     static CustomerAssocAccountDao daoAssoc = null;
     static CustomerContactDao daoContact = null;
+    static CustomerNationalAccountDao daoNational = null;
 
     private static boolean skipSchemaCreation = true;
     private static boolean skipDataLoad = true;
@@ -71,6 +75,7 @@ public class CustomerTest {
             daoPayment = customerMapper.customerPaymentInfoDao(keyspaceName);
             daoAssoc = customerMapper.customerAssocAccountDao(keyspaceName);
             daoContact  =  customerMapper.customerContactDao(keyspaceName);
+            daoNational = customerMapper.customerNationalAccountDao(keyspaceName);
         }
         catch(Exception e){
             System.out.println(e.getMessage());
@@ -123,6 +128,143 @@ public class CustomerTest {
 
         dropTestKeyspace();
         if (session != null) session.close();
+    }
+
+    @Test
+    public void nationalAccountTest(){
+        String acctID = "00112770";
+        PagingIterable<CustomerNationalAcccount> foundNatAccts = daoNational.findByAccountNumber(acctID);
+
+        assert(foundNatAccts.all().size() == 5);
+    }
+
+    @Test
+    public void nationalAccountPagingTest(){
+        int pageSize = 3;
+
+        Function<BoundStatementBuilder, BoundStatementBuilder> functionCustomPageSize =
+                builder -> builder.setPageSize(pageSize);
+
+        String acctID = "00112770";
+        PagingIterable<CustomerNationalAcccount> foundNatAccts = daoNational.findByAccountNumber(acctID, functionCustomPageSize);
+
+        assert(foundNatAccts.getAvailableWithoutFetching() == pageSize);
+        assert (foundNatAccts.isFullyFetched() == false);
+
+        System.out.println(foundNatAccts.getExecutionInfo().getPagingState());
+    }
+
+    @Test
+    public void nationalAccountMultPagingTest(){
+        String acctID = "00112770";
+        int expectedTotalSize = 5;
+        int pageSize = 3;
+        String query = "select * from " + keyspaceName + ".national_account_v1 where account_number = '" + acctID + "';";
+
+        System.out.println(query);
+        SimpleStatement stmt = SimpleStatement.builder(query).setPageSize(pageSize).build();
+
+        ResultSet rs =  session.execute(stmt);
+        ByteBuffer pagingState = rs.getExecutionInfo().getPagingState();
+        System.out.println("Initial paging state - " + pagingState);
+
+        assert(rs.isFullyFetched() == false );
+        assert(rs.getAvailableWithoutFetching() == pageSize);
+        System.out.println("First page results:");
+        while(rs.getAvailableWithoutFetching()>0){
+            Row row = rs.one();
+            System.out.println("\t" + row.getInstant("national_account_detail__membership_eff_date_time"));
+        }
+
+        SimpleStatement stmt2 = SimpleStatement.builder(query).setPagingState(pagingState).build();
+        ResultSet rs2 = session.execute(stmt2);
+
+        assert(rs2.isFullyFetched() == true );
+        assert(rs2.getAvailableWithoutFetching() == (expectedTotalSize - pageSize));
+        System.out.println("Second page results:");
+        while(rs2.getAvailableWithoutFetching()>0){
+            Row row = rs2.one();
+            System.out.println("\t" + row.getInstant("national_account_detail__membership_eff_date_time"));
+        }
+    }
+
+    @Test
+    public void nationalAccountMultPagingMappedTest(){
+        String acctID = "00112770";
+        int expectedTotalSize = 5;
+        int pageSize = 3;
+        String query = "select * from " + keyspaceName + ".national_account_v1 where account_number = '" + acctID + "';";
+
+        System.out.println(query);
+        SimpleStatement stmt = SimpleStatement.builder(query).setPageSize(pageSize).build();
+
+        ResultSet rs =  session.execute(stmt);
+        ByteBuffer pagingState = rs.getExecutionInfo().getPagingState();
+        System.out.println("Initial paging state - " + pagingState);
+
+        assert(rs.isFullyFetched() == false );
+        assert(rs.getAvailableWithoutFetching() == pageSize);
+        System.out.println("First page results:");
+        while(rs.getAvailableWithoutFetching()>0){
+            Row row = rs.one();
+            CustomerNationalAcccount natAcct = daoNational.asNationalAccount(row);
+
+            System.out.println("\t" +
+                    "Account Number - " + natAcct.getAccountNumber() + "    " +
+                    "Opco - " + natAcct.getOpco() +  "    " +
+                    "Effective date/time - " + natAcct.getMembershipEffectiveDateTime());
+        }
+
+        SimpleStatement stmt2 = SimpleStatement.builder(query).setPagingState(pagingState).build();
+        ResultSet rs2 = session.execute(stmt2);
+
+        assert(rs2.isFullyFetched() == true );
+        assert(rs2.getAvailableWithoutFetching() == (expectedTotalSize - pageSize));
+        System.out.println("Second page results:");
+        while(rs2.getAvailableWithoutFetching()>0){
+            Row row = rs2.one();
+            CustomerNationalAcccount natAcct = daoNational.asNationalAccount(row);
+
+            System.out.println("\t" +
+                    "Account Number - " + natAcct.getAccountNumber() + "    " +
+                    "Opco - " + natAcct.getOpco() +  "    " +
+                    "Effective date/time - " + natAcct.getMembershipEffectiveDateTime());
+        }
+    }
+
+
+    @Test
+    public void sampleTest(){
+        String acctID = "00112770";
+        String query = "select * from " + keyspaceName + ".national_account_v1 where account_number = '" + acctID + "';";
+
+        int expectedTotalSize = 5;
+        int pageSize = 3;
+        SimpleStatement stmt = SimpleStatement.builder(query).setPageSize(pageSize).build();
+        ResultSet rs =  session.execute(stmt);
+
+        ByteBuffer pagingState = rs.getExecutionInfo().getPagingState();
+        System.out.println("Initial paging state - " + pagingState);
+
+        assert(rs.isFullyFetched() == false );
+        assert(rs.getAvailableWithoutFetching() == pageSize);
+        while(rs.getAvailableWithoutFetching()>0){
+            Row row = rs.one();
+            //do something with row
+        }
+
+        SimpleStatement stmt2 = SimpleStatement.builder(query).setPagingState(pagingState).build();
+        ResultSet rs2 = session.execute(stmt2);
+
+        assert(rs2.isFullyFetched() == true );
+        assert(rs2.getAvailableWithoutFetching() == (expectedTotalSize - pageSize));
+
+        //sample calls to Bytes utility methods
+        String temp = Bytes.toHexString(pagingState);
+        System.out.println(temp);
+
+        ByteBuffer buff = Bytes.fromHexString(temp);
+        System.out.println(buff);
     }
 
     @Test

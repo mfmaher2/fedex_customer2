@@ -19,5 +19,6 @@ public interface CustomerMapper {
     @DaoFactory
     CustomerAssocAccountDao customerAssocAccountDao(@DaoKeyspace String keyspace);
 
-
+    @DaoFactory
+    CustomerNationalAccountDao customerNationalAccountDao(@DaoKeyspace String keyspace);
 }

@@ -728,17 +728,16 @@ WITH CLUSTERING ORDER BY(associated_account__opco ASC, associated_account__numbe
     AND speculative_retry = '99PERCENTILE';
 
 CREATE TABLE IF NOT EXISTS national_account_v1 (
-    account_type__acount_id__number text,
-    account_type__acount_id__opco text,
+    account_number text,
+    opco text,
+    last_update_tmstp timestamp,
     national_account_detail__national_account_company_cd text,
     national_account_detail__national_account_nbr text,
     national_account_detail__national_priority_cd text,
-    national_account_detail__national_subgroup_nbr text,
     national_account_detail__membership_exp_date_time timestamp,
     national_account_detail__membership_eff_date_time timestamp,
-    last_update_tmstp timestamp,
-    PRIMARY KEY(account_type__acount_id__number, account_type__acount_id__opco, national_account_detail__national_account_nbr, national_account_detail__national_subgroup_nbr, national_account_detail__national_priority_cd, national_account_detail__membership_eff_date_time))
- WITH CLUSTERING ORDER BY(account_type__acount_id__opco ASC, national_account_detail__national_account_nbr ASC, national_account_detail__national_subgroup_nbr ASC, national_account_detail__national_priority_cd ASC, national_account_detail__membership_eff_date_time DESC)
+    PRIMARY KEY(account_number, opco, national_account_detail__membership_eff_date_time, national_account_detail__national_account_nbr, national_account_detail__national_priority_cd))
+ WITH CLUSTERING ORDER BY(opco ASC, national_account_detail__membership_eff_date_time DESC, national_account_detail__national_account_nbr ASC, national_account_detail__national_priority_cd ASC)
      AND bloom_filter_fp_chance = 0.01
      AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
      AND comment = ''
@@ -757,8 +756,9 @@ CREATE TABLE IF NOT EXISTS national_account_v1 (
 --groupId
 --groupMembership
 CREATE TABLE IF NOT EXISTS group_info_v1 (
-     acount_id__number text,
-     acount_id__opco text,
+     account_number text,
+     opco text,
+     last_update_tmstp timestamp,
      group_id__code text,
      group_id__number text,
      group_id_detail__requester text,
@@ -766,8 +766,8 @@ CREATE TABLE IF NOT EXISTS group_info_v1 (
      group_id_detail__master_account text,
      effective_date_time timestamp,
      expiration_date_time timestamp,
-    PRIMARY KEY(acount_id__number, acount_id__opco, group_id__code, group_id__number, effective_date_time))
- WITH CLUSTERING ORDER BY(acount_id__opco ASC, group_id__code ASC, group_id__number ASC, effective_date_time DESC)
+    PRIMARY KEY(account_number, opco, group_id__code, group_id__number, effective_date_time))
+ WITH CLUSTERING ORDER BY(opco ASC, group_id__code ASC, group_id__number ASC, effective_date_time DESC)
      AND bloom_filter_fp_chance = 0.01
      AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
      AND comment = ''
@@ -784,9 +784,10 @@ CREATE TABLE IF NOT EXISTS group_info_v1 (
      AND speculative_retry = '99PERCENTILE';
 
 --comments
-CREATE TABLE IF NOT EXISTS group_info_v1 (
-     acount_id__number text,
-     acount_id__opco text,
+CREATE TABLE IF NOT EXISTS comment_v1 (
+     account_number text,
+     opco text,
+     last_update_tmstp timestamp,
      comment__type text,
      comment__comment_id text,
      comment__comment_description text,
@@ -795,8 +796,8 @@ CREATE TABLE IF NOT EXISTS group_info_v1 (
      comment__employee__opco text,
      comment__employee__number text,
      comment__comment_date_time timestamp,
-    PRIMARY KEY(acount_id__number, acount_id__opco, comment__type, comment__comment_id))
- WITH CLUSTERING ORDER BY(acount_id__opco ASC, comment__type ASC, comment__comment_id ASC)
+    PRIMARY KEY(account_number, opco, comment__comment_date_time, comment__type, comment__comment_id))
+ WITH CLUSTERING ORDER BY(opco ASC, comment__comment_date_time DESC, comment__type ASC, comment__comment_id ASC)
      AND bloom_filter_fp_chance = 0.01
      AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
      AND comment = ''
