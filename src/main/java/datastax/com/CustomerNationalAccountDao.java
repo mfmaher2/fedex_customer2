@@ -21,6 +21,9 @@ public interface CustomerNationalAccountDao {
     @Select
     CompletableFuture<CustomerNationalAcccount> findByAccountNumberAsync(String accountNum);
 
+    @Query("select * from national_account_v1 where solr_query = :nationalAcct")
+    PagingIterable<CustomerNationalAcccount> findByNationalAccountNumber(String nationalAcct);
+
     @GetEntity
     CustomerNationalAcccount asNationalAccount(Row row);
 

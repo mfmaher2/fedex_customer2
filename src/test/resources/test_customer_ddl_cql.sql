@@ -33,6 +33,37 @@ CREATE TYPE IF NOT EXISTS tax_exempt_data_type (
     tax_exempt_flag boolean
 );
 
+CREATE TYPE IF NOT EXISTS history_additional_identifier_type (
+    type text,
+    value text
+);
+
+CREATE TYPE IF NOT EXISTS history_entity_type (
+    action text,
+    stanza_name text,
+    stanza text
+);
+
+CREATE TYPE IF NOT EXISTS history_field_type (
+    action text,
+    stanza_name text,
+    previous_value text,
+    new_value text,
+);
+
+CREATE TYPE IF NOT EXISTS centralized_opco_description_type (
+    opco_code text,
+    opco_account_number text
+);
+
+CREATE TYPE IF NOT EXISTS line_of_business_contact_type(
+    contact_document_id text,
+    addl_copies int,
+    effective_date date,
+    expiration_date date,
+    comment text,
+);
+
 CREATE TABLE IF NOT EXISTS cust_acct_v1 (
     account_number text,
     opco text,
@@ -689,8 +720,8 @@ CREATE TABLE IF NOT EXISTS account_contact (
     additional_email_info2__email_marketing_flag text,
     social_media set<frozen<social_media_type>>,
 
-    PRIMARY KEY(account_number, opco, contact_type_code, contact_business_id))
-WITH CLUSTERING ORDER BY(opco ASC, contact_type_code ASC, contact_business_id ASC)
+    PRIMARY KEY(account_number, opco, contact_document_id, contact_type_code, contact_business_id))
+WITH CLUSTERING ORDER BY(opco ASC, contact_document_id ASC, contact_type_code ASC, contact_business_id ASC)
     AND bloom_filter_fp_chance = 0.01
     AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
     AND comment = ''
@@ -813,6 +844,120 @@ CREATE TABLE IF NOT EXISTS comment_v1 (
      AND read_repair_chance = 0.0
      AND speculative_retry = '99PERCENTILE';
 
+CREATE TABLE IF NOT EXISTS audit_history_v1 (
+     account_number text,
+     opco text,                     --maps to history_detail__opco
+     last_update_tmstp timestamp,
+     request_action text,
+     history_detail__descriptive_identifier text,
+     history_detail__additional_identifier__key set<frozen<history_additional_identifier_type>>,
+     history_detail__entity set<frozen<history_entity_type>>,
+     history_detail__field set<frozen<history_field_type>>,
+     app_id text,
+     user_id text,
+     source text,
+     request_type text,
+     transaction_id text,
+    PRIMARY KEY(account_number, last_update_tmstp, opco))
+ WITH CLUSTERING ORDER BY(last_update_tmstp DESC, opco ASC)
+     AND bloom_filter_fp_chance = 0.01
+     AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+     AND comment = ''
+     AND compaction = {'class': 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy', 'enabled': 'true', 'sstable_size_in_mb': '160', 'tombstone_compaction_interval': '86400', 'tombstone_threshold': '0.2', 'unchecked_tombstone_compaction': 'false'}
+     AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+     AND crc_check_chance = 1.0
+     AND dclocal_read_repair_chance = 0.0
+     AND default_time_to_live = 0
+     AND gc_grace_seconds = 864000
+     AND max_index_interval = 2048
+     AND memtable_flush_period_in_ms = 0
+     AND min_index_interval = 128
+     AND read_repair_chance = 0.0
+     AND speculative_retry = '99PERCENTILE';
+
+CREATE TABLE IF NOT EXISTS centralized_view_v1 (
+     account_number text,
+     account_status__status_code text,
+     account_status__status_date date,
+     opco_description set<frozen<centralized_opco_description_type>>,
+    PRIMARY KEY(account_number, account_status__status_date, account_status__status_code))
+ WITH CLUSTERING ORDER BY(account_status__status_date DESC, account_status__status_code ASC)
+     AND bloom_filter_fp_chance = 0.01
+     AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+     AND comment = ''
+     AND compaction = {'class': 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy', 'enabled': 'true', 'sstable_size_in_mb': '160', 'tombstone_compaction_interval': '86400', 'tombstone_threshold': '0.2', 'unchecked_tombstone_compaction': 'false'}
+     AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+     AND crc_check_chance = 1.0
+     AND dclocal_read_repair_chance = 0.0
+     AND default_time_to_live = 0
+     AND gc_grace_seconds = 864000
+     AND max_index_interval = 2048
+     AND memtable_flush_period_in_ms = 0
+     AND min_index_interval = 128
+     AND read_repair_chance = 0.0
+     AND speculative_retry = '99PERCENTILE';
+
+CREATE TABLE IF NOT EXISTS line_of_business_v1 (
+    account_number text,
+    opco text,
+    line_of_business__preference__direct_debit_day_of_month int,
+    line_of_business__preference__direct_debit_day_of_month2 int,
+    line_of_business__preference__direct_debit_days_to_debit text,
+    line_of_business__preference__direct_debit_notice_days text,
+    line_of_business__preference__duty_tax_inv_break int,
+    line_of_business__preference__invoice_max_amount float,
+    line_of_business__preference__invoice_min_override_flag boolean,
+    line_of_business__preference__invoice_summary_detail_ind int,
+    line_of_business__preference__invoice_type text,
+    line_of_business__preference__max_airbill_quantity int,
+    line_of_business__preference__page_layout_ind int,
+    line_of_business__preference__pri_bill_to_eff_date date,
+    line_of_business__preference__pri_bill_to_exp_date date,
+    line_of_business__preference__pri_bill_to_inv_copies int,
+    line_of_business__contact set<frozen<line_of_business_contact_type>>,
+    total_addl_addresses int,
+    PRIMARY KEY(account_number, line_of_business__preference__invoice_type, opco))
+ WITH CLUSTERING ORDER BY(line_of_business__preference__invoice_type ASC, opco ASC)
+     AND bloom_filter_fp_chance = 0.01
+     AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+     AND comment = ''
+     AND compaction = {'class': 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy', 'enabled': 'true', 'sstable_size_in_mb': '160', 'tombstone_compaction_interval': '86400', 'tombstone_threshold': '0.2', 'unchecked_tombstone_compaction': 'false'}
+     AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+     AND crc_check_chance = 1.0
+     AND dclocal_read_repair_chance = 0.0
+     AND default_time_to_live = 0
+     AND gc_grace_seconds = 864000
+     AND max_index_interval = 2048
+     AND memtable_flush_period_in_ms = 0
+     AND min_index_interval = 128
+     AND read_repair_chance = 0.0
+     AND speculative_retry = '99PERCENTILE';
+
+CREATE TABLE IF NOT EXISTS consignor_v1 (
+    account_number text,
+    opco text,
+    consignor__contact_document_id text,
+    consignor__nature_of_business text,
+    consignor__signed_date date,
+    consignor__vat_number text,
+    consignor__account_consignor boolean,
+    consignor__name text,
+    PRIMARY KEY(account_number, consignor__contact_document_id, opco))
+ WITH CLUSTERING ORDER BY(consignor__contact_document_id ASC, opco ASC)
+     AND bloom_filter_fp_chance = 0.01
+     AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+     AND comment = ''
+     AND compaction = {'class': 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy', 'enabled': 'true', 'sstable_size_in_mb': '160', 'tombstone_compaction_interval': '86400', 'tombstone_threshold': '0.2', 'unchecked_tombstone_compaction': 'false'}
+     AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+     AND crc_check_chance = 1.0
+     AND dclocal_read_repair_chance = 0.0
+     AND default_time_to_live = 0
+     AND gc_grace_seconds = 864000
+     AND max_index_interval = 2048
+     AND memtable_flush_period_in_ms = 0
+     AND min_index_interval = 128
+     AND read_repair_chance = 0.0
+     AND speculative_retry = '99PERCENTILE';
 
 --Temporary table for sample code and sample data functionality
 CREATE TABLE IF NOT EXISTS contact (

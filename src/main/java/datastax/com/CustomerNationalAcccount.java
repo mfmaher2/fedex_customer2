@@ -27,8 +27,4 @@ public class CustomerNationalAcccount {
     public Instant getMembershipEffectiveDateTime() { return membershipEffectiveDateTime;}
     public void setMembershipEffectiveDateTime(Instant val) { membershipEffectiveDateTime = val;
     }
-    //    opco ASC,
-//    national_account_detail__membership_eff_date_time DESC,
-//    national_account_detail__national_account_nbr ASC,
-//    national_account_detail__national_priority_cd ASC
 }

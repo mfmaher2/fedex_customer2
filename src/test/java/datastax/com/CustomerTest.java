@@ -131,11 +131,22 @@ public class CustomerTest {
     }
 
     @Test
+    public void nationalAccountSearchTest(){
+        String solrParam = "national_account_detail__national_account_nbr:00706";
+        int expectedResultCount = 14;
+        PagingIterable<CustomerNationalAcccount> foundNatAccts = daoNational.findByNationalAccountNumber(solrParam);
+
+        assert(foundNatAccts.all().size() == expectedResultCount);
+    }
+
+    @Test
     public void nationalAccountTest(){
         String acctID = "00112770";
+        int expectedResultCount = 5;
+
         PagingIterable<CustomerNationalAcccount> foundNatAccts = daoNational.findByAccountNumber(acctID);
 
-        assert(foundNatAccts.all().size() == 5);
+        assert(foundNatAccts.all().size() == expectedResultCount);
     }
 
     @Test
