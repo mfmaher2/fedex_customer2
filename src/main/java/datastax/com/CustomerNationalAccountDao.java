@@ -22,7 +22,10 @@ public interface CustomerNationalAccountDao {
     CompletableFuture<CustomerNationalAcccount> findByAccountNumberAsync(String accountNum);
 
     @Query("select * from national_account_v1 where solr_query = :nationalAcct")
-    PagingIterable<CustomerNationalAcccount> findByNationalAccountNumber(String nationalAcct);
+    PagingIterable<CustomerNationalAcccount> findByNationalAccountNumberFullSolrParam(String nationalAcct);
+
+    @Select(customWhereClause = "solr_query = :solrParam")
+    PagingIterable<CustomerNationalAcccount> findBySearchQuery(String solrParam);
 
     @GetEntity
     CustomerNationalAcccount asNationalAccount(Row row);

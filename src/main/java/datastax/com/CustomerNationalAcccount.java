@@ -25,6 +25,5 @@ public class CustomerNationalAcccount {
     public void setOpco(String val) {opco = val; }
 
     public Instant getMembershipEffectiveDateTime() { return membershipEffectiveDateTime;}
-    public void setMembershipEffectiveDateTime(Instant val) { membershipEffectiveDateTime = val;
-    }
+    public void setMembershipEffectiveDateTime(Instant val) { membershipEffectiveDateTime = val; }
 }
