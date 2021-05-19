@@ -16,6 +16,7 @@ public class CustomerPaymentInfo {
     @ClusteringColumn(3) @CqlName("record_seqa") private int recordSeq;
     @CqlName("credit_card_id") private String creditCardID;
 
+    CustomerPaymentInfo() {};
 
     public String getAccountNumber() { return accountNumber; }
     public void setAccountNumber(String val) {accountNumber = val;}

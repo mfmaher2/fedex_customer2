@@ -18,6 +18,8 @@ public class CustomerNationalAcccount {
     @ClusteringColumn(1)  @CqlName("national_account_detail__membership_eff_date_time") private Instant membershipEffectiveDateTime;
     @CqlName("national_account_detail__membership_eff_date_time") private Instant membershipExpirationDateTime;
 
+    public CustomerNationalAcccount() {};
+
     public String getAccountNumber() { return accountNumber; }
     public void setAccountNumber(String val) {accountNumber = val; }
 
