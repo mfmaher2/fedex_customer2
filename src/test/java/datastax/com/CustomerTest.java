@@ -1,6 +1,7 @@
 package datastax.com;
 
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.MappedAsyncPagingIterable;
 import com.datastax.oss.driver.api.core.PagingIterable;
 import com.datastax.oss.driver.api.core.cql.*;
 import com.datastax.oss.driver.api.core.data.UdtValue;
@@ -31,6 +32,7 @@ public class CustomerTest {
     static CustomerAssocAccountDao daoAssoc = null;
     static CustomerContactDao daoContact = null;
     static CustomerNationalAccountDao daoNational = null;
+    static CustomerApplyDiscountDao daoApplyDiscount = null;
 
     private static boolean skipSchemaCreation = true;
     private static boolean skipDataLoad = true;
@@ -76,6 +78,7 @@ public class CustomerTest {
             daoAssoc = customerMapper.customerAssocAccountDao(keyspaceName);
             daoContact  =  customerMapper.customerContactDao(keyspaceName);
             daoNational = customerMapper.customerNationalAccountDao(keyspaceName);
+            daoApplyDiscount = customerMapper.customerApplyDiscountDao(keyspaceName);
         }
         catch(Exception e){
             System.out.println(e.getMessage());
@@ -129,6 +132,52 @@ public class CustomerTest {
         dropTestKeyspace();
         if (session != null) session.close();
     }
+
+    @Test
+    public void applyDiscountSearchTest(){
+        int expectResultSize = 3;
+
+        String fullQuery = "select * from apply_discount_detail_v1 \n" +
+                "where \n" +
+                "    account_number = '000001236' and " +
+                "    solr_query = " +
+                "    '{" +
+                "        \"q\": \"opco:FX && " +
+                "              apply_discount__discount_flag:true && " +
+                "              apply_discount__effective_date_time:[2018-11-01T00:00:00.001Z TO *] && " +
+                "              apply_discount__expiration_date_time:[* TO 2019-01-01T00:00:00.001Z]\"," +
+                "        \"sort\": \"apply_discount__effective_date_time desc\"}';";
+
+
+        ResultSet rs = session.execute(fullQuery);
+        assert(expectResultSize == rs.all().size());
+    }
+
+    @Test
+    public void applyDiscountAsyncTest() throws ExecutionException, InterruptedException {
+        String acctNum = "000001236";
+        int expectResultSize = 11;
+
+        CompletableFuture<MappedAsyncPagingIterable<CustomerApplyDiscount>> cfDiscounts = daoApplyDiscount.findAllByAccountNumberAsync(acctNum);
+        cfDiscounts.join();
+        assert(cfDiscounts.get().remaining() == expectResultSize);
+    }
+
+    @Test
+    public void applyDiscountSearchAsyncTest() throws ExecutionException, InterruptedException {
+        String acctNum = "000001236";
+        String opco = "FX";
+        int expectResultSize = 10;
+
+        String solrParm = CustomerApplyDiscountHelper.constructSearchQuery(opco);
+        System.out.println("Solrquery - " + solrParm);
+
+        CompletableFuture<MappedAsyncPagingIterable<CustomerApplyDiscount>> cfDiscounts =
+                daoApplyDiscount.findAllByAccountSearchAsync(solrParm);
+        cfDiscounts.join();
+        assert(cfDiscounts.get().remaining() == expectResultSize);
+    }
+
 
     @Test
     public void nationalAccountFullSearchTest(){

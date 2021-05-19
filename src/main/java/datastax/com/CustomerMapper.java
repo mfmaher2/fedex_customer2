@@ -21,4 +21,7 @@ public interface CustomerMapper {
 
     @DaoFactory
     CustomerNationalAccountDao customerNationalAccountDao(@DaoKeyspace String keyspace);
+
+    @DaoFactory
+    CustomerApplyDiscountDao customerApplyDiscountDao(@DaoKeyspace String keyspace);
 }
