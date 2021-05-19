@@ -5,6 +5,7 @@ import com.datastax.oss.driver.api.core.MappedAsyncPagingIterable;
 import com.datastax.oss.driver.api.core.PagingIterable;
 import com.datastax.oss.driver.api.core.cql.*;
 import com.datastax.oss.driver.api.core.data.UdtValue;
+import com.datastax.oss.driver.api.mapper.annotations.Insert;
 import com.datastax.oss.protocol.internal.util.Bytes;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -132,6 +133,54 @@ public class CustomerTest {
 
         dropTestKeyspace();
         if (session != null) session.close();
+    }
+
+    @Test
+    public void applyDiscountUpdateTest(){
+        String acctNum = "123456789";
+        String opco = "FX";
+        Boolean applyDiscountFlag = true;
+        Instant effectiveDT = Instant.parse("2021-05-01T01:00:00.001Z");
+        Instant expirationDT = Instant.parse("2015-12-10T00:00:00.001Z");
+
+        CustomerApplyDiscount appDisc = new CustomerApplyDiscount();
+
+        appDisc.setAccountNumber(acctNum);
+        appDisc.setOpco(opco);
+        appDisc.setApplyDiscountFlag(applyDiscountFlag);
+        appDisc.setDisountEffectiveDateTime(effectiveDT);
+        appDisc.setDisountExpirationateTime(expirationDT);
+
+        //save initial version of the record
+        daoApplyDiscount.save(appDisc);
+
+        //retrieve initial version and verify property values
+        CustomerApplyDiscount readAppDisc = daoApplyDiscount.findByKeys(acctNum, opco, effectiveDT);
+        assert(readAppDisc.getAccountNumber().equals(acctNum));
+        assert(readAppDisc.getOpco().equals(opco));
+        assert(readAppDisc.getApplyDiscountFlag() == applyDiscountFlag);
+        assert(readAppDisc.getDisountEffectiveDateTime().equals(effectiveDT));
+        assert(readAppDisc.getDisountExpirationateTime().equals(expirationDT));
+
+
+        //update retrieved record
+        Boolean updatedApplyDiscountFlag = false;
+        Instant updatedExpirationDT = Instant.parse("2016-04-15T00:00:00.001Z");
+        readAppDisc.setApplyDiscountFlag(updatedApplyDiscountFlag);
+        readAppDisc.setDisountExpirationateTime(updatedExpirationDT);
+
+        daoApplyDiscount.update(readAppDisc);
+
+        //retrieve updated version and verify property values were updated
+        CustomerApplyDiscount foundUpdatedAppDisc = daoApplyDiscount.findByKeys(acctNum, opco, effectiveDT);
+        assert(foundUpdatedAppDisc.getAccountNumber().equals(acctNum));
+        assert(foundUpdatedAppDisc.getOpco().equals(opco));
+        assert(foundUpdatedAppDisc.getApplyDiscountFlag() == updatedApplyDiscountFlag);
+        assert(foundUpdatedAppDisc.getDisountEffectiveDateTime().equals(effectiveDT));
+        assert(foundUpdatedAppDisc.getDisountExpirationateTime().equals(updatedExpirationDT));
+
+        //cleanup test record
+        daoApplyDiscount.delete(appDisc);
     }
 
     @Test
