@@ -19,13 +19,13 @@ public interface CustomerApplyDiscountDao {
     @Select
     CompletableFuture<MappedAsyncPagingIterable<CustomerApplyDiscount>> findAllByAccountNumberAsync(String accountNum);
 
-//    @Select(customWhereClause = "account_number = :accountNum and solr_query = :solrParam")
-//    CompletableFuture<MappedAsyncPagingIterable<CustomerApplyDiscount>> findAllByAccountSearchAsync(String accountNum, String solrParam);
+    @Select(customWhereClause = "account_number = :accountNum and solr_query = :solrParam")
+    CompletableFuture<MappedAsyncPagingIterable<CustomerApplyDiscount>> findAllByAccountSearchAsync(String accountNum, String solrParam);
 
 //    @Query("select * from apply_discount_detail_v1 where account_number = '000001236'and solr_query = :solrParam")
 //    CompletableFuture<MappedAsyncPagingIterable<CustomerApplyDiscount>> findAllByAccountSearchAsync(String solrParam);
 
-    @Query("select * from apply_discount_detail_v1 where solr_query = :solrParam")
-    CompletableFuture<MappedAsyncPagingIterable<CustomerApplyDiscount>> findAllByAccountSearchAsync(String solrParam);
+//    @Query("select * from apply_discount_detail_v1 where solr_query = :solrParam")
+//    CompletableFuture<MappedAsyncPagingIterable<CustomerApplyDiscount>> findAllByAccountSearchAsync(String solrParam);
 
 }

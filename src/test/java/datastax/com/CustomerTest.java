@@ -13,6 +13,7 @@ import org.junit.Test;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -167,15 +168,41 @@ public class CustomerTest {
     public void applyDiscountSearchAsyncTest() throws ExecutionException, InterruptedException {
         String acctNum = "000001236";
         String opco = "FX";
-        int expectResultSize = 10;
+        Boolean applyDiscountFlag = true;
+        Instant effectiveDT = Instant.parse("2018-11-01T01:00:00.001Z");
+        Instant expriationDT = Instant.parse("2019-01-01T00:00:00.001Z");
 
-        String solrParm = CustomerApplyDiscountHelper.constructSearchQuery(opco);
-        System.out.println("Solrquery - " + solrParm);
+        //Solr filter on opco value only
+        int expectedResultSize1 = 11;
+        String solrParm1 = CustomerApplyDiscountHelper.constructSearchQuery(opco);
+        CompletableFuture<MappedAsyncPagingIterable<CustomerApplyDiscount>> cfDiscounts1 =
+                daoApplyDiscount.findAllByAccountSearchAsync(acctNum, solrParm1);
+        cfDiscounts1.join();
+        assert(cfDiscounts1.get().remaining() == expectedResultSize1);
 
-        CompletableFuture<MappedAsyncPagingIterable<CustomerApplyDiscount>> cfDiscounts =
-                daoApplyDiscount.findAllByAccountSearchAsync(solrParm);
-        cfDiscounts.join();
-        assert(cfDiscounts.get().remaining() == expectResultSize);
+        //Solr filter on opco and apply discount flag values only
+        int expectedResultSize2 = 6;
+        String solrParm2 = CustomerApplyDiscountHelper.constructSearchQuery(opco, applyDiscountFlag);
+        CompletableFuture<MappedAsyncPagingIterable<CustomerApplyDiscount>> cfDiscounts2 =
+                daoApplyDiscount.findAllByAccountSearchAsync(acctNum, solrParm2);
+        cfDiscounts2.join();
+        assert(cfDiscounts2.get().remaining() == expectedResultSize2);
+
+        //Solr filter on opco and effective date/time values only
+        int expectedResultSize3 = 7;
+        String solrParm3 = CustomerApplyDiscountHelper.constructSearchQuery(opco, effectiveDT);
+        CompletableFuture<MappedAsyncPagingIterable<CustomerApplyDiscount>> cfDiscounts3 =
+                daoApplyDiscount.findAllByAccountSearchAsync(acctNum, solrParm3);
+        cfDiscounts3.join();
+        assert(cfDiscounts3.get().remaining() == expectedResultSize3);
+
+        //Solr filter on opco, apply discount flag, effective date/time and expiration date/time
+        int expectedResultSize4 = 3;
+        String solrParm4 = CustomerApplyDiscountHelper.constructSearchQuery(opco, applyDiscountFlag, effectiveDT,expriationDT);
+        CompletableFuture<MappedAsyncPagingIterable<CustomerApplyDiscount>> cfDiscounts4 =
+                daoApplyDiscount.findAllByAccountSearchAsync(acctNum, solrParm4);
+        cfDiscounts4.join();
+        assert(cfDiscounts4.get().remaining() == expectedResultSize4);
     }
 
 
