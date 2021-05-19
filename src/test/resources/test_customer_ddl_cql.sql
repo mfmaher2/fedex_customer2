@@ -64,6 +64,11 @@ CREATE TYPE IF NOT EXISTS line_of_business_contact_type(
     comment text,
 );
 
+CREATE TYPE IF NOT EXISTS time_event_additional_details_items(
+    name text,
+    value text
+);
+
 CREATE TABLE IF NOT EXISTS cust_acct_v1 (
     account_number text,
     opco text,
@@ -958,6 +963,32 @@ CREATE TABLE IF NOT EXISTS consignor_v1 (
      AND min_index_interval = 128
      AND read_repair_chance = 0.0
      AND speculative_retry = '99PERCENTILE';
+
+CREATE TABLE IF NOT EXISTS time_event_v1 (
+    account_number text,
+    type text,
+    status text,
+    create_time timestamp,
+    process_time timestamp,
+    event_processed_time timestamp,
+    additional_details_items set<frozen<time_event_additional_details_items>>,
+    last_update_timestamp timestamp,
+    PRIMARY KEY(account_number, process_time, type, status))
+WITH CLUSTERING ORDER BY (process_time DESC, type ASC, status ASC)
+    AND bloom_filter_fp_chance = 0.01
+    AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+    AND comment = ''
+    AND compaction = {'class': 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy', 'enabled': 'true', 'sstable_size_in_mb': '160', 'tombstone_compaction_interval': '86400', 'tombstone_threshold': '0.2', 'unchecked_tombstone_compaction': 'false'}
+    AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+    AND crc_check_chance = 1.0
+    AND dclocal_read_repair_chance = 0.0
+    AND default_time_to_live = 0
+    AND gc_grace_seconds = 864000
+    AND max_index_interval = 2048
+    AND memtable_flush_period_in_ms = 0
+    AND min_index_interval = 128
+    AND read_repair_chance = 0.0
+    AND speculative_retry = '99PERCENTILE';
 
 --Temporary table for sample code and sample data functionality
 CREATE TABLE IF NOT EXISTS contact (
