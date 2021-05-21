@@ -1,5 +1,6 @@
 package datastax.com;
 
+import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.MappedAsyncPagingIterable;
 import com.datastax.oss.driver.api.core.PagingIterable;
@@ -51,7 +52,7 @@ public class CustomerTest {
         System.out.println(productName + " - before init() method called");
 
         try{
-            session = builder()
+            session = CqlSession.builder()
 //                    .addContactPoints("127.0.0.1") //should have multiple (2+) contactpoints listed
 //                    .withQueryOptions(new QueryOptions().setConsistencyLevel(ConsistencyLevel.LOCAL_QUORUM))
 //                    .withLoadBalancingPolicy(
@@ -403,6 +404,103 @@ public class CustomerTest {
 
         assert(rs2.isFullyFetched() == true );
         assert(rs2.getAvailableWithoutFetching() == (expectedTotalSize - pageSize));
+
+        //sample calls to Bytes utility methods
+        String temp = Bytes.toHexString(pagingState);
+        System.out.println(temp);
+
+        ByteBuffer buff = Bytes.fromHexString(temp);
+        System.out.println(buff);
+    }
+    @Test
+    public void sampleTestSearch(){
+        String acctID = "00112770";
+        String query = "select * from " + keyspaceName + ".national_account_v1 where solr_query = 'account_number:" + acctID + "';";
+        System.out.println(query);
+
+        int expectedTotalSize = 5;
+        int pageSize = 3;
+        SimpleStatement stmt = SimpleStatement.builder(query).setPageSize(pageSize).setConsistencyLevel(ConsistencyLevel.LOCAL_ONE).build();
+        ResultSet rs =  session.execute(stmt);
+
+        ByteBuffer pagingState = rs.getExecutionInfo().getPagingState();
+        System.out.println("Initial paging state - " + pagingState);
+
+        assert(rs.isFullyFetched() == false );
+        assert(rs.getAvailableWithoutFetching() == pageSize);
+        while(rs.getAvailableWithoutFetching()>0){
+            Row row = rs.one();
+            //do something with row
+        }
+
+        SimpleStatement stmt2 = SimpleStatement.builder(query).setPagingState(pagingState).build();
+        ResultSet rs2 = session.execute(stmt2);
+
+        assert(rs2.isFullyFetched() == true );
+        assert(rs2.getAvailableWithoutFetching() == (expectedTotalSize - pageSize));
+
+        //sample calls to Bytes utility methods
+        String temp = Bytes.toHexString(pagingState);
+        System.out.println(temp);
+
+        ByteBuffer buff = Bytes.fromHexString(temp);
+        System.out.println(buff);
+    }
+    @Test
+    public void sampleTestSearchMultiPage(){
+        String acctID = "00112770";
+        String query = "select * from " + keyspaceName + ".national_account_v1 where solr_query = 'account_number:" + acctID + "';";
+        System.out.println(query);
+
+        int expectedTotalSize = 5;
+        int pageSize = 2;
+        SimpleStatement stmt = SimpleStatement.builder(query).setPageSize(pageSize).setConsistencyLevel(ConsistencyLevel.LOCAL_ONE).build();
+        ResultSet rs =  session.execute(stmt);
+
+        ByteBuffer pagingState = rs.getExecutionInfo().getPagingState();
+        System.out.println("Initial paging state - " + pagingState);
+
+        assert(rs.isFullyFetched() == false );
+        assert(rs.getAvailableWithoutFetching() == pageSize);
+
+        System.out.println("Initial page fetch - ");
+        while(rs.getAvailableWithoutFetching()>0){
+            Row row = rs.one();
+            System.out.println("\t" + row.getInstant("last_update_tmstp").toString());
+            //do something with row
+        }
+
+        SimpleStatement stmt2 = SimpleStatement.builder(query).setPageSize(pageSize).setPagingState(pagingState).build();
+        ResultSet rs2 = session.execute(stmt2);
+
+        ByteBuffer pagingState2 = rs2.getExecutionInfo().getPagingState();
+        System.out.println("Second paging state - " + pagingState2);
+
+        assert(rs2.isFullyFetched() == false );
+        assert(rs2.getAvailableWithoutFetching() == pageSize);
+        System.out.println("\nSecond page fetch - ");
+        while(rs2.getAvailableWithoutFetching()>0){
+            Row row = rs2.one();
+            System.out.println("\t" + row.getInstant("last_update_tmstp").toString());
+            //do something with row
+        }
+
+        SimpleStatement stmt3 = SimpleStatement.builder(query).setPageSize(pageSize).setPagingState(pagingState2).build();
+        ResultSet rs3 = session.execute(stmt2);
+
+//        ByteBuffer pagingState3 = rs3.getExecutionInfo().getPagingState();
+//        System.out.println("Third paging state - " + pagingState2);
+
+//        assert(rs3.isFullyFetched() == false );
+//        int fetchAvailable = rs3.getAvailableWithoutFetching();
+////        assert(fetchAvailable == (expectedTotalSize-(pageSize*2)));
+//        System.out.println("\nThird page fetch - ");
+//        while(rs3.getAvailableWithoutFetching()>0){
+//            Row row = rs3.one();
+//            System.out.println("\t" + row.getInstant("last_update_tmstp").toString());
+//            //do something with row
+//        }
+
 
         //sample calls to Bytes utility methods
         String temp = Bytes.toHexString(pagingState);
