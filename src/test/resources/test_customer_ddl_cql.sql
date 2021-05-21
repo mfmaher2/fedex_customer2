@@ -990,6 +990,103 @@ WITH CLUSTERING ORDER BY (process_time DESC, type ASC, status ASC)
     AND read_repair_chance = 0.0
     AND speculative_retry = '99PERCENTILE';
 
+
+-- expressCustomerAccountDynamicProfile
+-- groundCustomerAccountDynamicProfile
+CREATE TABLE IF NOT EXISTS account_dynamic_profile (
+    account_number text,
+    opco text,
+    last_update_timestamp timestamp,
+    payor_type text,
+    shipment_type text,
+    packageQuantityForLastYear float,
+    averageDailyRevenueFromLastYear float,
+    totalRevenueAmountForLastYear float,
+    averageDailyPackageQuantityForLastYear float,
+    averageDailyPackageQuantityForLastMonth float,
+    averageDailyRevenueAmountForLastMonth float,
+    averageDailyRevenueAmountForLastYear float,
+    firstShipDate date,
+    lastShipDate date,
+    riskScore	int,
+
+ PRIMARY KEY(account_number, opco, payor_type, shipment_type))
+WITH CLUSTERING ORDER BY (opco ASC, payor_type ASC, shipment_type ASC)
+    AND bloom_filter_fp_chance = 0.01
+    AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+    AND comment = ''
+    AND compaction = {'class': 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy', 'enabled': 'true', 'sstable_size_in_mb': '160', 'tombstone_compaction_interval': '86400', 'tombstone_threshold': '0.2', 'unchecked_tombstone_compaction': 'false'}
+    AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+    AND crc_check_chance = 1.0
+    AND dclocal_read_repair_chance = 0.0
+    AND default_time_to_live = 0
+    AND gc_grace_seconds = 864000
+    AND max_index_interval = 2048
+    AND memtable_flush_period_in_ms = 0
+    AND min_index_interval = 128
+    AND read_repair_chance = 0.0
+    AND speculative_retry = '99PERCENTILE';
+
+-- expressCustomerEntityDynamicProfile
+-- groundCustomerEntityDynamicProfile
+-- freightCustomerEntityDynamicProfile
+CREATE TABLE IF NOT EXISTS entity_dynamic_profile (
+    entity_number text,
+    opco text,
+    last_update_timestamp timestamp,
+    payor_type text,
+    shipment_type text,
+    packageQuantityForLastYear float,
+    netRevenueForLastYear float,
+
+ PRIMARY KEY(entity_number, opco, payor_type, shipment_type))
+ WITH CLUSTERING ORDER BY (opco ASC, payor_type ASC, shipment_type ASC)
+    AND bloom_filter_fp_chance = 0.01
+    AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+    AND comment = ''
+    AND compaction = {'class': 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy', 'enabled': 'true', 'sstable_size_in_mb': '160', 'tombstone_compaction_interval': '86400', 'tombstone_threshold': '0.2', 'unchecked_tombstone_compaction': 'false'}
+    AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+    AND crc_check_chance = 1.0
+    AND dclocal_read_repair_chance = 0.0
+    AND default_time_to_live = 0
+    AND gc_grace_seconds = 864000
+    AND max_index_interval = 2048
+    AND memtable_flush_period_in_ms = 0
+    AND min_index_interval = 128
+    AND read_repair_chance = 0.0
+    AND speculative_retry = '99PERCENTILE';
+
+
+-- expressInvoicePaymentProfile
+CREATE TABLE IF NOT EXISTS invoice_payment_profile (
+    account_number text,
+    opco text,
+    last_update_timestamp timestamp,
+    payor_type text,
+    shipment_type text,
+    lastPaymentAmount float,
+    lastPaymentDate date,
+    returnedChecksAmount float,
+
+ PRIMARY KEY(account_number, opco, payor_type, shipment_type))
+WITH CLUSTERING ORDER BY (opco ASC, payor_type ASC, shipment_type ASC)
+    AND bloom_filter_fp_chance = 0.01
+    AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+    AND comment = ''
+    AND compaction = {'class': 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy', 'enabled': 'true', 'sstable_size_in_mb': '160', 'tombstone_compaction_interval': '86400', 'tombstone_threshold': '0.2', 'unchecked_tombstone_compaction': 'false'}
+    AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+    AND crc_check_chance = 1.0
+    AND dclocal_read_repair_chance = 0.0
+    AND default_time_to_live = 0
+    AND gc_grace_seconds = 864000
+    AND max_index_interval = 2048
+    AND memtable_flush_period_in_ms = 0
+    AND min_index_interval = 128
+    AND read_repair_chance = 0.0
+    AND speculative_retry = '99PERCENTILE';
+
+
+
 --Temporary table for sample code and sample data functionality
 CREATE TABLE IF NOT EXISTS contact (
     contact_document_id bigint, --added field for key
