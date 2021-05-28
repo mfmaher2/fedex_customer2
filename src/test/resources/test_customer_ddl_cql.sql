@@ -3,7 +3,7 @@ USE customer;
 CREATE TYPE IF NOT EXISTS telecom_details_type (
     telecom_method text,
     numeric_country_code text,
-    aplha_country_code text,
+    alpha_country_code text,
     area_code text,
     phone_number text,
     extension text,
@@ -157,7 +157,7 @@ CREATE TABLE IF NOT EXISTS cust_acct_v1 (
     credit_detail__credit_alert_parent_type text,
     credit_detail__credit_limit text,
     credit_detail__credit_limit_tolerance_pct int,
-    credit_detail__override_date date,
+    credit_detail__credit_override_date date,
     credit_detail__credit_rating text,
     credit_detail__receivership_account_number text,
     credit_detail__receivership_date date,
@@ -201,8 +201,10 @@ CREATE TABLE IF NOT EXISTS cust_acct_v1 (
     --express_edi
     edi__cust_inv_rept_flag boolean,
     edi__dom_data_frmt text,
+    edi__dom_frmt_ver text,
     edi__dom_inv_print_until_date date,
     edi__intl_data_frmt text,
+    edi__intl_inv_frmt_ver text,
     edi__intl_inv_print_until_date date,
     edi__mm_bill_3rd_party text,
     edi__mm_bill_recip text,
@@ -993,24 +995,23 @@ WITH CLUSTERING ORDER BY (process_time DESC, type ASC, status ASC)
 
 -- expressCustomerAccountDynamicProfile
 -- groundCustomerAccountDynamicProfile
-CREATE TABLE IF NOT EXISTS account_dynamic_profile (
+CREATE TABLE IF NOT EXISTS account_dynamic_profile_v1 (  //need _v1 in table name?
     account_number text,
     opco text,
     last_update_timestamp timestamp,
-    payor_type text,
-    shipment_type text,
-    packageQuantityForLastYear float,
-    averageDailyRevenueFromLastYear float,
-    totalRevenueAmountForLastYear float,
-    averageDailyPackageQuantityForLastYear float,
-    averageDailyPackageQuantityForLastMonth float,
-    averageDailyRevenueAmountForLastMonth float,
-    averageDailyRevenueAmountForLastYear float,
-    firstShipDate date,
-    lastShipDate date,
-    riskScore	int,
-
- PRIMARY KEY(account_number, opco, payor_type, shipment_type))
+    payor_type text,                        //slightly altered naming convention, no path prefix - keep simplified?
+    shipment_type text,                     //slightly altered naming convention, no path prefix - keep simplified?
+    package_quantity_for_last_year float,
+    average_daily_revenue_from_last_year float,
+    total_revenue_amount_for_last_year float,
+    average_daily_package_quantity_for_last_year float,
+    average_daily_package_quantity_for_last_month float,
+    average_daily_revenue_amount_for_last_month float,
+    average_daily_revenue_amount_for_last_year float,
+    first_ship_date date,
+    last_ship_date date,
+    risk_score	int,
+    PRIMARY KEY(account_number, opco, payor_type, shipment_type))       //need confirm keys
 WITH CLUSTERING ORDER BY (opco ASC, payor_type ASC, shipment_type ASC)
     AND bloom_filter_fp_chance = 0.01
     AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
@@ -1030,16 +1031,15 @@ WITH CLUSTERING ORDER BY (opco ASC, payor_type ASC, shipment_type ASC)
 -- expressCustomerEntityDynamicProfile
 -- groundCustomerEntityDynamicProfile
 -- freightCustomerEntityDynamicProfile
-CREATE TABLE IF NOT EXISTS entity_dynamic_profile (
+CREATE TABLE IF NOT EXISTS entity_dynamic_profile_v1 ( //need _v1 in table name?
     entity_number text,
     opco text,
     last_update_timestamp timestamp,
     payor_type text,
     shipment_type text,
-    packageQuantityForLastYear float,
-    netRevenueForLastYear float,
-
- PRIMARY KEY(entity_number, opco, payor_type, shipment_type))
+    package_quantity_for_last_year float,
+    net_revenue_for_last_year float,
+    PRIMARY KEY(entity_number, opco, payor_type, shipment_type))
  WITH CLUSTERING ORDER BY (opco ASC, payor_type ASC, shipment_type ASC)
     AND bloom_filter_fp_chance = 0.01
     AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
@@ -1056,19 +1056,17 @@ CREATE TABLE IF NOT EXISTS entity_dynamic_profile (
     AND read_repair_chance = 0.0
     AND speculative_retry = '99PERCENTILE';
 
-
 -- expressInvoicePaymentProfile
-CREATE TABLE IF NOT EXISTS invoice_payment_profile (
+CREATE TABLE IF NOT EXISTS invoice_payment_profile_v1 ( //need _v1 in table name?
     account_number text,
     opco text,
     last_update_timestamp timestamp,
     payor_type text,
     shipment_type text,
-    lastPaymentAmount float,
-    lastPaymentDate date,
-    returnedChecksAmount float,
-
- PRIMARY KEY(account_number, opco, payor_type, shipment_type))
+    last_payment_amount float,
+    last_payment_date date,
+    returned_checks_amount float,
+    PRIMARY KEY(account_number, opco, payor_type, shipment_type))
 WITH CLUSTERING ORDER BY (opco ASC, payor_type ASC, shipment_type ASC)
     AND bloom_filter_fp_chance = 0.01
     AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
