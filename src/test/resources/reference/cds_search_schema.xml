@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+
+<schema name="customerAccount" version="1.5">
+
+    <types>
+
+        <fieldType class="org.apache.solr.schema.BoolField" name="BoolField"/>
+
+        <fieldType class="org.apache.solr.schema.TextField" name="TextField">
+            <analyzer>
+                <tokenizer class="solr.StandardTokenizerFactory"/>
+                <filter class="solr.UpperCaseFilterFactory"/>
+            </analyzer>
+        </fieldType>
+        <fieldType class="org.apache.solr.schema.TrieLongField" name="TrieLongField"/>
+        <fieldType class="com.datastax.bdp.search.solr.core.types.TupleField" name="TupleField"/>
+        <fieldType name="cdsNorm1" class="solr.TextField" omitNorms="true" sortMissingLast="true">
+            <analyzer type="index">
+                <tokenizer class="solr.KeywordTokenizerFactory"/>
+                <filter class="solr.PatternReplaceFilterFactory" pattern="[^a-zA-Z0-9]" replacement="" replace="all"/>
+                <filter class="solr.UpperCaseFilterFactory"/>
+            </analyzer>
+            <analyzer type="query">
+                <tokenizer class="solr.KeywordTokenizerFactory"/>
+                <filter class="solr.PatternReplaceFilterFactory" pattern="[^a-zA-Z0-9]" replacement="" replace="all"/>
+                <filter class="solr.UpperCaseFilterFactory"/>
+            </analyzer>
+        </fieldType>
+        <fieldType name="cdsNorm2" class="solr.TextField" omitNorms="true" sortMissingLast="true">
+            <analyzer type="index">
+                <tokenizer class="solr.KeywordTokenizerFactory"/>
+                <filter class="solr.PatternReplaceFilterFactory" pattern="[^a-zA-Z0-9\p{Punct}\p{Space}]" replacement="" replace="all"/>
+                <filter class="solr.UpperCaseFilterFactory"/>
+            </analyzer>
+            <analyzer type="query">
+                <tokenizer class="solr.KeywordTokenizerFactory"/>
+                <filter class="solr.PatternReplaceFilterFactory" pattern="[^a-zA-Z0-9\p{Punct}\p{Space}]" replacement="" replace="all"/>
+                <filter class="solr.UpperCaseFilterFactory"/>
+            </analyzer>
+        </fieldType>
+    </types>
+    <fields>
+        <field indexed="true" multiValued="false" name="documentId" stored="true" type="TrieLongField"/>
+        <field indexed="true" multiValued="true" name="contact" stored="true" type="TupleField"/>
+        <field indexed="true" multiValued="false" name="contact.documentId" stored="true" type="TrieLongField"/>
+        <field indexed="true" multiValued="false" name="contact.person_firstName" stored="true" type="cdsNorm1"/>
+        <field indexed="true" multiValued="false" name="contact.person_middleName" stored="true" type="cdsNorm1"/>
+        <field indexed="true" multiValued="false" name="contact.person_lastName" stored="true" type="cdsNorm1"/>
+        <field indexed="true" multiValued="false" name="contact.companyName" stored="true" type="cdsNorm1"/>
+        <field indexed="true" multiValued="false" name="contact.address_streetLine" stored="true" type="cdsNorm1"/>
+        <field indexed="true" multiValued="false" name="contact.address_additionalLine1" stored="true" type="cdsNorm1"/>
+        <field indexed="true" multiValued="false" name="contact.address_additionalLine2" stored="true" type="cdsNorm1"/>
+        <field indexed="true" multiValued="false" name="contact.address_geoPoliticalSubdivision1" stored="true" type="cdsNorm1"/>
+        <field indexed="true" multiValued="false" name="contact.address_geoPoliticalSubdivision2" stored="true" type="cdsNorm1"/>
+        <field indexed="true" multiValued="false" name="contact.address_geoPoliticalSubdivision3" stored="true" type="cdsNorm1"/>
+        <field indexed="true" multiValued="false" name="contact.address_postalCode" stored="true" type="cdsNorm1"/>
+        <field indexed="true" multiValued="false" name="contact.address_countryCode" stored="true" type="TextField"/>
+        <field indexed="true" multiValued="true" name="contact.teleCom_teleComMethod" stored="true" type="TextField"/>
+        <field indexed="true" multiValued="true" name="contact.teleCom_numericCountryCode" stored="true" type="TextField"/>
+        <field indexed="true" multiValued="true" name="contact.teleCom_alphaCountryCode" stored="true" type="TextField"/>
+        <field indexed="true" multiValued="true" name="contact.teleCom_areaCode" stored="true" type="cdsNorm1"/>
+        <field indexed="true" multiValued="true" name="contact.teleCom_phoneNumber" stored="true" type="cdsNorm1"/>
+        <field indexed="true" multiValued="false" name="contact.email" stored="true" type="cdsNorm1"/>
+        <field indexed="true" multiValued="true" name="contact.additionalEmailInfo_email" stored="true" type="cdsNorm1"/>
+        <field indexed="true" multiValued="false" name="contact.attentionTo" stored="true" type="cdsNorm1"/>
+        <field indexed="true" multiValued="true" name="accountContact" stored="true" type="TupleField"/>
+        <field indexed="true" multiValued="false" name="accountContact.documentId" stored="true" type="TrieLongField"/>
+        <field indexed="true" multiValued="false" name="accountContact.accountType_accountNumber" stored="true" type="cdsNorm1"/>
+        <field indexed="true" multiValued="false" name="accountContact.accountType_accountId_opco" stored="true" type="cdsNorm1"/>
+        <field indexed="true" multiValued="false" name="accountContact.accountType_accountId_number" stored="true" type="cdsNorm1"/>
+        <field indexed="true" multiValued="false" name="accountContact.contactTypeCode" stored="true" type="cdsNorm1"/>
+        <field indexed="true" multiValued="false" name="accountContact.contactDocumentId" stored="true" type="TrieLongField"/>
+        <field indexed="true" multiValued="false" name="accountContact.shareId" stored="true" type="cdsNorm1"/>
+        <field indexed="true" multiValued="false" name="cargoOperationsProfile" stored="true" type="TupleField"/>
+        <field indexed="true" multiValued="false" name="cargoOperationsProfile.profile_airportCode" stored="true" type="cdsNorm1"/>
+        <field indexed="true" multiValued="false" name="cargoOperationsProfile.profile_businessMode" stored="true" type="cdsNorm1"/>
+        <field indexed="true" multiValued="true" name="cargoOperationsProfile.profile_synonymName" stored="true" type="cdsNorm1"/>
+        <field indexed="true" multiValued="false" name="expressAccountProfile" stored="true" type="TupleField"/>
+        <field indexed="true" multiValued="false" name="expressAccountProfile.profile_accountType" stored="true" type="cdsNorm1"/>
+        <field indexed="true" multiValued="false" name="expressAccountProfile.profile_customerAccountStatus" stored="true" type="cdsNorm1"/>
+        <field indexed="true" multiValued="false" name="expressAccountProfile.profile_archiveReasonCode" stored="true" type="cdsNorm1"/>
+        <field indexed="true" multiValued="false" name="expressOperationsProfile" stored="true" type="TupleField"/>
+        <field indexed="true" multiValued="false" name="expressOperationsProfile.profile_interlineCode" stored="true" type="cdsNorm1"/>
+        <field indexed="true" multiValued="false" name="expressInvoicePreference" stored="true" type="TupleField"/>
+        <field indexed="true" multiValued="false" name="expressInvoicePreference.invoicePreference_billingRestrictionIndicator" stored="true" type="cdsNorm1"/>
+        <field indexed="true" multiValued="false" name="expressCreditDetail" stored="true" type="TupleField"/>
+        <field indexed="true" multiValued="false" name="expressCreditDetail.creditDetail_creditRating" stored="true" type="cdsNorm1"/>
+        <field indexed="true" multiValued="false" name="expressCreditDetail.creditDetail_cashOnlyReason" stored="true" type="cdsNorm1"/>
+        <field indexed="true" multiValued="false" name="freightAccountProfile" stored="true" type="TupleField"/>
+        <field indexed="true" multiValued="false" name="freightAccountProfile.profile_accountType" stored="true" type="cdsNorm1"/>
+        <field indexed="true" multiValued="false" name="freightAccountProfile.profile_customerAccountStatus" stored="true" type="cdsNorm1"/>
+        <field indexed="true" multiValued="false" name="freightAccountProfile.profile_archiveReasonCode" stored="true" type="cdsNorm1"/>
+        <field indexed="true" multiValued="true" name="nameLine" stored="false" type="cdsNorm1" docValues="true"/>
+    </fields>
+    <uniqueKey>documentId</uniqueKey>
+    <copyField source="contact.companyName" dest="nameLine"/>
+    <copyField source="contact.person_lastName" dest="nameLine"/>
+    <copyField source="contact.person_firstName" dest="nameLine"/>
+    <copyField source="cargoOperationsProfile.profile_synonymName" dest="nameLine"/>
+</schema>
