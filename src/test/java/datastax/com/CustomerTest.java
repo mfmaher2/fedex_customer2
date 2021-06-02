@@ -446,6 +446,7 @@ public class CustomerTest {
         ByteBuffer buff = Bytes.fromHexString(temp);
         System.out.println(buff);
     }
+
     @Test
     public void sampleTestSearchMultiPage(){
         String acctID = "00112770";
