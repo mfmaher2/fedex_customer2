@@ -1100,6 +1100,49 @@ WITH CLUSTERING ORDER BY (opco ASC, payor_type ASC, shipment_type ASC)
     AND speculative_retry = '99PERCENTILE';
 
 
+--Possible search use case specific table
+CREATE TABLE IF NOT EXISTS cam_search_v1 (
+       account_number text,
+       opco text,
+       profile__archive_reason_code text,
+       profile__customer_account_status text,
+       profile__account_type text,
+       invoice_preference__billing_restriction_indicator text,
+       credit_detail__cash_only_reason text,
+       credit_detail__credit_rating text,
+       profile__interline_cd text,
+       contact_document_id bigint,
+       contact_type_code text,
+       contact_business_id text,
+       company_name text,
+       person__first_name text,
+       person__last_name text,
+       person__middle_name text,
+       address__street_line text,
+       address__additional_line1 text,
+       address__geo_political_subdivision1 text,
+       address__geo_political_subdivision2 text,
+       address__geo_political_subdivision3 text,
+       address__postal_code text,
+       address__country_code text,
+       email text,
+       tele_com set<frozen<telecom_details_type>>,
+    PRIMARY KEY(account_number, opco, contact_document_id, contact_type_code, contact_business_id))
+WITH CLUSTERING ORDER BY(opco ASC, contact_document_id ASC, contact_type_code ASC, contact_business_id ASC)
+    AND bloom_filter_fp_chance = 0.01
+    AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+    AND comment = ''
+    AND compaction = {'class': 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy', 'enabled': 'true', 'sstable_size_in_mb': '160', 'tombstone_compaction_interval': '86400', 'tombstone_threshold': '0.2', 'unchecked_tombstone_compaction': 'false'}
+    AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+    AND crc_check_chance = 1.0
+    AND dclocal_read_repair_chance = 0.0
+    AND default_time_to_live = 0
+    AND gc_grace_seconds = 864000
+    AND max_index_interval = 2048
+    AND memtable_flush_period_in_ms = 0
+    AND min_index_interval = 128
+    AND read_repair_chance = 0.0
+    AND speculative_retry = '99PERCENTILE';
 
 --Temporary table for sample code and sample data functionality
 CREATE TABLE IF NOT EXISTS contact (

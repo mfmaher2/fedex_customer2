@@ -17,6 +17,9 @@ CREATE SEARCH INDEX IF NOT EXISTS ON cust_acct_v1
        profile__archive_reason_code,
        profile__customer_account_status,
        profile__account_type,
+       invoice_preference__billing_restriction_indicator,
+       credit_detail__cash_only_reason,
+       credit_detail__credit_rating,
        profile__interline_cd
 ;
 
@@ -61,7 +64,6 @@ CREATE SEARCH INDEX IF NOT EXISTS ON account_contact
        contact_document_id,
        contact_type_code,
        contact_business_id
-       contact_type_code,
        company_name,
        person__first_name,
        person__last_name,
