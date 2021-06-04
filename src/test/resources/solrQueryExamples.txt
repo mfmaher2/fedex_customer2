@@ -1,0 +1,5 @@
+http://localhost:8983/solr/customer.cust_acct_v1/select/?q=account_number:1111
+
+http://localhost:8983/solr/customer.cust_acct_v1/select/?q={!join+fromIndex=customer.account_contact}account_number:1111
+
+http://localhost:8983/solr/customer.cust_acct_v1/select/?q=account_number:1111%20AND%20opco:op1

@@ -58,6 +58,9 @@ CREATE SEARCH INDEX IF NOT EXISTS ON account_contact
     WITH COLUMNS
        account_number,
        opco,
+       contact_document_id,
+       contact_type_code,
+       contact_business_id
        contact_type_code,
        company_name,
        person__first_name,
