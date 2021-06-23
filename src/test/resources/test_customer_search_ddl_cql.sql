@@ -63,7 +63,7 @@ CREATE SEARCH INDEX IF NOT EXISTS ON account_contact
        opco,
        contact_document_id,
        contact_type_code,
-       contact_business_id
+       contact_business_id,
        company_name,
        person__first_name,
        person__last_name,
