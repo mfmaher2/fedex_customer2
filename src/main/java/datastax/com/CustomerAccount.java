@@ -13,7 +13,6 @@ public class CustomerAccount {
     @ClusteringColumn private String opco;
     @CqlName("profile__customer_type") private String profileCustomerType;
     @CqlName("profile__account_type") private String profileAccountType;
-
     @CqlName("profile__account_status__status_code") private String profileAccountStatusCode;
     @CqlName("profile__account_status__reason_code") private String profileAccountReasonCode;
     @CqlName("profile__enterprise_source") private String profileEnterpriseSource;

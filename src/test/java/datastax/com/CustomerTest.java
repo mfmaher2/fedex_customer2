@@ -23,6 +23,8 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.datastax.oss.driver.api.core.CqlSession.*;
 
@@ -540,10 +542,11 @@ public class CustomerTest {
         assert(foundCust.getProfileAccountReasonCode().equals(acctReason));
         assert(foundCust.getProfileEnterpriseSource().equals(entSource));
 
-        //delete single poperty
+        //test delete single poperty
+        String deleteProp = "profile__account_type";
         String stmtDeletProperty =
                 "DELETE \n" +
-                "    profile__account_type \n" +
+                "    " + deleteProp + " \n" +
                 "FROM\n" +
                 "    cust_acct_v1 \n" +
                 "WHERE \n" +
@@ -552,37 +555,42 @@ public class CustomerTest {
 
         session.execute(stmtDeletProperty);
         CustomerAccount foundCustDelProp = daoAccount.findByAccountNumber(acctID);
-        assert(foundCustDelProp.getOpco().equals(opco));
+        //check that deleted property is no longer in record
         assert(foundCustDelProp.getProfileAccountType() == null);
+        //check that all other properties still set to expected values
+        assert(foundCustDelProp.getOpco().equals(opco));
+        assert(foundCustDelProp.getProfileCustomerType().equals(custType));
+        assert(foundCustDelProp.getProfileAccountStatusCode().equals(acctStatus));
+        assert(foundCustDelProp.getProfileAccountReasonCode().equals(acctReason));
+        assert(foundCustDelProp.getProfileEnterpriseSource().equals(entSource));
 
-//        CustomerAccount custNulls1 = new CustomerAccount();
-//        custNulls1.setAccountNumber(acctID);
-//        custNulls1.setOpco(opco);
-//        custNulls1.setProfileCustomerType(null);
-//
-//        daoAccount.updateNulls(custNulls1);
-//        daoAccount.update(custNulls1);
+        //test delete multiple poperties
+        List<String> deleteProps = Stream.of(
+                "profile__customer_type",
+                "profile__account_status__status_code",
+                "profile__account_status__reason_code"
+            ).collect(Collectors.toList());
 
-//        CustomerAccount custNulls2 = foundCust;
-//        custNulls2.setProfileCustomerType(null);
-//
-//        daoAccount.updateNulls(custNulls2);
+        String stmtDeleteMultiProperties =
+                "DELETE \n" +
+                "    " + String.join(",", deleteProps) + " \n" +
+                "FROM\n" +
+                "    cust_acct_v1 \n" +
+                "WHERE \n" +
+                "    account_number = '" + acctID + "'\n" +
+                "    AND opco = '" + opco + "';";
 
-//        CustomerAccount custNulls3 = foundCust;
-//        custNulls3.setProfileCustomerType(null);
-//
-//        daoAccount.updateNoSet(custNulls3);
-//
-//        unset.value
-//
-//        PreparedStatement ps1 = session.prepare("");
-//        BoundStatement bound = ps1.bind("");
-//        bound.unset()
-
-
+        session.execute(stmtDeleteMultiProperties);
+        CustomerAccount foundCustDelMultiProps = daoAccount.findByAccountNumber(acctID);
+        //check that deleted properties are no longer in record
+        assert(foundCustDelMultiProps.getProfileCustomerType() == null);
+        assert(foundCustDelMultiProps.getProfileAccountType() == null);
+        assert(foundCustDelMultiProps.getProfileAccountStatusCode()== null);
+        assert(foundCustDelMultiProps.getProfileAccountReasonCode()== null);
+        //check that all other properties still set to expected values
+        assert(foundCustDelMultiProps.getOpco().equals(opco));
+        assert(foundCustDelMultiProps.getProfileEnterpriseSource().equals(entSource));
     }
-
-
 
     @Test
     public void combineAsyncQueryTest() throws ExecutionException, InterruptedException {
