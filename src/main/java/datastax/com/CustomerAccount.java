@@ -14,6 +14,9 @@ public class CustomerAccount {
     @CqlName("profile__customer_type") private String profileCustomerType;
     @CqlName("profile__account_type") private String profileAccountType;
 
+    @CqlName("profile__account_status__status_code") private String profileAccountStatusCode;
+    @CqlName("profile__account_status__reason_code") private String profileAccountReasonCode;
+    @CqlName("profile__enterprise_source") private String profileEnterpriseSource;
 
     public CustomerAccount() {};
 
@@ -28,4 +31,13 @@ public class CustomerAccount {
 
     public String getProfileAccountType() { return profileAccountType;}
     public void setProfileAccountType(String val) { profileAccountType = val;}
+
+    public String getProfileAccountStatusCode() { return profileAccountStatusCode;}
+    public void setProfileAccountStatusCode(String val) { profileAccountStatusCode = val;}
+
+    public String getProfileAccountReasonCode() { return profileAccountReasonCode;}
+    public void setProfileAccountReasonCode(String val) { profileAccountReasonCode = val;}
+
+    public String getProfileEnterpriseSource() { return profileEnterpriseSource;}
+    public void setProfileEnterpriseSource(String val) { profileEnterpriseSource = val;}
 }

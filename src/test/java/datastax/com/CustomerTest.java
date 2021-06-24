@@ -512,6 +512,79 @@ public class CustomerTest {
     }
 
     @Test
+    public void verifyCusomterNullPropertyUpdate(){
+        String acctID = "998877";
+        String opco = "opc1";
+        String custType = "custType1";
+        String acctType = "acctType1";
+        String acctStatus = "status1";
+        String acctReason = "reason1";
+        String entSource = "entSource1";
+
+        CustomerAccount custAllProps = new CustomerAccount();
+        custAllProps.setAccountNumber(acctID);
+        custAllProps.setOpco(opco);
+        custAllProps.setProfileCustomerType(custType);
+        custAllProps.setProfileAccountType(acctType);
+        custAllProps.setProfileAccountStatusCode(acctStatus);
+        custAllProps.setProfileAccountReasonCode(acctReason);
+        custAllProps.setProfileEnterpriseSource(entSource);
+        daoAccount.save(custAllProps);
+
+        //verify all properties exist in rcord before deleting select properties
+        CustomerAccount foundCust = daoAccount.findByAccountNumber(acctID);
+        assert(foundCust.getOpco().equals(opco));
+        assert(foundCust.getProfileCustomerType().equals(custType));
+        assert(foundCust.getProfileAccountType().equals(acctType));
+        assert(foundCust.getProfileAccountStatusCode().equals(acctStatus));
+        assert(foundCust.getProfileAccountReasonCode().equals(acctReason));
+        assert(foundCust.getProfileEnterpriseSource().equals(entSource));
+
+        //delete single poperty
+        String stmtDeletProperty =
+                "DELETE \n" +
+                "    profile__account_type \n" +
+                "FROM\n" +
+                "    cust_acct_v1 \n" +
+                "WHERE \n" +
+                "    account_number = '" + acctID + "'\n" +
+                "    AND opco = '" + opco + "';";
+
+        session.execute(stmtDeletProperty);
+        CustomerAccount foundCustDelProp = daoAccount.findByAccountNumber(acctID);
+        assert(foundCustDelProp.getOpco().equals(opco));
+        assert(foundCustDelProp.getProfileAccountType() == null);
+
+//        CustomerAccount custNulls1 = new CustomerAccount();
+//        custNulls1.setAccountNumber(acctID);
+//        custNulls1.setOpco(opco);
+//        custNulls1.setProfileCustomerType(null);
+//
+//        daoAccount.updateNulls(custNulls1);
+//        daoAccount.update(custNulls1);
+
+//        CustomerAccount custNulls2 = foundCust;
+//        custNulls2.setProfileCustomerType(null);
+//
+//        daoAccount.updateNulls(custNulls2);
+
+//        CustomerAccount custNulls3 = foundCust;
+//        custNulls3.setProfileCustomerType(null);
+//
+//        daoAccount.updateNoSet(custNulls3);
+//
+//        unset.value
+//
+//        PreparedStatement ps1 = session.prepare("");
+//        BoundStatement bound = ps1.bind("");
+//        bound.unset()
+
+
+    }
+
+
+
+    @Test
     public void combineAsyncQueryTest() throws ExecutionException, InterruptedException {
         //execute async queries
         String acctID = "1111";
