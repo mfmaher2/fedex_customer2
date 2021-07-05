@@ -139,6 +139,30 @@ public class CustomerTest {
     }
 
     @Test
+    public void containUTFTest(){
+        char euroUTF = '\u20ac';
+
+        String acctNum = "987654321";
+        String opco = "testOpco";
+        String acctType = String.valueOf(euroUTF);
+
+        CustomerAccount custAcct = new CustomerAccount();
+        custAcct.setAccountNumber(acctNum);
+        custAcct.setOpco(opco);
+        custAcct.setProfileAccountType(acctType);
+
+        daoAccount.save(custAcct);
+
+        CustomerAccount foundAcct = daoAccount.findByAccountNumber(acctNum);
+        String foundAcctType = foundAcct.getProfileAccountType();
+
+        assert(foundAcctType.equals(acctType));
+
+        //cleanup
+        daoAccount.delete(custAcct);
+    }
+
+    @Test
     public void applyDiscountUpdateTest(){
         String acctNum = "123456789";
         String opco = "FX";
