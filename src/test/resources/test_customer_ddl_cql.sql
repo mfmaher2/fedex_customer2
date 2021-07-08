@@ -250,7 +250,7 @@ CREATE TABLE IF NOT EXISTS cust_acct_v1 (
     invoice_preference__invoice__level_discount_exp_date date,
     invoice_preference__invoice__level_discount_flag_cd text,
     invoice_preference__invoice__minimum_override_flag boolean,
-    invoice_preference__invoice__opiton_flag_cd text,
+    invoice_preference__invoice__option_flag_cd text,
     invoice_preference__invoice__page_layout_indicator int,
     invoice_preference__invoice__transaction_breakup_type int,
     invoice_preference__invoice__wait_days int,
@@ -308,7 +308,7 @@ CREATE TABLE IF NOT EXISTS cust_acct_v1 (
     tax_info__vat__type text,
     tax_info__vat__number text,
     tax_info__vat__exemption_code text,
-    tax_info__vat__exeption_ref text,
+    tax_info__vat__exception_ref text,
     tax_info__vat__eff_date date,
     tax_info__vat__exp_date date,
     tax_info__vat__response_code int,
@@ -1073,7 +1073,8 @@ CREATE TABLE IF NOT EXISTS entity_dynamic_profile_v1 ( //need _v1 in table name?
     AND speculative_retry = '99PERCENTILE';
 
 -- expressInvoicePaymentProfile
-CREATE TABLE IF NOT EXISTS invoice_payment_profile_v1 ( //need _v1 in table name?
+-- need _v1 in table name?
+CREATE TABLE IF NOT EXISTS invoice_payment_profile_v1 (
     account_number text,
     opco text,
     last_update_timestamp timestamp,
@@ -1126,9 +1127,11 @@ CREATE TABLE IF NOT EXISTS cam_search_v1 (
        address__postal_code text,
        address__country_code text,
        email text,
+       profile__synonym_name_1 text,
+       profile__synonym_name_2 text,
        tele_com set<frozen<telecom_details_type>>,
-    PRIMARY KEY(account_number, opco, contact_document_id, contact_type_code, contact_business_id))
-WITH CLUSTERING ORDER BY(opco ASC, contact_document_id ASC, contact_type_code ASC, contact_business_id ASC)
+    PRIMARY KEY(account_number, opco, contact_type_code, contact_business_id))
+WITH CLUSTERING ORDER BY(opco ASC, contact_document_id ASC, contact_type_code ASC)
     AND bloom_filter_fp_chance = 0.01
     AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
     AND comment = ''
