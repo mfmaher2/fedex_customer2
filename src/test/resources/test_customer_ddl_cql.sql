@@ -468,6 +468,12 @@ CREATE TABLE IF NOT EXISTS cust_acct_v1 (
     profile__blind_shipper_flag boolean,
     profile__pricing_code text,
 
+    -- eligibility (stanza?)
+    eligibility__ground boolean,
+    eligibility__express boolean,
+    eligibility__freight boolean,
+    eligibility__office boolean,
+
     -- nationalAccount   -- QUESTION . We need another table...... ?
     PRIMARY KEY(account_number, opco))
 WITH CLUSTERING ORDER BY (opco ASC)
@@ -1108,10 +1114,13 @@ CREATE TABLE IF NOT EXISTS cam_search_v1 (
        profile__archive_reason_code text,
        profile__customer_account_status text,
        profile__account_type text,
+       profile__airport_code text,
+       profile__synonym_name_1 text,
+       profile__synonym_name_2 text,
+       profile__interline_cd text,
        invoice_preference__billing_restriction_indicator text,
        credit_detail__cash_only_reason text,
        credit_detail__credit_rating text,
-       profile__interline_cd text,
        contact_document_id bigint,
        contact_type_code text,
        contact_business_id text,
@@ -1127,11 +1136,9 @@ CREATE TABLE IF NOT EXISTS cam_search_v1 (
        address__postal_code text,
        address__country_code text,
        email text,
-       profile__synonym_name_1 text,
-       profile__synonym_name_2 text,
        tele_com set<frozen<telecom_details_type>>,
     PRIMARY KEY(account_number, opco, contact_type_code, contact_business_id))
-WITH CLUSTERING ORDER BY(opco ASC, contact_document_id ASC, contact_type_code ASC)
+WITH CLUSTERING ORDER BY(opco ASC, contact_type_code ASC, contact_business_id ASC)
     AND bloom_filter_fp_chance = 0.01
     AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
     AND comment = ''

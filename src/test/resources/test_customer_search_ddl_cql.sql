@@ -4,6 +4,11 @@ CREATE SEARCH INDEX IF NOT EXISTS ON assoc_accounts_v1;
 CREATE SEARCH INDEX IF NOT EXISTS ON national_account_v1;
 CREATE SEARCH INDEX IF NOT EXISTS ON apply_discount_detail_v1;
 CREATE SEARCH INDEX IF NOT EXISTS ON time_event_v1;
+CREATE SEARCH INDEX IF NOT EXISTS ON group_info_v1;
+CREATE SEARCH INDEX IF NOT EXISTS ON audit_history_v1;
+CREATE SEARCH INDEX IF NOT EXISTS ON comment_v1;
+CREATE SEARCH INDEX IF NOT EXISTS ON centralized_view_v1;
+
 
 --Temporary search index for test functionality
 CREATE SEARCH INDEX IF NOT EXISTS ON contact;
@@ -19,7 +24,39 @@ CREATE SEARCH INDEX IF NOT EXISTS ON cust_acct_v1
        invoice_preference__billing_restriction_indicator,
        credit_detail__cash_only_reason,
        credit_detail__credit_rating,
-       profile__interline_cd
+       profile__interline_cd,
+
+       --included for 'other searches' and/or adHoc queries
+       aggregations__bill_to_number,
+       aggregations__edi_number,
+       account_regulatory__bus_registration_id,
+       tax_info__tax_data,
+       customer_id__customer_id_doc_nbr,
+       duty_tax_info,
+       tax_info__codice_fiscale,
+       aggregations__ed_aggr_code,
+
+       --included  for adHoc queries
+       invoice_preference__billing_cycle,
+       invoice_preference__billing_medium,
+       invoice_preference__currency_code,
+       invoice_preference__electronic_bill_payment_plan_flag_cd,
+       invoice_preference__international_billing_cycle,
+       invoice_preference__international_billing_medium,
+       invoice_preference__settlement_level_indicator,
+       invoice_preference__direct_debit_indicator,
+       eligibility__ground,
+       eligibility__express,
+       eligibility__freight,
+       eligibility__office,
+       credit_detail__credit_status,
+       credit_detail__credit_status_reason_code,
+       credit_detail__cash_only_reason,
+       credit_detail__credit_rating,
+       account_receivables__payment_type
+       geographic_info__alpha_id,
+       geographic_info__station_number,
+
 ;
 
 ALTER SEARCH INDEX SCHEMA ON cust_acct_v1
@@ -183,6 +220,9 @@ ALTER SEARCH INDEX SCHEMA ON cam_search_v1
         }]
     }$$;
 
+ALTER SEARCH INDEX SCHEMA ON cam_search_v1 SET FIELD[@name='profile__airport_code'] @type='textNorm1';
+ALTER SEARCH INDEX SCHEMA ON cam_search_v1 SET FIELD[@name='profile__synonym_name_1'] @type='textNorm1';
+ALTER SEARCH INDEX SCHEMA ON cam_search_v1 SET FIELD[@name='profile__synonym_name_2'] @type='textNorm1';
 ALTER SEARCH INDEX SCHEMA ON cam_search_v1 SET FIELD[@name='person__first_name'] @type='textNorm1';
 ALTER SEARCH INDEX SCHEMA ON cam_search_v1 SET FIELD[@name='person__last_name'] @type='textNorm1';
 ALTER SEARCH INDEX SCHEMA ON cam_search_v1 SET FIELD[@name='person__middle_name'] @type='textNorm1';
