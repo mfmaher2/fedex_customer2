@@ -22,8 +22,6 @@ CREATE SEARCH INDEX IF NOT EXISTS ON cust_acct_v1
        profile__customer_account_status,
        profile__account_type,
        invoice_preference__billing_restriction_indicator,
-       credit_detail__cash_only_reason,
-       credit_detail__credit_rating,
        profile__interline_cd,
 
        --included for 'other searches' and/or adHoc queries
@@ -53,9 +51,9 @@ CREATE SEARCH INDEX IF NOT EXISTS ON cust_acct_v1
        credit_detail__credit_status_reason_code,
        credit_detail__cash_only_reason,
        credit_detail__credit_rating,
-       account_receivables__payment_type
+       account_receivables__payment_type,
        geographic_info__alpha_id,
-       geographic_info__station_number,
+       geographic_info__station_number
 
 ;
 
