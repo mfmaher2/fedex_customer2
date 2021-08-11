@@ -6,7 +6,6 @@ import com.datastax.oss.driver.api.core.MappedAsyncPagingIterable;
 import com.datastax.oss.driver.api.core.PagingIterable;
 import com.datastax.oss.driver.api.core.cql.*;
 import com.datastax.oss.driver.api.core.data.UdtValue;
-import com.datastax.oss.driver.api.mapper.annotations.Insert;
 import com.datastax.oss.protocol.internal.util.Bytes;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -26,8 +25,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.datastax.oss.driver.api.core.CqlSession.*;
-
 public class CustomerTest {
 
     private static CqlSession session = null;
@@ -39,9 +36,9 @@ public class CustomerTest {
     static CustomerNationalAccountDao daoNational = null;
     static CustomerApplyDiscountDao daoApplyDiscount = null;
 
-    private static boolean skipSchemaCreation = true;
-    private static boolean skipDataLoad = true;
-    private static boolean skipKeyspaceDrop = true;
+    private static boolean skipSchemaCreation = false;
+    private static boolean skipDataLoad = false;
+    private static boolean skipKeyspaceDrop = false;
     private static String keyspaceName = "customer";
     private static String productName = "Customer" ;
 
@@ -92,7 +89,11 @@ public class CustomerTest {
 
     static void dropTestKeyspace(){
         String keyspaceDrop = "DROP KEYSPACE IF EXISTS " + keyspaceName + ";";
-        if(!skipKeyspaceDrop) {session.execute(keyspaceDrop); }
+        if(!skipKeyspaceDrop) {
+            System.out.println("Dropping keyspace - " + keyspaceName);
+
+            session.execute(keyspaceDrop);
+        }
     }
 
     static void loadSchema() throws IOException, InterruptedException {
@@ -102,11 +103,11 @@ public class CustomerTest {
             String keyspaceCreate = "CREATE KEYSPACE If NOT EXISTS " + keyspaceName + " WITH replication = {'class': 'NetworkTopologyStrategy', 'SearchGraphAnalytics': '1'}  AND durable_writes = true;";
             session.execute(keyspaceCreate);
 
-            runScrpt(schemaScriptPath);//TODO get resource path programmatically
+            runScript(schemaScriptPath);//TODO get resource path programmatically
         }
     }
 
-    static void runScrpt(String scriptPath) throws InterruptedException, IOException {
+    static void runScript(String scriptPath) throws InterruptedException, IOException {
         ProcessBuilder processBuild = new ProcessBuilder(scriptPath); //TODO get resource path programmatically
         Process process = processBuild.start();
 
@@ -122,7 +123,7 @@ public class CustomerTest {
         if(!skipDataLoad){
             System.out.println("Running " + productName + " data load");
 
-            runScrpt(dataScriptPath); //TODO get resource path programmatically
+            runScript(dataScriptPath); //TODO get resource path programmatically
 
             //sleep for a time to allow Solr indexes to update completely
             System.out.println("Completed " + productName + " data load.  Pausing to allow indexes to update...");
@@ -204,7 +205,7 @@ public class CustomerTest {
     public void customerAcctTypesTest(){
         String acctNum = "9876543333";
         String opco = "testOpcoAcctTypes";
-        boolean hazardShipperFlag = false;
+        String hazardShipperFlag = "shipFlag";
 
         CustomerAccount custAcct = new CustomerAccount();
         custAcct.setAccountNumber(acctNum);
@@ -214,7 +215,7 @@ public class CustomerTest {
         daoAccount.save(custAcct);
 
         CustomerAccount foundAcct = daoAccount.findByAccountNumber(acctNum);
-        assert(foundAcct.getHazardousShipperFlag() == hazardShipperFlag);
+        assert(foundAcct.getHazardousShipperFlag().equals(hazardShipperFlag));
 
         //cleanup
         daoAccount.delete(custAcct);

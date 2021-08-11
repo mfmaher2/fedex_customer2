@@ -83,7 +83,7 @@ CREATE TABLE IF NOT EXISTS cust_acct_v1 (
     profile__welcome_kit__welcome_kit_flag boolean,
     profile__welcome_kit__welcome_kit_promo_code text,
 
-    profile__customer_request_name text,
+    profile__customer_requester_name text,
     profile__employee_requester__opco text,
     profile__employee_requester__number text,
     profile__source_group text,
@@ -103,6 +103,7 @@ CREATE TABLE IF NOT EXISTS cust_acct_v1 (
     profile__sales_rep__number text,
     profile__service_level text,
     profile__scac_code text,
+    profile_special_instructions text,
 
 
     --cargoAccountReceivables
@@ -158,7 +159,7 @@ CREATE TABLE IF NOT EXISTS cust_acct_v1 (
     --express_direct_debit
     direct_debit_detail__person__first_name text,
     direct_debit_detail__person__last_name text,
-    direct_debit_detail__back_account_holder_name text,
+    direct_debit_detail__bank_account_holder_name text,
     direct_debit_detail__bank_name text,
     direct_debit_detail__address__street_line text,
     direct_debit_detail__address__additional_line1 text,
@@ -223,14 +224,15 @@ CREATE TABLE IF NOT EXISTS cust_acct_v1 (
     invoice_preference__billing_restriction_indicator text,
     invoice_preference__billing_type int,
     invoice_preference__combine_option text,
-    invoice_preference__consolidated_invoice_flag_cd text,
+    invoice_preference__consolidated_invoicing_flag_cd text,
     invoice_preference__consolidated_refund_flag boolean,
+    invoice_preference__cost_center_number text,
     invoice_preference__currency_code text,
     invoice_preference__customer_reference_information text,
-    invoice_preference__days_to_credit int,
-    invoice_preference__days_to_pay int,
-    invoice_preference__documentation_exception_indicator int,
-    invoice_preference__duty_tax_days_to_pay int,
+    invoice_preference__daysto_credit int,
+    invoice_preference__daysto_pay int,
+    invoice_preference__document_exception_indicator int,
+    invoice_preference__duty_tax_daysto_pay int,
     invoice_preference__duty_tax_billing_cycle text,
     invoice_preference__electronic_bill_payment_plan_flag_cd text,
     invoice_preference__electronic_data_record_proof_of_delivery boolean,
@@ -257,7 +259,7 @@ CREATE TABLE IF NOT EXISTS cust_acct_v1 (
     invoice_preference__manage_my_account_at_fed_ex_flag_cd text,
     invoice_preference__master_account_invoice_summary_flag_cd text,
     invoice_preference__monthly_billing_indicator text,
-    invoice_preference__past_detail_level int,
+    invoice_preference__past_due_detail_level int,
     invoice_preference__past_due_flag_cd text,
     invoice_preference__pod_wait_days int,
     invoice_preference__primary_sort_option int,
@@ -359,7 +361,7 @@ CREATE TABLE IF NOT EXISTS cust_acct_v1 (
     profile__doc_prep_service_flag boolean,
     profile__ftbd_flag text,
     profile__ftbd_svc map<text,text>,
-    profile__hazardous_shipper_flag boolean,
+    profile__hazardous_shipper_flag text,
     profile__high_value_accept_cd text,
     profile__interline_cd text,
     profile__idf_elig_flag text,
@@ -468,7 +470,7 @@ CREATE TABLE IF NOT EXISTS cust_acct_v1 (
     profile__blind_shipper_flag boolean,
     profile__pricing_code text,
 
-    -- eligibility (stanza?)
+    -- enterpriseEligibiity
     eligibility__ground boolean,
     eligibility__express boolean,
     eligibility__freight boolean,
@@ -662,7 +664,7 @@ CREATE TABLE IF NOT EXISTS account_contact (
     contact_type_code text,
     contact_document_id bigint,
     contact_business_id text,
-    customer_account_refrence text,
+    customer_account_reference text,
     share_id text,
     print_name_on_bill_flag boolean,
     responsible_party_flag boolean,
@@ -717,8 +719,8 @@ CREATE TABLE IF NOT EXISTS account_contact (
     additional_email_info2__email_marketing_flag text,
     social_media set<frozen<social_media_type>>,
 
-    PRIMARY KEY(account_number, opco, contact_document_id, contact_type_code, contact_business_id))
-WITH CLUSTERING ORDER BY(opco ASC, contact_document_id ASC, contact_type_code ASC, contact_business_id ASC)
+    PRIMARY KEY(account_number, opco, contact_type_code, contact_business_id))
+WITH CLUSTERING ORDER BY(opco ASC, contact_type_code ASC, contact_business_id ASC)
     AND bloom_filter_fp_chance = 0.01
     AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
     AND comment = ''
