@@ -201,6 +201,26 @@ public class CustomerTest {
     }
 
     @Test
+    public void customerAcctTypesTest(){
+        String acctNum = "9876543333";
+        String opco = "testOpcoAcctTypes";
+        boolean hazardShipperFlag = false;
+
+        CustomerAccount custAcct = new CustomerAccount();
+        custAcct.setAccountNumber(acctNum);
+        custAcct.setOpco(opco);
+        custAcct.setHazardousShipperFlag(hazardShipperFlag);
+
+        daoAccount.save(custAcct);
+
+        CustomerAccount foundAcct = daoAccount.findByAccountNumber(acctNum);
+        assert(foundAcct.getHazardousShipperFlag() == hazardShipperFlag);
+
+        //cleanup
+        daoAccount.delete(custAcct);
+    }
+
+    @Test
     public void containUTFTest(){
         char euroUTF = '\u20ac';
 

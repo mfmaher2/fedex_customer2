@@ -16,6 +16,8 @@ public class CustomerAccount {
     @CqlName("profile__account_status__status_code") private String profileAccountStatusCode;
     @CqlName("profile__account_status__reason_code") private String profileAccountReasonCode;
     @CqlName("profile__enterprise_source") private String profileEnterpriseSource;
+    @CqlName("profile__hazardous_shipper_flag") private boolean hazardousShipperFlag;
+
 
     public CustomerAccount() {};
 
@@ -39,4 +41,7 @@ public class CustomerAccount {
 
     public String getProfileEnterpriseSource() { return profileEnterpriseSource;}
     public void setProfileEnterpriseSource(String val) { profileEnterpriseSource = val;}
+
+    public boolean getHazardousShipperFlag() { return hazardousShipperFlag; }
+    public void setHazardousShipperFlag(boolean val) {hazardousShipperFlag = val;}
 }
