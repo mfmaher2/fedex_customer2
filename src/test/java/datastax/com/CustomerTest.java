@@ -169,12 +169,12 @@ public class CustomerTest {
         //CQL map entry example
         String dutyTaxAddElement =
                 "UPDATE \n" +
-                "    customer.cust_acct_v1 \n" +
+                "    " + keyspaceName + ".cust_acct_v1 \n" +
                 "SET \n" +
-                "    duty_tax_info = duty_tax_info + {'key3' : 'val3'} \n" +
+                "    duty_tax_info = duty_tax_info + {'" + keyC +"' : '" + valC + "'} \n" +
                 "WHERE \n" +
-                "    account_number = '9876543344' AND \n" +
-                "    opco = 'testOpcoAcctTypes';";
+                "    account_number = '" + acctNum + "' AND \n" +
+                "    opco = '" + opco + "';";
 
         session.execute(dutyTaxAddElement);
         CustomerAccount foundAcct2 = daoAccount.findByAccountNumber(acctNum);
