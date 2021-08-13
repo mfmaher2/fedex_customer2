@@ -5,6 +5,8 @@ import com.datastax.oss.driver.api.mapper.annotations.CqlName;
 import com.datastax.oss.driver.api.mapper.annotations.Entity;
 import com.datastax.oss.driver.api.mapper.annotations.PartitionKey;
 
+import java.util.Map;
+
 @Entity
 @CqlName("cust_acct_v1")
 public class CustomerAccount {
@@ -17,6 +19,7 @@ public class CustomerAccount {
     @CqlName("profile__account_status__reason_code") private String profileAccountReasonCode;
     @CqlName("profile__enterprise_source") private String profileEnterpriseSource;
     @CqlName("profile__hazardous_shipper_flag") private String hazardousShipperFlag;
+    @CqlName("duty_tax_info") private Map<String, String> dutyTaxInfo;
 
 
     public CustomerAccount() {};
@@ -44,4 +47,7 @@ public class CustomerAccount {
 
     public String getHazardousShipperFlag() { return hazardousShipperFlag; }
     public void setHazardousShipperFlag(String val) {hazardousShipperFlag = val;}
+
+    public Map<String, String> getDutyTaxInfo() { return dutyTaxInfo; }
+    public void setDutyTaxInfo(Map<String, String> val) { dutyTaxInfo = val; }
 }

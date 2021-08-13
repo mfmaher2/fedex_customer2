@@ -15,10 +15,7 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
@@ -137,6 +134,67 @@ public class CustomerTest {
 
         dropTestKeyspace();
         if (session != null) session.close();
+    }
+
+    @Test
+    public void mappedCollectionsTest() {
+        String acctNum = "9876543344";
+        String opco = "testOpcoAcctTypes";
+        Map<String, String> dutyTax = new HashMap<>();
+
+        String keyA = "key1";
+        String keyB = "key2";
+        String keyC = "key3";
+        String valA = "val1";
+        String valB = "val2";
+        String valC = "val3";
+
+        dutyTax.put(keyA, valA);
+        dutyTax.put(keyB, valB);
+
+        CustomerAccount custAcct = new CustomerAccount();
+        custAcct.setAccountNumber(acctNum);
+        custAcct.setOpco(opco);
+        custAcct.setDutyTaxInfo(dutyTax);
+
+        daoAccount.save(custAcct);
+
+        CustomerAccount foundAcct = daoAccount.findByAccountNumber(acctNum);
+        Map<String, String> foundDutyTax = foundAcct.getDutyTaxInfo();
+        assert(foundDutyTax.get(keyA).equals(valA));
+        assert(foundDutyTax.get(keyB).equals(valB));
+
+        daoAccount.updateCustomerType(acctNum, opco, "custType1");
+
+        //CQL map entry example
+        String dutyTaxAddElement =
+                "UPDATE \n" +
+                "    customer.cust_acct_v1 \n" +
+                "SET \n" +
+                "    duty_tax_info = duty_tax_info + {'key3' : 'val3'} \n" +
+                "WHERE \n" +
+                "    account_number = '9876543344' AND \n" +
+                "    opco = 'testOpcoAcctTypes';";
+
+        session.execute(dutyTaxAddElement);
+        CustomerAccount foundAcct2 = daoAccount.findByAccountNumber(acctNum);
+        Map<String, String> foundDutyTax2 = foundAcct2.getDutyTaxInfo();
+        assert(foundDutyTax2.get(keyC).equals(valC));
+
+        //working, hard-coded map update
+        daoAccount.addDutyTaxInfoEntry(acctNum, opco);
+
+        //non-working options attempted
+//        daoAccount.addDutyTaxInfoEntry(acctNum, opco, keyC, valC);
+//        String newMapEnt = "{'key5': 'val5'}";
+//        daoAccount.addDutyTaxInfoMapEntry(acctNum, opco, newMapEnt);
+
+
+        //cleanup
+        daoAccount.delete(custAcct);
+
+        //reference for CQL manipulation for map type fields
+        //https://docs.datastax.com/en/dse/5.1/cql/cql/cql_using/useInsertMap.html
     }
 
     @Test
