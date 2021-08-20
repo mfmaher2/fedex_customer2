@@ -1,4 +1,4 @@
-﻿account_number,opco,record_type_cd,record_key,record_seq,credit_card_id, last_updt_tmstp
-1111,A,type1,key1,1,ccID1,2021-03-04T00:00:00.000Z
-2222,B,type2,key2,2,ccID2,2021-03-05T00:00:00.000Z
-3333,C,type3,key3,3,ccID3,2021-03-06T00:00:00.000Z
+﻿account_number,opco,record_type_cd,record_key,record_seq,credit_card_id
+1111,A,type1,key1,1,ccID1
+2222,B,type2,key2,2,ccID2
+3333,C,type3,key3,3,ccID3

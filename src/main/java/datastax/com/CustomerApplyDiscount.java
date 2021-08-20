@@ -12,9 +12,9 @@ import java.time.Instant;
 public class CustomerApplyDiscount {
     @PartitionKey private String accountNumber;
     @ClusteringColumn(0) private String opco;
-    @ClusteringColumn(1) @CqlName("apply_discount__effective_date_time") private Instant disountEffectiveDateTime;
-    @ClusteringColumn(2) @CqlName("last_updt_tmstp") private Instant lastUpdated;
+    @CqlName("last_update_tmstp") private Instant lastUpdated;
     @CqlName("apply_discount__discount_flag") private Boolean applyDiscountFlag;
+    @ClusteringColumn(1) @CqlName("apply_discount__effective_date_time") private Instant disountEffectiveDateTime;
     @CqlName("apply_discount__expiration_date_time") private Instant disountExpirationateTime;
 
     public CustomerApplyDiscount() {};

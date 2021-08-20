@@ -5,8 +5,6 @@ import com.datastax.oss.driver.api.mapper.annotations.CqlName;
 import com.datastax.oss.driver.api.mapper.annotations.Entity;
 import com.datastax.oss.driver.api.mapper.annotations.PartitionKey;
 
-import java.time.Instant;
-
 @Entity
 @CqlName("payment_info_v1")
 public class CustomerPaymentInfo {
@@ -15,8 +13,7 @@ public class CustomerPaymentInfo {
     @ClusteringColumn(0) private String opco;
     @ClusteringColumn(1) @CqlName("record_type_cd") private String recordType;
     @ClusteringColumn(2) private String recordKey;
-    @ClusteringColumn(3) @CqlName("record_seq") private int recordSeq;
-    @ClusteringColumn(4) @CqlName("last_updt_tmstp") private Instant lastUpdated;
+    @ClusteringColumn(3) @CqlName("record_seqa") private int recordSeq;
     @CqlName("credit_card_id") private String creditCardID;
 
     CustomerPaymentInfo() {};
@@ -38,7 +35,4 @@ public class CustomerPaymentInfo {
 
     public String getCreditCardID() { return creditCardID; }
     public void setCreditCardID(String val) { creditCardID = val; }
-
-    public Instant getLastUpdated() { return lastUpdated; }
-    public void setLastUpdated(Instant val) { lastUpdated = val;}
 }

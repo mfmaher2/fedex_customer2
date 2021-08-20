@@ -64,7 +64,7 @@ CREATE TYPE IF NOT EXISTS time_event_additional_details_items(
 CREATE TABLE IF NOT EXISTS cust_acct_v1 (
     account_number text,
     opco text,
-    last_updt_tmstp timestamp,
+    last_update_timestamp timestamp,
 
     --enterpriseProfile
     profile__customer_type text,
@@ -477,8 +477,8 @@ CREATE TABLE IF NOT EXISTS cust_acct_v1 (
     eligibility__office boolean,
 
     -- nationalAccount   -- QUESTION . We need another table...... ?
-    PRIMARY KEY(account_number, opco, last_updt_tmstp))
-WITH CLUSTERING ORDER BY (opco ASC, last_updt_tmstp DESC)
+    PRIMARY KEY(account_number, opco))
+WITH CLUSTERING ORDER BY (opco ASC)
     AND bloom_filter_fp_chance = 0.01
     AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
     AND comment = ''
@@ -498,12 +498,12 @@ WITH CLUSTERING ORDER BY (opco ASC, last_updt_tmstp DESC)
 CREATE TABLE IF NOT EXISTS apply_discount_detail_v1 (
     account_number text,
     opco text,
-    last_updt_tmstp timestamp,
+    last_update_tmstp timestamp,
     apply_discount__discount_flag boolean,
     apply_discount__effective_date_time timestamp,
     apply_discount__expiration_date_time timestamp,
-    PRIMARY KEY(account_number, opco, apply_discount__effective_date_time, last_updt_tmstp))
-WITH CLUSTERING ORDER BY(opco ASC, apply_discount__effective_date_time DESC, last_updt_tmstp DESC)
+    PRIMARY KEY(account_number, opco, apply_discount__effective_date_time))
+WITH CLUSTERING ORDER BY(opco ASC, apply_discount__effective_date_time DESC)
     AND bloom_filter_fp_chance = 0.01
     AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
     AND comment = ''
@@ -522,7 +522,6 @@ WITH CLUSTERING ORDER BY(opco ASC, apply_discount__effective_date_time DESC, las
 CREATE TABLE IF NOT EXISTS payment_info_v1 (
     account_number text,
     opco text,
-    last_updt_tmstp timestamp,
     record_type_cd text,  --account, express electronic, etc.
     record_key text,
     record_seq int,
@@ -564,6 +563,7 @@ CREATE TABLE IF NOT EXISTS payment_info_v1 (
     additional_credit_card_info__holder_phone__extension text,
     additional_credit_card_info__holder_phone__ftc_ok_to_call_flag boolean,
     last_authentication_date date,
+
 
     --eftBankInfo
     authorization__person__first_name text,
@@ -638,8 +638,8 @@ CREATE TABLE IF NOT EXISTS payment_info_v1 (
     fpan__exp_date_month int,
     fpan__exp_date_year int,
 
-    PRIMARY KEY(account_number, opco, record_type_cd, record_key, record_seq, last_updt_tmstp))
-WITH CLUSTERING ORDER BY(opco ASC, record_type_cd ASC, record_key ASC, record_seq ASC, last_updt_tmstp DESC)
+    PRIMARY KEY(account_number, opco, record_type_cd, record_key, record_seq))
+WITH CLUSTERING ORDER BY(opco ASC, record_type_cd ASC, record_key ASC, record_seq ASC)
     AND bloom_filter_fp_chance = 0.01
     AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
     AND comment = ''
@@ -658,7 +658,7 @@ WITH CLUSTERING ORDER BY(opco ASC, record_type_cd ASC, record_key ASC, record_se
 CREATE TABLE IF NOT EXISTS account_contact (
     account_number text,
     opco text,
-    last_updt_tmstp timestamp,
+    last_update_tmstp timestamp,
 
     --accountContact
     contact_type_code text,
@@ -719,8 +719,8 @@ CREATE TABLE IF NOT EXISTS account_contact (
     additional_email_info2__email_marketing_flag text,
     social_media set<frozen<social_media_type>>,
 
-    PRIMARY KEY(account_number, opco, contact_type_code, contact_business_id, last_updt_tmstp))
-WITH CLUSTERING ORDER BY(opco ASC, contact_type_code ASC, contact_business_id ASC, last_updt_tmstp DESC)
+    PRIMARY KEY(account_number, opco, contact_type_code, contact_business_id))
+WITH CLUSTERING ORDER BY(opco ASC, contact_type_code ASC, contact_business_id ASC)
     AND bloom_filter_fp_chance = 0.01
     AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
     AND comment = ''
@@ -740,9 +740,8 @@ CREATE TABLE IF NOT EXISTS assoc_accounts_v1 (
     account_number text,
     associated_account__opco text,
     associated_account__number text,
-    last_updt_tmstp timestamp,
-    PRIMARY KEY(account_number, associated_account__opco, associated_account__number, last_updt_tmstp))
-WITH CLUSTERING ORDER BY(associated_account__opco ASC, associated_account__number ASC, last_updt_tmstp DESC)
+    PRIMARY KEY(account_number, associated_account__opco, associated_account__number))
+WITH CLUSTERING ORDER BY(associated_account__opco ASC, associated_account__number ASC)
     AND bloom_filter_fp_chance = 0.01
     AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
     AND comment = ''
@@ -761,14 +760,14 @@ WITH CLUSTERING ORDER BY(associated_account__opco ASC, associated_account__numbe
 CREATE TABLE IF NOT EXISTS national_account_v1 (
     account_number text,
     opco text,
-    last_updt_tmstp timestamp,
+    last_update_tmstp timestamp,
     national_account_detail__national_account_company_cd text,
     national_account_detail__national_account_nbr text,
     national_account_detail__national_priority_cd text,
     national_account_detail__membership_exp_date_time timestamp,
     national_account_detail__membership_eff_date_time timestamp,
-    PRIMARY KEY(account_number, opco, national_account_detail__membership_eff_date_time, national_account_detail__national_account_nbr, national_account_detail__national_priority_cd, last_updt_tmstp))
- WITH CLUSTERING ORDER BY(opco ASC, national_account_detail__membership_eff_date_time DESC, national_account_detail__national_account_nbr ASC, national_account_detail__national_priority_cd ASC, last_updt_tmstp DESC)
+    PRIMARY KEY(account_number, opco, national_account_detail__membership_eff_date_time, national_account_detail__national_account_nbr, national_account_detail__national_priority_cd))
+ WITH CLUSTERING ORDER BY(opco ASC, national_account_detail__membership_eff_date_time DESC, national_account_detail__national_account_nbr ASC, national_account_detail__national_priority_cd ASC)
      AND bloom_filter_fp_chance = 0.01
      AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
      AND comment = ''
@@ -789,7 +788,7 @@ CREATE TABLE IF NOT EXISTS national_account_v1 (
 CREATE TABLE IF NOT EXISTS group_info_v1 (
      account_number text,
      opco text,
-     last_updt_tmstp timestamp,
+     last_update_tmstp timestamp,
      group_id__code text,
      group_id__number text,
      group_id_detail__requester text,
@@ -797,8 +796,8 @@ CREATE TABLE IF NOT EXISTS group_info_v1 (
      group_id_detail__master_account text,
      effective_date_time timestamp,
      expiration_date_time timestamp,
-    PRIMARY KEY(account_number, opco, group_id__code, group_id__number, effective_date_time, last_updt_tmstp))
- WITH CLUSTERING ORDER BY(opco ASC, group_id__code ASC, group_id__number ASC, effective_date_time DESC, last_updt_tmstp DESC)
+    PRIMARY KEY(account_number, opco, group_id__code, group_id__number, effective_date_time))
+ WITH CLUSTERING ORDER BY(opco ASC, group_id__code ASC, group_id__number ASC, effective_date_time DESC)
      AND bloom_filter_fp_chance = 0.01
      AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
      AND comment = ''
@@ -818,7 +817,7 @@ CREATE TABLE IF NOT EXISTS group_info_v1 (
 CREATE TABLE IF NOT EXISTS comment_v1 (
      account_number text,
      opco text,
-     last_updt_tmstp timestamp,
+     last_update_tmstp timestamp,
      comment__type text,
      comment__comment_id text,
      comment__comment_description text,
@@ -827,8 +826,8 @@ CREATE TABLE IF NOT EXISTS comment_v1 (
      comment__employee__opco text,
      comment__employee__number text,
      comment__comment_date_time timestamp,
-    PRIMARY KEY(account_number, opco, comment__comment_date_time, comment__type, comment__comment_id, last_updt_tmstp))
- WITH CLUSTERING ORDER BY(opco ASC, comment__comment_date_time DESC, comment__type ASC, comment__comment_id ASC, last_updt_tmstp DESC)
+    PRIMARY KEY(account_number, opco, comment__comment_date_time, comment__type, comment__comment_id))
+ WITH CLUSTERING ORDER BY(opco ASC, comment__comment_date_time DESC, comment__type ASC, comment__comment_id ASC)
      AND bloom_filter_fp_chance = 0.01
      AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
      AND comment = ''
@@ -847,7 +846,7 @@ CREATE TABLE IF NOT EXISTS comment_v1 (
 CREATE TABLE IF NOT EXISTS audit_history_v1 (
      account_number text,
      opco text,                     --maps to history_detail__opco
-     last_updt_tmstp timestamp,
+     last_update_tmstp timestamp,
      request_action text,
      history_detail__descriptive_identifier text,
      history_detail__additional_identifier__key set<frozen<history_additional_identifier_type>>,
@@ -858,8 +857,8 @@ CREATE TABLE IF NOT EXISTS audit_history_v1 (
      source text,
      request_type text,
      transaction_id text,
-    PRIMARY KEY(account_number, last_updt_tmstp, opco))
- WITH CLUSTERING ORDER BY(last_updt_tmstp DESC, opco ASC)
+    PRIMARY KEY(account_number, last_update_tmstp, opco))
+ WITH CLUSTERING ORDER BY(last_update_tmstp DESC, opco ASC)
      AND bloom_filter_fp_chance = 0.01
      AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
      AND comment = ''
@@ -880,9 +879,8 @@ CREATE TABLE IF NOT EXISTS centralized_view_v1 (
      account_status__status_code text,
      account_status__status_date date,
      opco_description set<frozen<centralized_opco_description_type>>,
-     last_updt_tmstp timestamp,
-    PRIMARY KEY(account_number, account_status__status_date, account_status__status_code, last_updt_tmstp))
- WITH CLUSTERING ORDER BY(account_status__status_date DESC, account_status__status_code ASC, last_updt_tmstp DESC)
+    PRIMARY KEY(account_number, account_status__status_date, account_status__status_code))
+ WITH CLUSTERING ORDER BY(account_status__status_date DESC, account_status__status_code ASC)
      AND bloom_filter_fp_chance = 0.01
      AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
      AND comment = ''
@@ -901,7 +899,6 @@ CREATE TABLE IF NOT EXISTS centralized_view_v1 (
 CREATE TABLE IF NOT EXISTS line_of_business_v1 (
     account_number text,
     opco text,
-    last_updt_tmstp timestamp,
     line_of_business__preference__direct_debit_day_of_month int,
     line_of_business__preference__direct_debit_day_of_month2 int,
     line_of_business__preference__direct_debit_days_to_debit text,
@@ -976,8 +973,8 @@ CREATE TABLE IF NOT EXISTS line_of_business_v1 (
     social_media set<frozen<social_media_type>>,
 
 
-    PRIMARY KEY(account_number, line_of_business__preference__invoice_type, opco, contact_document_id, last_updt_tmstp))
- WITH CLUSTERING ORDER BY(line_of_business__preference__invoice_type ASC, opco ASC, contact_document_id ASC, last_updt_tmstp DESC)
+    PRIMARY KEY(account_number, line_of_business__preference__invoice_type, opco, contact_document_id))
+ WITH CLUSTERING ORDER BY(line_of_business__preference__invoice_type ASC, opco ASC, contact_document_id ASC)
      AND bloom_filter_fp_chance = 0.01
      AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
      AND comment = ''
@@ -1001,9 +998,9 @@ CREATE TABLE IF NOT EXISTS time_event_v1 (
     process_time timestamp,
     event_processed_time timestamp,
     additional_details_items set<frozen<time_event_additional_details_items>>,
-    last_updt_tmstp timestamp,
-    PRIMARY KEY(account_number, process_time, type, status, last_updt_tmstp))
-WITH CLUSTERING ORDER BY (process_time DESC, type ASC, status ASC, last_updt_tmstp DESC)
+    last_update_timestamp timestamp,
+    PRIMARY KEY(account_number, process_time, type, status))
+WITH CLUSTERING ORDER BY (process_time DESC, type ASC, status ASC)
     AND bloom_filter_fp_chance = 0.01
     AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
     AND comment = ''
@@ -1025,7 +1022,7 @@ WITH CLUSTERING ORDER BY (process_time DESC, type ASC, status ASC, last_updt_tms
 CREATE TABLE IF NOT EXISTS account_dynamic_profile_v1 (  //need _v1 in table name?
     account_number text,
     opco text,
-    last_updt_tmstp timestamp,
+    last_update_timestamp timestamp,
     payor_type text,                        //slightly altered naming convention, no path prefix - keep simplified?
     shipment_type text,                     //slightly altered naming convention, no path prefix - keep simplified?
     package_quantity_for_last_year float,
@@ -1038,8 +1035,8 @@ CREATE TABLE IF NOT EXISTS account_dynamic_profile_v1 (  //need _v1 in table nam
     first_ship_date date,
     last_ship_date date,
     risk_score	int,
-    PRIMARY KEY(account_number, opco, payor_type, shipment_type, last_updt_tmstp))       //need confirm keys
-WITH CLUSTERING ORDER BY (opco ASC, payor_type ASC, shipment_type ASC, last_updt_tmstp DESC)
+    PRIMARY KEY(account_number, opco, payor_type, shipment_type))       //need confirm keys
+WITH CLUSTERING ORDER BY (opco ASC, payor_type ASC, shipment_type ASC)
     AND bloom_filter_fp_chance = 0.01
     AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
     AND comment = ''
@@ -1061,13 +1058,13 @@ WITH CLUSTERING ORDER BY (opco ASC, payor_type ASC, shipment_type ASC, last_updt
 CREATE TABLE IF NOT EXISTS entity_dynamic_profile_v1 ( //need _v1 in table name?
     entity_number text,
     opco text,
-    last_updt_tmstp timestamp,
+    last_update_timestamp timestamp,
     payor_type text,
     shipment_type text,
     package_quantity_for_last_year float,
     net_revenue_for_last_year float,
-    PRIMARY KEY(entity_number, opco, payor_type, shipment_type, last_updt_tmstp))
- WITH CLUSTERING ORDER BY (opco ASC, payor_type ASC, shipment_type ASC, last_updt_tmstp DESC)
+    PRIMARY KEY(entity_number, opco, payor_type, shipment_type))
+ WITH CLUSTERING ORDER BY (opco ASC, payor_type ASC, shipment_type ASC)
     AND bloom_filter_fp_chance = 0.01
     AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
     AND comment = ''
@@ -1088,14 +1085,14 @@ CREATE TABLE IF NOT EXISTS entity_dynamic_profile_v1 ( //need _v1 in table name?
 CREATE TABLE IF NOT EXISTS invoice_payment_profile_v1 (
     account_number text,
     opco text,
-    last_updt_tmstp timestamp,
+    last_update_timestamp timestamp,
     payor_type text,
     shipment_type text,
     last_payment_amount float,
     last_payment_date date,
     returned_checks_amount float,
-    PRIMARY KEY(account_number, opco, payor_type, shipment_type, last_updt_tmstp))
-WITH CLUSTERING ORDER BY (opco ASC, payor_type ASC, shipment_type ASC, last_updt_tmstp DESC)
+    PRIMARY KEY(account_number, opco, payor_type, shipment_type))
+WITH CLUSTERING ORDER BY (opco ASC, payor_type ASC, shipment_type ASC)
     AND bloom_filter_fp_chance = 0.01
     AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
     AND comment = ''
