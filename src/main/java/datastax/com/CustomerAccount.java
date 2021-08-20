@@ -5,6 +5,7 @@ import com.datastax.oss.driver.api.mapper.annotations.CqlName;
 import com.datastax.oss.driver.api.mapper.annotations.Entity;
 import com.datastax.oss.driver.api.mapper.annotations.PartitionKey;
 
+import java.time.Instant;
 import java.util.Map;
 
 @Entity
@@ -12,7 +13,8 @@ import java.util.Map;
 public class CustomerAccount {
 
     @PartitionKey private String accountNumber;
-    @ClusteringColumn private String opco;
+    @ClusteringColumn(0) @CqlName("opco") private String opco;
+    @ClusteringColumn(1) @CqlName("last_updt_tmstp") private Instant lastUpdated;
     @CqlName("profile__customer_type") private String profileCustomerType;
     @CqlName("profile__account_type") private String profileAccountType;
     @CqlName("profile__account_status__status_code") private String profileAccountStatusCode;
@@ -21,7 +23,6 @@ public class CustomerAccount {
     @CqlName("profile__hazardous_shipper_flag") private String hazardousShipperFlag;
     @CqlName("duty_tax_info") private Map<String, String> dutyTaxInfo;
 
-
     public CustomerAccount() {};
 
     public String getAccountNumber() { return accountNumber;}
@@ -29,6 +30,9 @@ public class CustomerAccount {
 
     public String getOpco() {return opco;}
     public void setOpco(String val) {opco = val;}
+
+    public Instant getLastUpdated() { return lastUpdated; }
+    public void setLastUpdated(Instant val) { lastUpdated = val;}
 
     public String getProfileCustomerType() { return profileCustomerType;}
     public void setProfileCustomerType(String val) { profileCustomerType = val;}

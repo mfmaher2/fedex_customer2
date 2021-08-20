@@ -18,6 +18,7 @@ CREATE SEARCH INDEX IF NOT EXISTS ON cust_acct_v1
     WITH COLUMNS
        account_number,
        opco,
+       last_updt_tmstp,
        profile__archive_reason_code,
        profile__customer_account_status,
        profile__account_type,
@@ -95,6 +96,7 @@ CREATE SEARCH INDEX IF NOT EXISTS ON account_contact
     WITH COLUMNS
        account_number,
        opco,
+       last_updt_tmstp,
        contact_document_id,
        contact_type_code,
        contact_business_id,

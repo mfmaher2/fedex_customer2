@@ -33,9 +33,9 @@ public class CustomerTest {
     static CustomerNationalAccountDao daoNational = null;
     static CustomerApplyDiscountDao daoApplyDiscount = null;
 
-    private static boolean skipSchemaCreation = false;
-    private static boolean skipDataLoad = false;
-    private static boolean skipKeyspaceDrop = false;
+    private static boolean skipSchemaCreation = true;
+    private static boolean skipDataLoad = true;
+    private static boolean skipKeyspaceDrop = true;
     private static String keyspaceName = "customer";
     private static String productName = "Customer" ;
 
@@ -201,12 +201,12 @@ public class CustomerTest {
     public void searchSubStringTest() throws InterruptedException {
         //using dummy values for contact record to test substring matching functionaliyt
         String insertRec1 = "INSERT INTO account_contact\n" +
-                "    (account_number, opco, contact_document_id, contact_type_code, contact_business_id, person__first_name)\n" +
-                "    VALUES('123456', 'opc1', 101, 'type1', 'cBus1', 'FedExDotCom');";
+                "    (account_number, opco, last_updt_tmstp, contact_document_id, contact_type_code, contact_business_id, person__first_name)\n" +
+                "    VALUES('123456', 'opc1', '2020-04-11T00:00:00Z', 101, 'type1', 'cBus1', 'FedExDotCom');";
 
         String insertRec2 = "INSERT INTO account_contact\n" +
-                "    (account_number, opco, contact_document_id, contact_type_code, contact_business_id, person__first_name)\n" +
-                "    VALUES('123456', 'opc1', 102, 'type1', 'cBus2', 'FedExDotom');";
+                "    (account_number, opco, last_updt_tmstp, contact_document_id, contact_type_code, contact_business_id, person__first_name)\n" +
+                "    VALUES('123456', 'opc1', '2020-04-12T00:00:00Z', 102, 'type1', 'cBus2', 'FedExDotom');";
 
         //add test records to table
         session.execute(insertRec1);
@@ -307,6 +307,7 @@ public class CustomerTest {
     public void applyDiscountUpdateTest(){
         String acctNum = "123456789";
         String opco = "FX";
+        Instant updateDT = Instant.parse("2015-12-20T00:00:00.001Z");
         Boolean applyDiscountFlag = true;
         Instant effectiveDT = Instant.parse("2021-05-01T01:00:00.001Z");
         Instant expirationDT = Instant.parse("2015-12-10T00:00:00.001Z");
@@ -315,6 +316,7 @@ public class CustomerTest {
 
         appDisc.setAccountNumber(acctNum);
         appDisc.setOpco(opco);
+        appDisc.setLastUpdated(updateDT);
         appDisc.setApplyDiscountFlag(applyDiscountFlag);
         appDisc.setDisountEffectiveDateTime(effectiveDT);
         appDisc.setDisountExpirationateTime(expirationDT);
@@ -323,9 +325,10 @@ public class CustomerTest {
         daoApplyDiscount.save(appDisc);
 
         //retrieve initial version and verify property values
-        CustomerApplyDiscount readAppDisc = daoApplyDiscount.findByKeys(acctNum, opco, effectiveDT);
+        CustomerApplyDiscount readAppDisc = daoApplyDiscount.findByKeys(acctNum, opco, effectiveDT, updateDT);
         assert(readAppDisc.getAccountNumber().equals(acctNum));
         assert(readAppDisc.getOpco().equals(opco));
+        assert(readAppDisc.getLastUpdated().equals(updateDT));
         assert(readAppDisc.getApplyDiscountFlag() == applyDiscountFlag);
         assert(readAppDisc.getDisountEffectiveDateTime().equals(effectiveDT));
         assert(readAppDisc.getDisountExpirationateTime().equals(expirationDT));
@@ -340,9 +343,10 @@ public class CustomerTest {
         daoApplyDiscount.update(readAppDisc);
 
         //retrieve updated version and verify property values were updated
-        CustomerApplyDiscount foundUpdatedAppDisc = daoApplyDiscount.findByKeys(acctNum, opco, effectiveDT);
+        CustomerApplyDiscount foundUpdatedAppDisc = daoApplyDiscount.findByKeys(acctNum, opco, effectiveDT, updateDT);
         assert(foundUpdatedAppDisc.getAccountNumber().equals(acctNum));
         assert(foundUpdatedAppDisc.getOpco().equals(opco));
+        assert(foundUpdatedAppDisc.getLastUpdated().equals(updateDT));
         assert(foundUpdatedAppDisc.getApplyDiscountFlag() == updatedApplyDiscountFlag);
         assert(foundUpdatedAppDisc.getDisountEffectiveDateTime().equals(effectiveDT));
         assert(foundUpdatedAppDisc.getDisountExpirationateTime().equals(updatedExpirationDT));
@@ -634,7 +638,7 @@ public class CustomerTest {
         System.out.println("Initial page fetch - ");
         while(rs.getAvailableWithoutFetching()>0){
             Row row = rs.one();
-            System.out.println("\t" + row.getInstant("last_update_tmstp").toString());
+            System.out.println("\t" + row.getInstant("last_updt_tmstp").toString());
             //do something with row
         }
 
@@ -649,7 +653,7 @@ public class CustomerTest {
         System.out.println("\nSecond page fetch - ");
         while(rs2.getAvailableWithoutFetching()>0){
             Row row = rs2.one();
-            System.out.println("\t" + row.getInstant("last_update_tmstp").toString());
+            System.out.println("\t" + row.getInstant("last_updt_tmstp").toString());
             //do something with row
         }
 
@@ -665,7 +669,7 @@ public class CustomerTest {
 //        System.out.println("\nThird page fetch - ");
 //        while(rs3.getAvailableWithoutFetching()>0){
 //            Row row = rs3.one();
-//            System.out.println("\t" + row.getInstant("last_update_tmstp").toString());
+//            System.out.println("\t" + row.getInstant("last_updt_tmstp").toString());
 //            //do something with row
 //        }
 

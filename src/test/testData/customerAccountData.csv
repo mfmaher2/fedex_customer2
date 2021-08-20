@@ -1,4 +1,4 @@
-﻿account_number,opco,profile__customer_type,profile__account_type
-1111,A,custType1,acctType1
-2222,B,custType2,acctType2
-3333,C,custType3,acctType3
+﻿account_number,opco,profile__customer_type,profile__account_type, last_updt_tmstp
+1111,A,custType1,acctType1,2021-02-02T00:00:00.000Z
+2222,B,custType2,acctType2,2021-02-03T00:00:00.000Z
+3333,C,custType3,acctType3,2021-02-04T00:00:00.000Z

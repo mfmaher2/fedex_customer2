@@ -15,8 +15,8 @@ public interface CustomerApplyDiscountDao {
     @Select
     CompletableFuture<CustomerApplyDiscount> findByAccountNumberAsync(String accountNum);
 
-    @Select (customWhereClause = "account_number = :accountNum and opco = :opco and apply_discount__effective_date_time = :effDT")
-    CustomerApplyDiscount findByKeys(String accountNum, String opco, Instant effDT);
+    @Select (customWhereClause = "account_number = :accountNum and opco = :opco and apply_discount__effective_date_time = :effDT and last_updt_tmstp = :updtDT")
+    CustomerApplyDiscount findByKeys(String accountNum, String opco, Instant effDT, Instant updtDT);
 
     @Select
     CompletableFuture<MappedAsyncPagingIterable<CustomerApplyDiscount>> findAllByAccountNumberAsync(String accountNum);
