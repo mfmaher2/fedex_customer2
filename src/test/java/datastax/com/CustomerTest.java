@@ -152,15 +152,9 @@ public class CustomerTest {
                             long start = System.currentTimeMillis();
                             PagingIterable<CustomerAccount> customerAccountIterable = daoAccount.findAllByAccountNumber(acctNbr);
                             int numCustAccounts = customerAccountIterable.getAvailableWithoutFetching();
-                            //customerAccountIterable.all()
                             System.out.println("Acct# " + acctNbr + " OPCO INQUIRY QUERY TIME : " + (System.currentTimeMillis() - start) + "\t\tFIRST PAGE SIZE : " + numCustAccounts);
-//                            System.out.println("1 complete");
                             return customerAccountIterable;
-            //            }) ;//.thenApply(customerAccountIterable -> { mapAccountData(customerAccountIterable, resultMap); return true;});
                         }).thenApply(customerAccountIterable -> { /*mapAccountData(customerAccountIterable, resultMap);*/ return true;});
-
-
-//            CustomerApplyDiscount
 
             CompletableFuture<Boolean> future2
                     = CompletableFuture.supplyAsync(() -> {
@@ -168,32 +162,10 @@ public class CustomerTest {
                 PagingIterable<CustomerApplyDiscount> applyDiscountIterable = daoApplyDiscount.findAllByAccountNumber(acctNbr);
                 int numAccountDiscounts = applyDiscountIterable.getAvailableWithoutFetching();
                 System.out.println("Acct# " + acctNbr + " APPLY DISCOUNT INQUIRY QUERY TIME : " + (System.currentTimeMillis() - start) + "\t\tFIRST PAGE SIZE : " + numAccountDiscounts);
-//                System.out.println("2 complete");
                 return applyDiscountIterable;
-                //            }) ;//.thenApply(customerAccountIterable -> { mapAccountData(customerAccountIterable, resultMap); return true;});
             }).thenApply(customerAccountIterable -> { /*mapAccountData(customerAccountIterable, resultMap);*/ return true;});
 
-
-//            CompletableFuture<Boolean> future2
-//
-//                    = CompletableFuture.supplyAsync(() -> {
-//
-//                long start = System.currentTimeMillis();
-//
-//                PagingIterable<CustomerContact> customerContacts = daoContact.findAllByAccountNumber(acctNbr);
-//
-//                System.out.println("ACCOUNT CONTACTINQUIRY QUERY TIME : " + (System.currentTimeMillis() - start));
-//
-//                System.out.println("2 complete");
-//
-//                return customerContacts;
-//
-//            }) ; //.thenApply(customerContacts -> { mapContactData(customerContacts, resultMap); return true;});
-
-
-
             CompletableFuture<Void> allFutures = CompletableFuture.allOf(future1, future2);
-//            CompletableFuture<Void> allFutures = CompletableFuture.allOf(future1);
             try {
                 allFutures.get();
             } catch (InterruptedException e) {
