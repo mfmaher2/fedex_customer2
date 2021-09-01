@@ -33,9 +33,9 @@ public class CustomerTest {
     static CustomerNationalAccountDao daoNational = null;
     static CustomerApplyDiscountDao daoApplyDiscount = null;
 
-    private static boolean skipSchemaCreation = false;
-    private static boolean skipDataLoad = false;
-    private static boolean skipKeyspaceDrop = false;
+    private static boolean skipSchemaCreation = true;
+    private static boolean skipDataLoad = true;
+    private static boolean skipKeyspaceDrop = true;
     private static String keyspaceName = "customer";
     private static String productName = "Customer" ;
 
@@ -134,6 +134,78 @@ public class CustomerTest {
 
         dropTestKeyspace();
         if (session != null) session.close();
+    }
+
+    @Test
+    public void latencyTest() {
+
+        List<String> acctList = new ArrayList<String>();
+        acctList.add("001146670");
+        acctList.add("002101513");
+        acctList.add("002101530");
+        acctList.add("002101572");
+
+        acctList.stream().forEach(acctNbr->{
+            long futuresstart = System.currentTimeMillis();
+            CompletableFuture<Boolean> future1
+                    = CompletableFuture.supplyAsync(() -> {
+                            long start = System.currentTimeMillis();
+                            PagingIterable<CustomerAccount> customerAccountIterable = daoAccount.findAllByAccountNumber(acctNbr);
+                            int numCustAccounts = customerAccountIterable.getAvailableWithoutFetching();
+                            //customerAccountIterable.all()
+                            System.out.println("Acct# " + acctNbr + " OPCO INQUIRY QUERY TIME : " + (System.currentTimeMillis() - start) + "\t\tFIRST PAGE SIZE : " + numCustAccounts);
+//                            System.out.println("1 complete");
+                            return customerAccountIterable;
+            //            }) ;//.thenApply(customerAccountIterable -> { mapAccountData(customerAccountIterable, resultMap); return true;});
+                        }).thenApply(customerAccountIterable -> { /*mapAccountData(customerAccountIterable, resultMap);*/ return true;});
+
+
+//            CustomerApplyDiscount
+
+            CompletableFuture<Boolean> future2
+                    = CompletableFuture.supplyAsync(() -> {
+                long start = System.currentTimeMillis();
+                PagingIterable<CustomerApplyDiscount> applyDiscountIterable = daoApplyDiscount.findAllByAccountNumber(acctNbr);
+                int numAccountDiscounts = applyDiscountIterable.getAvailableWithoutFetching();
+                System.out.println("Acct# " + acctNbr + " APPLY DISCOUNT INQUIRY QUERY TIME : " + (System.currentTimeMillis() - start) + "\t\tFIRST PAGE SIZE : " + numAccountDiscounts);
+//                System.out.println("2 complete");
+                return applyDiscountIterable;
+                //            }) ;//.thenApply(customerAccountIterable -> { mapAccountData(customerAccountIterable, resultMap); return true;});
+            }).thenApply(customerAccountIterable -> { /*mapAccountData(customerAccountIterable, resultMap);*/ return true;});
+
+
+//            CompletableFuture<Boolean> future2
+//
+//                    = CompletableFuture.supplyAsync(() -> {
+//
+//                long start = System.currentTimeMillis();
+//
+//                PagingIterable<CustomerContact> customerContacts = daoContact.findAllByAccountNumber(acctNbr);
+//
+//                System.out.println("ACCOUNT CONTACTINQUIRY QUERY TIME : " + (System.currentTimeMillis() - start));
+//
+//                System.out.println("2 complete");
+//
+//                return customerContacts;
+//
+//            }) ; //.thenApply(customerContacts -> { mapContactData(customerContacts, resultMap); return true;});
+
+
+
+            CompletableFuture<Void> allFutures = CompletableFuture.allOf(future1, future2);
+//            CompletableFuture<Void> allFutures = CompletableFuture.allOf(future1);
+            try {
+                allFutures.get();
+            } catch (InterruptedException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            } catch (ExecutionException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+            System.out.println("All complete for acct : " + acctNbr);
+            System.out.println("ACCOUNT FUTURES TOTAL QUERY TIME : " + (System.currentTimeMillis() - futuresstart) + "\n\n");
+        });
     }
 
     @Test

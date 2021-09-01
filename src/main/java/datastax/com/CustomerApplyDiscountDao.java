@@ -13,6 +13,9 @@ public interface CustomerApplyDiscountDao {
     CustomerApplyDiscount findByAccountNumber(String accountNum);
 
     @Select
+    PagingIterable<CustomerApplyDiscount> findAllByAccountNumber(String accountNum);
+
+    @Select
     CompletableFuture<CustomerApplyDiscount> findByAccountNumberAsync(String accountNum);
 
     @Select (customWhereClause = "account_number = :accountNum and opco = :opco and apply_discount__effective_date_time = :effDT")

@@ -1,5 +1,6 @@
 package datastax.com;
 
+import com.datastax.oss.driver.api.core.PagingIterable;
 import com.datastax.oss.driver.api.mapper.annotations.*;
 import java.util.concurrent.CompletableFuture;
 
@@ -8,6 +9,9 @@ public interface CustomerAccountDao {
 
     @Select
     CustomerAccount findByAccountNumber(String accountNum);
+
+    @Select
+    PagingIterable<CustomerAccount> findAllByAccountNumber(String accountNum);
 
     @Select
     CompletableFuture<CustomerAccount> findByAccountNumberAsync(String accountNum);
