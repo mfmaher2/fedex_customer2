@@ -476,6 +476,11 @@ CREATE TABLE IF NOT EXISTS cust_acct_v1 (
     eligibility__freight boolean,
     eligibility__office boolean,
 
+    -- expressSalesProfile
+   profile__geoTerr text,
+   profile__marketingCd text,
+   profile__correspondenceCd boolean,
+
     -- nationalAccount   -- QUESTION . We need another table...... ?
     PRIMARY KEY(account_number, opco))
 WITH CLUSTERING ORDER BY (opco ASC)
