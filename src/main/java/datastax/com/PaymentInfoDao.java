@@ -4,13 +4,13 @@ import com.datastax.oss.driver.api.mapper.annotations.*;
 import java.util.concurrent.CompletableFuture;
 
 @Dao
-public interface CustomerPaymentInfoDao {
+public interface PaymentInfoDao {
 
     @Select
-    CustomerPaymentInfo findByAccountNumber(String acct);
+    PaymentInfo findByAccountNumber(String acct);
 
     @Select
-    CompletableFuture<CustomerPaymentInfo> findByAccountNumberAsync(String acct);
+    CompletableFuture<PaymentInfo> findByAccountNumberAsync(String acct);
 
 //    @Insert
 //    void save(CustomerPaymentInfo payInfo);

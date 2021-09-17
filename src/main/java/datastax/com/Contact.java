@@ -8,7 +8,7 @@ import java.util.Set;
 
 @Entity
 @CqlName("contact")
-public class CustomerContact {
+public class Contact {
 
     @PartitionKey private long contactDocumentId;
 
@@ -18,9 +18,9 @@ public class CustomerContact {
     private String person__last_name;                       //explicit use of table property
     private String person_MiddleName;                       //use default naming strategy mapping, property = person__middle_name
 
-    @CqlName("tele_com") private Set<CustomerContactTelecomDetails> teleCom;
+    @CqlName("tele_com") private Set<ContactTelecomDetails> teleCom;
 
-    public CustomerContact() {};
+    public Contact() {};
 
     public long getContactDocumentId() { return contactDocumentId;}
     public void setContactDocumentId(long id) { contactDocumentId = id;}
@@ -34,6 +34,6 @@ public class CustomerContact {
     public String getPerson_MiddleName() { return person_MiddleName;}
     public void setPerson_MiddleName(String name) { person_MiddleName = name;}
 
-    public Set<CustomerContactTelecomDetails> getTeleCom() { return teleCom; }
-    public void setTeleCom(Set<CustomerContactTelecomDetails> tc) { teleCom = tc; }
+    public Set<ContactTelecomDetails> getTeleCom() { return teleCom; }
+    public void setTeleCom(Set<ContactTelecomDetails> tc) { teleCom = tc; }
 }

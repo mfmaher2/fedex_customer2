@@ -8,20 +8,20 @@ import com.datastax.oss.driver.api.mapper.annotations.Mapper;
 public interface CustomerMapper {
 
     @DaoFactory
-    CustomerContactDao customerContactDao(@DaoKeyspace String keyspace);
+    ContactDao customerContactDao(@DaoKeyspace String keyspace);
 
     @DaoFactory
-    CustomerPaymentInfoDao customerPaymentInfoDao(@DaoKeyspace String keyspace);
+    PaymentInfoDao customerPaymentInfoDao(@DaoKeyspace String keyspace);
 
     @DaoFactory
-    CustomerAccountDao customerAccountDao(@DaoKeyspace String keyspace);
+    AccountDao customerAccountDao(@DaoKeyspace String keyspace);
 
     @DaoFactory
-    CustomerAssocAccountDao customerAssocAccountDao(@DaoKeyspace String keyspace);
+    AssocAccountDao customerAssocAccountDao(@DaoKeyspace String keyspace);
 
     @DaoFactory
-    CustomerNationalAccountDao customerNationalAccountDao(@DaoKeyspace String keyspace);
+    NationalAccountDao customerNationalAccountDao(@DaoKeyspace String keyspace);
 
     @DaoFactory
-    CustomerApplyDiscountDao customerApplyDiscountDao(@DaoKeyspace String keyspace);
+    ApplyDiscountDao customerApplyDiscountDao(@DaoKeyspace String keyspace);
 }

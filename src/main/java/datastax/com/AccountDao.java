@@ -5,25 +5,25 @@ import com.datastax.oss.driver.api.mapper.annotations.*;
 import java.util.concurrent.CompletableFuture;
 
 @Dao
-public interface CustomerAccountDao {
+public interface AccountDao {
 
     @Select
-    CustomerAccount findByAccountNumber(String accountNum);
+    Account findByAccountNumber(String accountNum);
 
     @Select
-    PagingIterable<CustomerAccount> findAllByAccountNumber(String accountNum);
+    PagingIterable<Account> findAllByAccountNumber(String accountNum);
 
     @Select
-    CompletableFuture<CustomerAccount> findByAccountNumberAsync(String accountNum);
+    CompletableFuture<Account> findByAccountNumberAsync(String accountNum);
 
     @Insert
-    void save(CustomerAccount account);
+    void save(Account account);
 
     @Update
-    void update(CustomerAccount account);
+    void update(Account account);
 
     @Delete
-    void delete(CustomerAccount account);
+    void delete(Account account);
 
 //    @Query("UPDATE ${keyspaceId}.cust_acct_v1 SET duty_tax_info = duty_tax_info + {:newKey : :newValue} WHERE account_number = :acctNum AND opco = :opco") //TODO use common table ID instead of hard coded value
 //    void addDutyTaxInfoEntry(String acctNum, String opco, String newKey, String newValue);

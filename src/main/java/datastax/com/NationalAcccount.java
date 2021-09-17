@@ -8,7 +8,7 @@ import java.time.Instant;
 
 @Entity
 @CqlName("national_account_v1")
-public class CustomerNationalAcccount {
+public class NationalAcccount {
 
     @PartitionKey @CqlName("account_number") private String accountNumber;
     @ClusteringColumn(0) @CqlName("opco") private String opco;
@@ -18,7 +18,7 @@ public class CustomerNationalAcccount {
     @ClusteringColumn(1)  @CqlName("national_account_detail__membership_eff_date_time") private Instant membershipEffectiveDateTime;
     @CqlName("national_account_detail__membership_eff_date_time") private Instant membershipExpirationDateTime;
 
-    public CustomerNationalAcccount() {};
+    public NationalAcccount() {};
 
     public String getAccountNumber() { return accountNumber; }
     public void setAccountNumber(String val) {accountNumber = val; }

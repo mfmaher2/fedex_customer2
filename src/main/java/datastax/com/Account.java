@@ -9,7 +9,7 @@ import java.util.Map;
 
 @Entity
 @CqlName("cust_acct_v1")
-public class CustomerAccount {
+public class Account {
 
     @PartitionKey private String accountNumber;
     @ClusteringColumn private String opco;
@@ -22,7 +22,7 @@ public class CustomerAccount {
     @CqlName("duty_tax_info") private Map<String, String> dutyTaxInfo;
 
 
-    public CustomerAccount() {};
+    public Account() {};
 
     public String getAccountNumber() { return accountNumber;}
     public void setAccountNumber(String val) { accountNumber = val;}

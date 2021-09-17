@@ -9,7 +9,7 @@ import java.time.Instant;
 
 @Entity
 @CqlName("apply_discount_detail_v1")
-public class CustomerApplyDiscount {
+public class ApplyDiscount {
     @PartitionKey private String accountNumber;
     @ClusteringColumn(0) private String opco;
     @CqlName("last_update_tmstp") private Instant lastUpdated;
@@ -17,7 +17,7 @@ public class CustomerApplyDiscount {
     @ClusteringColumn(1) @CqlName("apply_discount__effective_date_time") private Instant disountEffectiveDateTime;
     @CqlName("apply_discount__expiration_date_time") private Instant disountExpirationateTime;
 
-    public CustomerApplyDiscount() {};
+    public ApplyDiscount() {};
 
     public String getAccountNumber() { return accountNumber; }
     public void setAccountNumber(String val) {accountNumber = val; }

@@ -9,26 +9,26 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
 @Dao
-public interface CustomerNationalAccountDao {
+public interface NationalAccountDao {
 
 //    @Query("select * from national_account_v1 where account_number = :accountNum")
     @Select
-    PagingIterable<CustomerNationalAcccount> findByAccountNumber(String accountNum);
+    PagingIterable<NationalAcccount> findByAccountNumber(String accountNum);
 
     @Select
-    PagingIterable<CustomerNationalAcccount> findByAccountNumber(String accountNum, Function<BoundStatementBuilder, BoundStatementBuilder> setAttributes);
+    PagingIterable<NationalAcccount> findByAccountNumber(String accountNum, Function<BoundStatementBuilder, BoundStatementBuilder> setAttributes);
 
     @Select
-    CompletableFuture<CustomerNationalAcccount> findByAccountNumberAsync(String accountNum);
+    CompletableFuture<NationalAcccount> findByAccountNumberAsync(String accountNum);
 
     @Query("select * from national_account_v1 where solr_query = :nationalAcct")
-    PagingIterable<CustomerNationalAcccount> findByNationalAccountNumberFullSolrParam(String nationalAcct);
+    PagingIterable<NationalAcccount> findByNationalAccountNumberFullSolrParam(String nationalAcct);
 
     @Select(customWhereClause = "solr_query = :solrParam")
-    PagingIterable<CustomerNationalAcccount> findBySearchQuery(String solrParam);
+    PagingIterable<NationalAcccount> findBySearchQuery(String solrParam);
 
     @GetEntity
-    CustomerNationalAcccount asNationalAccount(Row row);
+    NationalAcccount asNationalAccount(Row row);
 
 
 //    @Insert

@@ -6,11 +6,11 @@ import com.datastax.oss.driver.api.mapper.annotations.Select;
 import java.util.concurrent.CompletableFuture;
 
 @Dao
-public interface CustomerAssocAccountDao {
+public interface AssocAccountDao {
 
     @Select
-    CustomerAssocAccount findByAccountNumber(String accountNum);
+    AssocAccount findByAccountNumber(String accountNum);
 
     @Select
-    CompletableFuture<CustomerAssocAccount> findByAccountNumberAsync(String accountNum);
+    CompletableFuture<AssocAccount> findByAccountNumberAsync(String accountNum);
 }

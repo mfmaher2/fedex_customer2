@@ -26,16 +26,16 @@ public class CustomerTest {
 
     private static CqlSession session = null;
     private static CustomerMapper customerMapper = null;
-    static CustomerAccountDao daoAccount = null;
-    static CustomerPaymentInfoDao daoPayment = null;
-    static CustomerAssocAccountDao daoAssoc = null;
-    static CustomerContactDao daoContact = null;
-    static CustomerNationalAccountDao daoNational = null;
-    static CustomerApplyDiscountDao daoApplyDiscount = null;
+    static AccountDao daoAccount = null;
+    static PaymentInfoDao daoPayment = null;
+    static AssocAccountDao daoAssoc = null;
+    static ContactDao daoContact = null;
+    static NationalAccountDao daoNational = null;
+    static ApplyDiscountDao daoApplyDiscount = null;
 
-    private static boolean skipSchemaCreation = true;
-    private static boolean skipDataLoad = true;
-    private static boolean skipKeyspaceDrop = true;
+    private static boolean skipSchemaCreation = false;
+    private static boolean skipDataLoad = false;
+    private static boolean skipKeyspaceDrop = false;
     private static String keyspaceName = "customer";
     private static String productName = "Customer" ;
 
@@ -125,6 +125,8 @@ public class CustomerTest {
             //sleep for a time to allow Solr indexes to update completely
             System.out.println("Completed " + productName + " data load.  Pausing to allow indexes to update...");
             Thread.sleep(11000);
+
+            System.out.println("Index update complete, starting tests...");
         }
     }
 
@@ -150,7 +152,7 @@ public class CustomerTest {
             CompletableFuture<Boolean> future1
                     = CompletableFuture.supplyAsync(() -> {
                             long start = System.currentTimeMillis();
-                            PagingIterable<CustomerAccount> customerAccountIterable = daoAccount.findAllByAccountNumber(acctNbr);
+                            PagingIterable<Account> customerAccountIterable = daoAccount.findAllByAccountNumber(acctNbr);
                             int numCustAccounts = customerAccountIterable.getAvailableWithoutFetching();
                             System.out.println("Acct# " + acctNbr + " OPCO INQUIRY QUERY TIME : " + (System.currentTimeMillis() - start) + "\t\tFIRST PAGE SIZE : " + numCustAccounts);
                             return customerAccountIterable;
@@ -159,7 +161,7 @@ public class CustomerTest {
             CompletableFuture<Boolean> future2
                     = CompletableFuture.supplyAsync(() -> {
                 long start = System.currentTimeMillis();
-                PagingIterable<CustomerApplyDiscount> applyDiscountIterable = daoApplyDiscount.findAllByAccountNumber(acctNbr);
+                PagingIterable<ApplyDiscount> applyDiscountIterable = daoApplyDiscount.findAllByAccountNumber(acctNbr);
                 int numAccountDiscounts = applyDiscountIterable.getAvailableWithoutFetching();
                 System.out.println("Acct# " + acctNbr + " APPLY DISCOUNT INQUIRY QUERY TIME : " + (System.currentTimeMillis() - start) + "\t\tFIRST PAGE SIZE : " + numAccountDiscounts);
                 return applyDiscountIterable;
@@ -196,14 +198,14 @@ public class CustomerTest {
         dutyTax.put(keyA, valA);
         dutyTax.put(keyB, valB);
 
-        CustomerAccount custAcct = new CustomerAccount();
+        Account custAcct = new Account();
         custAcct.setAccountNumber(acctNum);
         custAcct.setOpco(opco);
         custAcct.setDutyTaxInfo(dutyTax);
 
         daoAccount.save(custAcct);
 
-        CustomerAccount foundAcct = daoAccount.findByAccountNumber(acctNum);
+        Account foundAcct = daoAccount.findByAccountNumber(acctNum);
         Map<String, String> foundDutyTax = foundAcct.getDutyTaxInfo();
         assert(foundDutyTax.get(keyA).equals(valA));
         assert(foundDutyTax.get(keyB).equals(valB));
@@ -221,7 +223,7 @@ public class CustomerTest {
                 "    opco = '" + opco + "';";
 
         session.execute(dutyTaxAddElement);
-        CustomerAccount foundAcct2 = daoAccount.findByAccountNumber(acctNum);
+        Account foundAcct2 = daoAccount.findByAccountNumber(acctNum);
         Map<String, String> foundDutyTax2 = foundAcct2.getDutyTaxInfo();
         assert(foundDutyTax2.get(keyC).equals(valC));
 
@@ -309,14 +311,14 @@ public class CustomerTest {
         String opco = "testOpcoAcctTypes";
         String hazardShipperFlag = "shipFlag";
 
-        CustomerAccount custAcct = new CustomerAccount();
+        Account custAcct = new Account();
         custAcct.setAccountNumber(acctNum);
         custAcct.setOpco(opco);
         custAcct.setHazardousShipperFlag(hazardShipperFlag);
 
         daoAccount.save(custAcct);
 
-        CustomerAccount foundAcct = daoAccount.findByAccountNumber(acctNum);
+        Account foundAcct = daoAccount.findByAccountNumber(acctNum);
         assert(foundAcct.getHazardousShipperFlag().equals(hazardShipperFlag));
 
         //cleanup
@@ -331,14 +333,14 @@ public class CustomerTest {
         String opco = "testOpco";
         String acctType = String.valueOf(euroUTF);
 
-        CustomerAccount custAcct = new CustomerAccount();
+        Account custAcct = new Account();
         custAcct.setAccountNumber(acctNum);
         custAcct.setOpco(opco);
         custAcct.setProfileAccountType(acctType);
 
         daoAccount.save(custAcct);
 
-        CustomerAccount foundAcct = daoAccount.findByAccountNumber(acctNum);
+        Account foundAcct = daoAccount.findByAccountNumber(acctNum);
         String foundAcctType = foundAcct.getProfileAccountType();
 
         assert(foundAcctType.equals(acctType));
@@ -355,7 +357,7 @@ public class CustomerTest {
         Instant effectiveDT = Instant.parse("2021-05-01T01:00:00.001Z");
         Instant expirationDT = Instant.parse("2015-12-10T00:00:00.001Z");
 
-        CustomerApplyDiscount appDisc = new CustomerApplyDiscount();
+        ApplyDiscount appDisc = new ApplyDiscount();
 
         appDisc.setAccountNumber(acctNum);
         appDisc.setOpco(opco);
@@ -367,7 +369,7 @@ public class CustomerTest {
         daoApplyDiscount.save(appDisc);
 
         //retrieve initial version and verify property values
-        CustomerApplyDiscount readAppDisc = daoApplyDiscount.findByKeys(acctNum, opco, effectiveDT);
+        ApplyDiscount readAppDisc = daoApplyDiscount.findByKeys(acctNum, opco, effectiveDT);
         assert(readAppDisc.getAccountNumber().equals(acctNum));
         assert(readAppDisc.getOpco().equals(opco));
         assert(readAppDisc.getApplyDiscountFlag() == applyDiscountFlag);
@@ -384,7 +386,7 @@ public class CustomerTest {
         daoApplyDiscount.update(readAppDisc);
 
         //retrieve updated version and verify property values were updated
-        CustomerApplyDiscount foundUpdatedAppDisc = daoApplyDiscount.findByKeys(acctNum, opco, effectiveDT);
+        ApplyDiscount foundUpdatedAppDisc = daoApplyDiscount.findByKeys(acctNum, opco, effectiveDT);
         assert(foundUpdatedAppDisc.getAccountNumber().equals(acctNum));
         assert(foundUpdatedAppDisc.getOpco().equals(opco));
         assert(foundUpdatedAppDisc.getApplyDiscountFlag() == updatedApplyDiscountFlag);
@@ -420,7 +422,7 @@ public class CustomerTest {
         String acctNum = "000001236";
         int expectResultSize = 11;
 
-        CompletableFuture<MappedAsyncPagingIterable<CustomerApplyDiscount>> cfDiscounts = daoApplyDiscount.findAllByAccountNumberAsync(acctNum);
+        CompletableFuture<MappedAsyncPagingIterable<ApplyDiscount>> cfDiscounts = daoApplyDiscount.findAllByAccountNumberAsync(acctNum);
         cfDiscounts.join();
         assert(cfDiscounts.get().remaining() == expectResultSize);
     }
@@ -435,32 +437,32 @@ public class CustomerTest {
 
         //Solr filter on opco value only
         int expectedResultSize1 = 11;
-        String solrParm1 = CustomerApplyDiscountHelper.constructSearchQuery(opco);
-        CompletableFuture<MappedAsyncPagingIterable<CustomerApplyDiscount>> cfDiscounts1 =
+        String solrParm1 = ApplyDiscountHelper.constructSearchQuery(opco);
+        CompletableFuture<MappedAsyncPagingIterable<ApplyDiscount>> cfDiscounts1 =
                 daoApplyDiscount.findAllByAccountSearchAsync(acctNum, solrParm1);
         cfDiscounts1.join();
         assert(cfDiscounts1.get().remaining() == expectedResultSize1);
 
         //Solr filter on opco and apply discount flag values only
         int expectedResultSize2 = 6;
-        String solrParm2 = CustomerApplyDiscountHelper.constructSearchQuery(opco, applyDiscountFlag);
-        CompletableFuture<MappedAsyncPagingIterable<CustomerApplyDiscount>> cfDiscounts2 =
+        String solrParm2 = ApplyDiscountHelper.constructSearchQuery(opco, applyDiscountFlag);
+        CompletableFuture<MappedAsyncPagingIterable<ApplyDiscount>> cfDiscounts2 =
                 daoApplyDiscount.findAllByAccountSearchAsync(acctNum, solrParm2);
         cfDiscounts2.join();
         assert(cfDiscounts2.get().remaining() == expectedResultSize2);
 
         //Solr filter on opco and effective date/time values only
         int expectedResultSize3 = 7;
-        String solrParm3 = CustomerApplyDiscountHelper.constructSearchQuery(opco, effectiveDT);
-        CompletableFuture<MappedAsyncPagingIterable<CustomerApplyDiscount>> cfDiscounts3 =
+        String solrParm3 = ApplyDiscountHelper.constructSearchQuery(opco, effectiveDT);
+        CompletableFuture<MappedAsyncPagingIterable<ApplyDiscount>> cfDiscounts3 =
                 daoApplyDiscount.findAllByAccountSearchAsync(acctNum, solrParm3);
         cfDiscounts3.join();
         assert(cfDiscounts3.get().remaining() == expectedResultSize3);
 
         //Solr filter on opco, apply discount flag, effective date/time and expiration date/time
         int expectedResultSize4 = 3;
-        String solrParm4 = CustomerApplyDiscountHelper.constructSearchQuery(opco, applyDiscountFlag, effectiveDT,expriationDT);
-        CompletableFuture<MappedAsyncPagingIterable<CustomerApplyDiscount>> cfDiscounts4 =
+        String solrParm4 = ApplyDiscountHelper.constructSearchQuery(opco, applyDiscountFlag, effectiveDT,expriationDT);
+        CompletableFuture<MappedAsyncPagingIterable<ApplyDiscount>> cfDiscounts4 =
                 daoApplyDiscount.findAllByAccountSearchAsync(acctNum, solrParm4);
         cfDiscounts4.join();
         assert(cfDiscounts4.get().remaining() == expectedResultSize4);
@@ -471,7 +473,7 @@ public class CustomerTest {
     public void nationalAccountFullSearchTest(){
         String solrParam = "national_account_detail__national_account_nbr:00706";
         int expectedResultCount = 14;
-        PagingIterable<CustomerNationalAcccount> foundNatAccts = daoNational.findByNationalAccountNumberFullSolrParam(solrParam);
+        PagingIterable<NationalAcccount> foundNatAccts = daoNational.findByNationalAccountNumberFullSolrParam(solrParam);
 
         assert(foundNatAccts.all().size() == expectedResultCount);
     }
@@ -480,7 +482,7 @@ public class CustomerTest {
     public void nationalAccountSearchTest(){
         String solrParam = "national_account_detail__national_account_nbr:00706";
         int expectedResultCount = 14;
-        PagingIterable<CustomerNationalAcccount> foundNatAccts = daoNational.findBySearchQuery(solrParam);
+        PagingIterable<NationalAcccount> foundNatAccts = daoNational.findBySearchQuery(solrParam);
 
         assert(foundNatAccts.all().size() == expectedResultCount);
     }
@@ -490,7 +492,7 @@ public class CustomerTest {
         String acctID = "00112770";
         int expectedResultCount = 5;
 
-        PagingIterable<CustomerNationalAcccount> foundNatAccts = daoNational.findByAccountNumber(acctID);
+        PagingIterable<NationalAcccount> foundNatAccts = daoNational.findByAccountNumber(acctID);
 
         assert(foundNatAccts.all().size() == expectedResultCount);
     }
@@ -503,7 +505,7 @@ public class CustomerTest {
                 builder -> builder.setPageSize(pageSize);
 
         String acctID = "00112770";
-        PagingIterable<CustomerNationalAcccount> foundNatAccts = daoNational.findByAccountNumber(acctID, functionCustomPageSize);
+        PagingIterable<NationalAcccount> foundNatAccts = daoNational.findByAccountNumber(acctID, functionCustomPageSize);
 
         assert(foundNatAccts.getAvailableWithoutFetching() == pageSize);
         assert (foundNatAccts.isFullyFetched() == false);
@@ -564,7 +566,7 @@ public class CustomerTest {
         System.out.println("First page results:");
         while(rs.getAvailableWithoutFetching()>0){
             Row row = rs.one();
-            CustomerNationalAcccount natAcct = daoNational.asNationalAccount(row);
+            NationalAcccount natAcct = daoNational.asNationalAccount(row);
 
             System.out.println("\t" +
                     "Account Number - " + natAcct.getAccountNumber() + "    " +
@@ -580,7 +582,7 @@ public class CustomerTest {
         System.out.println("Second page results:");
         while(rs2.getAvailableWithoutFetching()>0){
             Row row = rs2.one();
-            CustomerNationalAcccount natAcct = daoNational.asNationalAccount(row);
+            NationalAcccount natAcct = daoNational.asNationalAccount(row);
 
             System.out.println("\t" +
                     "Account Number - " + natAcct.getAccountNumber() + "    " +
@@ -626,7 +628,7 @@ public class CustomerTest {
     @Test
     public void sampleTestSearch(){
         String acctID = "00112770";
-        String query = "select * from " + keyspaceName + ".national_account_v1 where solr_query = 'account_number:" + acctID + "';";
+        String query = "select * from " + keyspaceName + ".national_account_v1 where account_number='" + acctID + "';";
         System.out.println(query);
 
         int expectedTotalSize = 5;
@@ -661,7 +663,7 @@ public class CustomerTest {
     @Test
     public void sampleTestSearchMultiPage(){
         String acctID = "00112770";
-        String query = "select * from " + keyspaceName + ".national_account_v1 where solr_query = 'account_number:" + acctID + "';";
+        String query = "select * from " + keyspaceName + ".national_account_v1 where account_number = '" + acctID + "';";
         System.out.println(query);
 
         int expectedTotalSize = 5;
@@ -715,11 +717,11 @@ public class CustomerTest {
 
 
         //sample calls to Bytes utility methods
-        String temp = Bytes.toHexString(pagingState);
-        System.out.println(temp);
-
-        ByteBuffer buff = Bytes.fromHexString(temp);
-        System.out.println(buff);
+//        String temp = Bytes.toHexString(pagingState); //Debug ouput if needed
+//        System.out.println(temp);
+//
+//        ByteBuffer buff = Bytes.fromHexString(temp);
+//        System.out.println(buff);
     }
 
     @Test
@@ -732,7 +734,7 @@ public class CustomerTest {
         String acctReason = "reason1";
         String entSource = "entSource1";
 
-        CustomerAccount custAllProps = new CustomerAccount();
+        Account custAllProps = new Account();
         custAllProps.setAccountNumber(acctID);
         custAllProps.setOpco(opco);
         custAllProps.setProfileCustomerType(custType);
@@ -743,7 +745,7 @@ public class CustomerTest {
         daoAccount.save(custAllProps);
 
         //verify all properties exist in rcord before deleting select properties
-        CustomerAccount foundCust = daoAccount.findByAccountNumber(acctID);
+        Account foundCust = daoAccount.findByAccountNumber(acctID);
         assert(foundCust.getOpco().equals(opco));
         assert(foundCust.getProfileCustomerType().equals(custType));
         assert(foundCust.getProfileAccountType().equals(acctType));
@@ -763,7 +765,7 @@ public class CustomerTest {
                 "    AND opco = '" + opco + "';";
 
         session.execute(stmtDeletProperty);
-        CustomerAccount foundCustDelProp = daoAccount.findByAccountNumber(acctID);
+        Account foundCustDelProp = daoAccount.findByAccountNumber(acctID);
         //check that deleted property is no longer in record
         assert(foundCustDelProp.getProfileAccountType() == null);
         //check that all other properties still set to expected values
@@ -790,7 +792,7 @@ public class CustomerTest {
                 "    AND opco = '" + opco + "';";
 
         session.execute(stmtDeleteMultiProperties);
-        CustomerAccount foundCustDelMultiProps = daoAccount.findByAccountNumber(acctID);
+        Account foundCustDelMultiProps = daoAccount.findByAccountNumber(acctID);
         //check that deleted properties are no longer in record
         assert(foundCustDelMultiProps.getProfileCustomerType() == null);
         assert(foundCustDelMultiProps.getProfileAccountType() == null);
@@ -805,9 +807,9 @@ public class CustomerTest {
     public void combineAsyncQueryTest() throws ExecutionException, InterruptedException {
         //execute async queries
         String acctID = "1111";
-        CompletableFuture<CustomerAccount> cfFoundAccount = daoAccount.findByAccountNumberAsync(acctID);
-        CompletableFuture<CustomerPaymentInfo> cfFoundPayment = daoPayment.findByAccountNumberAsync(acctID);
-        CompletableFuture<CustomerAssocAccount> cfFoundAssoc = daoAssoc.findByAccountNumberAsync(acctID);
+        CompletableFuture<Account> cfFoundAccount = daoAccount.findByAccountNumberAsync(acctID);
+        CompletableFuture<PaymentInfo> cfFoundPayment = daoPayment.findByAccountNumberAsync(acctID);
+        CompletableFuture<AssocAccount> cfFoundAssoc = daoAssoc.findByAccountNumberAsync(acctID);
 
         //allow all async calls to complete
         CompletableFuture.allOf(cfFoundAccount, cfFoundPayment, cfFoundAssoc);
@@ -818,7 +820,7 @@ public class CustomerTest {
         String expectedAccountType = "acctType1";
 
         //assign account data object
-        CustomerAccount foundAccount = cfFoundAccount.get();
+        Account foundAccount = cfFoundAccount.get();
 
         assert(foundAccount.getOpco().equals(expectedOpco));
         assert(foundAccount.getProfileCustomerType().equals(expectedCustomerType));
@@ -833,7 +835,7 @@ public class CustomerTest {
         String expectedCCId = "ccID1";
 
         //assign payment data object
-        CustomerPaymentInfo foundPayment = cfFoundPayment.get();
+        PaymentInfo foundPayment = cfFoundPayment.get();
 
         assert(foundPayment.getOpco().equals(expectedPaymentOpco));
         assert(foundPayment.getRecordType().equals(expectedType));
@@ -846,7 +848,7 @@ public class CustomerTest {
         String expectedAssocAcct = "2222";
 
         //assign assoc data object
-        CustomerAssocAccount foundAssoc = cfFoundAssoc.get();
+        AssocAccount foundAssoc = cfFoundAssoc.get();
 
         assert(foundAssoc.getOpco().equals(expectedAssocOpco));
         assert(foundAssoc.getAssociatedAccountNumber().equals(expectedAssocAcct));
@@ -858,7 +860,7 @@ public class CustomerTest {
         String expectedOpco = "B";
         String expectedAssocAcct = "2222";
 
-        CustomerAssocAccount foundAssoc = daoAssoc.findByAccountNumber(acctID);
+        AssocAccount foundAssoc = daoAssoc.findByAccountNumber(acctID);
 
         assert(foundAssoc.getOpco().equals(expectedOpco));
         assert(foundAssoc.getAssociatedAccountNumber().equals(expectedAssocAcct));
@@ -870,9 +872,9 @@ public class CustomerTest {
         String expectedOpco = "B";
         String expectedAssocAcct = "2222";
 
-        CompletableFuture<CustomerAssocAccount> cfFoundAssoc = daoAssoc.findByAccountNumberAsync(acctID);
+        CompletableFuture<AssocAccount> cfFoundAssoc = daoAssoc.findByAccountNumberAsync(acctID);
         cfFoundAssoc.join();
-        CustomerAssocAccount foundAssoc = cfFoundAssoc.get();
+        AssocAccount foundAssoc = cfFoundAssoc.get();
 
         assert(foundAssoc.getOpco().equals(expectedOpco));
         assert(foundAssoc.getAssociatedAccountNumber().equals(expectedAssocAcct));
@@ -888,7 +890,7 @@ public class CustomerTest {
         int expectedSeq = 1;
         String expectedCCId = "ccID1";
 
-        CustomerPaymentInfo foundPayment = daoPayment.findByAccountNumber(acctID);
+        PaymentInfo foundPayment = daoPayment.findByAccountNumber(acctID);
 
         assert(foundPayment.getOpco().equals(expectedOpco));
         assert(foundPayment.getRecordType().equals(expectedType));
@@ -910,9 +912,9 @@ public class CustomerTest {
         int expectedSeq = 1;
         String expectedCCId = "ccID1";
 
-        CompletableFuture<CustomerPaymentInfo> cfFoundPayment = daoPayment.findByAccountNumberAsync(acctID);
+        CompletableFuture<PaymentInfo> cfFoundPayment = daoPayment.findByAccountNumberAsync(acctID);
         cfFoundPayment.join();
-        CustomerPaymentInfo foundPayment = cfFoundPayment.get();
+        PaymentInfo foundPayment = cfFoundPayment.get();
 
         assert(foundPayment.getOpco().equals(expectedOpco));
         assert(foundPayment.getRecordType().equals(expectedType));
@@ -928,7 +930,7 @@ public class CustomerTest {
         String expectedCustomerType = "custType1";
         String expectedAccountType = "acctType1";
 
-        CustomerAccount foundAccount = daoAccount.findByAccountNumber(acctID);
+        Account foundAccount = daoAccount.findByAccountNumber(acctID);
 
         assert(foundAccount.getOpco().equals(expectedOpco));
         assert(foundAccount.getProfileCustomerType().equals(expectedCustomerType));
@@ -942,9 +944,9 @@ public class CustomerTest {
         String expectedCustomerType = "custType1";
         String expectedAccountType = "acctType1";
 
-        CompletableFuture<CustomerAccount> cfFoundAccount = daoAccount.findByAccountNumberAsync(acctID);
+        CompletableFuture<Account> cfFoundAccount = daoAccount.findByAccountNumberAsync(acctID);
         cfFoundAccount.join();
-        CustomerAccount foundAccount = cfFoundAccount.get();
+        Account foundAccount = cfFoundAccount.get();
 
         assert(foundAccount.getOpco().equals(expectedOpco));
         assert(foundAccount.getProfileCustomerType().equals(expectedCustomerType));
@@ -954,14 +956,14 @@ public class CustomerTest {
 
     @Test
     public void contactUdtMapperReadTest(){
-        CustomerContact foundContact = daoContact.findByContactDocumentId(83);
-        Set<CustomerContactTelecomDetails> setTeleCom = foundContact.getTeleCom();
+        Contact foundContact = daoContact.findByContactDocumentId(83);
+        Set<ContactTelecomDetails> setTeleCom = foundContact.getTeleCom();
 
         //verify size of returned set
         assert(setTeleCom.size() == 1);
 
         //verify udt values
-        CustomerContactTelecomDetails addrSec = setTeleCom.iterator().next();
+        ContactTelecomDetails addrSec = setTeleCom.iterator().next();
         assert(addrSec.getTelecomMethod().equals("PV"));
         assert(addrSec.getAreaCode().equals("123"));
         assert(addrSec.getPhoneNumber().equals("456-7890"));
@@ -979,15 +981,15 @@ public class CustomerTest {
         String areaCode = "000";
         String phoneNum = "111-2222";
 
-        CustomerContactTelecomDetails writeTeleCom = new CustomerContactTelecomDetails();
+        ContactTelecomDetails writeTeleCom = new ContactTelecomDetails();
         writeTeleCom.setTelecomMethod(telComMethod);
         writeTeleCom.setAreaCode(areaCode);
         writeTeleCom.setPhoneNumber(phoneNum);
 
-        Set<CustomerContactTelecomDetails> setTelecom = new HashSet<>();
+        Set<ContactTelecomDetails> setTelecom = new HashSet<>();
         setTelecom.add(writeTeleCom);
 
-        CustomerContact writeContact = new CustomerContact();
+        Contact writeContact = new Contact();
         writeContact.setContactDocumentId(testDocID);
         writeContact.setPersonFirstName(testFirstName);
         writeContact.setPerson__last_name(testLastName);
@@ -998,20 +1000,20 @@ public class CustomerTest {
         daoContact.save(writeContact);
 
         //verify record written correctly
-        CustomerContact foundContact = daoContact.findByContactDocumentId(testDocID);
-        Set<CustomerContactTelecomDetails> setReadTelecom = foundContact.getTeleCom();
+        Contact foundContact = daoContact.findByContactDocumentId(testDocID);
+        Set<ContactTelecomDetails> setReadTelecom = foundContact.getTeleCom();
 
         //verify size of returned set
         assert(1 == setReadTelecom.size());
 
         //verify udt values
-        CustomerContactTelecomDetails addrSec = setReadTelecom.iterator().next();
+        ContactTelecomDetails addrSec = setReadTelecom.iterator().next();
 //        assert(addrSec.getUnit().equals(addSecUnit));
 //        assert(addrSec.getValue().equals(addSecVal));
 
         //cleanup test UDT record
         daoContact.delete(writeContact);
-        CustomerContact readVerifyDelete = daoContact.findByContactDocumentId(testDocID);
+        Contact readVerifyDelete = daoContact.findByContactDocumentId(testDocID);
         assert(null == readVerifyDelete);
     }
 
@@ -1023,7 +1025,7 @@ public class CustomerTest {
         String testMiddleName = "Middle20000" ;
 
         //write test record
-        CustomerContact writeContact = new CustomerContact();
+        Contact writeContact = new Contact();
         writeContact.setContactDocumentId(testDocID);
         writeContact.setPersonFirstName(testFirstName);
         writeContact.setPerson__last_name(testLastName);
@@ -1031,31 +1033,31 @@ public class CustomerTest {
         daoContact.save(writeContact);
 
         //test read functionality
-        CustomerContact readContact = daoContact.findByContactDocumentId(testDocID);
+        Contact readContact = daoContact.findByContactDocumentId(testDocID);
         assert(readContact.getPersonFirstName().equals(testFirstName));
         assert(readContact.getPerson__last_name().equals(testLastName));
         assert(readContact.getPerson_MiddleName().equals(testMiddleName));
 
         //test delete capability
         daoContact.delete(writeContact);
-        CustomerContact readVerifyDelete = daoContact.findByContactDocumentId(testDocID);
+        Contact readVerifyDelete = daoContact.findByContactDocumentId(testDocID);
         assert(null == readVerifyDelete);
     }
 
     @Test
     public void contactMapperAsyncTest() throws ExecutionException, InterruptedException {
-        CompletableFuture<CustomerContact> cfFoundContact = daoContact.findByContactDocumentIdAsync(83);
+        CompletableFuture<Contact> cfFoundContact = daoContact.findByContactDocumentIdAsync(83);
         cfFoundContact.join();
 
-        CustomerContact foundContact = cfFoundContact.get();
+        Contact foundContact = cfFoundContact.get();
 
-        Set<CustomerContactTelecomDetails> setTeleCom = foundContact.getTeleCom();
+        Set<ContactTelecomDetails> setTeleCom = foundContact.getTeleCom();
 
         //verify size of returned set
         assert(setTeleCom.size() == 1);
 
         //verify udt values
-        CustomerContactTelecomDetails addrSec = setTeleCom.iterator().next();
+        ContactTelecomDetails addrSec = setTeleCom.iterator().next();
         assert(addrSec.getTelecomMethod().equals("PV"));
         assert(addrSec.getAreaCode().equals("123"));
         assert(addrSec.getPhoneNumber().equals("456-7890"));
@@ -1213,28 +1215,28 @@ public class CustomerTest {
         String areaCode3 = "333";
         String phone3 = "333-3333";
 
-        CustomerContact deleteContact = new CustomerContact();
+        Contact deleteContact = new Contact();
         deleteContact.setContactDocumentId(testDocId);
         daoContact.delete(deleteContact);
 
-        CustomerContact readVerifyDelete = daoContact.findByContactDocumentId(testDocId);
+        Contact readVerifyDelete = daoContact.findByContactDocumentId(testDocId);
         assert(null == readVerifyDelete);
 
-        CustomerContactTelecomDetails writeTelecom1 = new CustomerContactTelecomDetails();
+        ContactTelecomDetails writeTelecom1 = new ContactTelecomDetails();
         writeTelecom1.setTelecomMethod(method1);
         writeTelecom1.setTelecomMethod(areaCode1);
         writeTelecom1.setPhoneNumber(phone1);
 
-        CustomerContactTelecomDetails writeTelecom2 = new CustomerContactTelecomDetails();
+        ContactTelecomDetails writeTelecom2 = new ContactTelecomDetails();
         writeTelecom2.setTelecomMethod(method2);
         writeTelecom2.setTelecomMethod(areaCode2);
         writeTelecom2.setPhoneNumber(phone2);
 
-        Set<CustomerContactTelecomDetails> setTelecom = new HashSet<>();
+        Set<ContactTelecomDetails> setTelecom = new HashSet<>();
         setTelecom.add(writeTelecom1);
         setTelecom.add(writeTelecom2);
 
-        CustomerContact writeContact = new CustomerContact();
+        Contact writeContact = new Contact();
         writeContact.setContactDocumentId(testDocId);
         writeContact.setTeleCom(setTelecom);
 
@@ -1242,14 +1244,14 @@ public class CustomerTest {
         daoContact.save(writeContact);
 
         //verify record written as expected
-        CustomerContact checkWriteContact = daoContact.findByContactDocumentId(testDocId);
+        Contact checkWriteContact = daoContact.findByContactDocumentId(testDocId);
         assert(testDocId == checkWriteContact.getContactDocumentId());
 
-        Set<CustomerContactTelecomDetails> setCheckTelecom = checkWriteContact.getTeleCom();
+        Set<ContactTelecomDetails> setCheckTelecom = checkWriteContact.getTeleCom();
         assert(2 == setTelecom.size());
 
         //update collection of UDTs
-        CustomerContactTelecomDetails writeTelecom3 = new CustomerContactTelecomDetails();
+        ContactTelecomDetails writeTelecom3 = new ContactTelecomDetails();
         writeTelecom3.setTelecomMethod(method3);
         writeTelecom3.setTelecomMethod(areaCode3);
         writeTelecom3.setPhoneNumber(phone3);
@@ -1261,14 +1263,14 @@ public class CustomerTest {
 
 
         //verify update executed as expected
-        CustomerContact checkUpdateContact = daoContact.findByContactDocumentId(testDocId);
+        Contact checkUpdateContact = daoContact.findByContactDocumentId(testDocId);
         assert(testDocId == checkUpdateContact.getContactDocumentId());
 
-        Set<CustomerContactTelecomDetails> setCheckUpdateAddrSec = checkUpdateContact.getTeleCom();
+        Set<ContactTelecomDetails> setCheckUpdateAddrSec = checkUpdateContact.getTeleCom();
 //        assert(3 == setCheckUpdateAddrSec.size());  //** update does not appear to currently work as expected
 
         daoContact.delete(deleteContact);
-        CustomerContact readVerifyDeleteEnd = daoContact.findByContactDocumentId(testDocId);
+        Contact readVerifyDeleteEnd = daoContact.findByContactDocumentId(testDocId);
         assert(null == readVerifyDeleteEnd);
     }
 

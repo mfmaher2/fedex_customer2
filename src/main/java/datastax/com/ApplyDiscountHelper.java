@@ -2,7 +2,7 @@ package datastax.com;
 
 import java.time.Instant;
 
-public class CustomerApplyDiscountHelper {
+public class ApplyDiscountHelper {
 
     static String opocParam = "__opco";
     static String discountFlag = "__discoungFlag";
