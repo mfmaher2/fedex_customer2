@@ -1,9 +1,10 @@
-package datastax.com;
+package datastax.com.DAOs;
 
 import com.datastax.oss.driver.api.core.PagingIterable;
 import com.datastax.oss.driver.api.core.cql.BoundStatementBuilder;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.mapper.annotations.*;
+import datastax.com.dataObjects.NationalAcccount;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;

@@ -7,6 +7,8 @@ import com.datastax.oss.driver.api.core.PagingIterable;
 import com.datastax.oss.driver.api.core.cql.*;
 import com.datastax.oss.driver.api.core.data.UdtValue;
 import com.datastax.oss.protocol.internal.util.Bytes;
+import datastax.com.dataObjects.*;
+import datastax.com.DAOs.*;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -72,12 +74,12 @@ public class CustomerTest {
             loadData();
 
             customerMapper = new CustomerMapperBuilder(session).build();
-            daoAccount = customerMapper.customerAccountDao(keyspaceName);
-            daoPayment = customerMapper.customerPaymentInfoDao(keyspaceName);
-            daoAssoc = customerMapper.customerAssocAccountDao(keyspaceName);
-            daoContact  =  customerMapper.customerContactDao(keyspaceName);
-            daoNational = customerMapper.customerNationalAccountDao(keyspaceName);
-            daoApplyDiscount = customerMapper.customerApplyDiscountDao(keyspaceName);
+            daoAccount = customerMapper.accountDao(keyspaceName);
+            daoPayment = customerMapper.paymentInfoDao(keyspaceName);
+            daoAssoc = customerMapper.assocAccountDao(keyspaceName);
+            daoContact  =  customerMapper.contactDao(keyspaceName);
+            daoNational = customerMapper.nationalAccountDao(keyspaceName);
+            daoApplyDiscount = customerMapper.applyDiscountDao(keyspaceName);
         }
         catch(Exception e){
             System.out.println(e.getMessage());

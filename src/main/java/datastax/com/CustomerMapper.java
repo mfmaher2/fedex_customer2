@@ -3,25 +3,26 @@ package datastax.com;
 import com.datastax.oss.driver.api.mapper.annotations.DaoFactory;
 import com.datastax.oss.driver.api.mapper.annotations.DaoKeyspace;
 import com.datastax.oss.driver.api.mapper.annotations.Mapper;
+import datastax.com.DAOs.*;
 
 @Mapper
 public interface CustomerMapper {
 
     @DaoFactory
-    ContactDao customerContactDao(@DaoKeyspace String keyspace);
+    ContactDao contactDao(@DaoKeyspace String keyspace);
 
     @DaoFactory
-    PaymentInfoDao customerPaymentInfoDao(@DaoKeyspace String keyspace);
+    PaymentInfoDao paymentInfoDao(@DaoKeyspace String keyspace);
 
     @DaoFactory
-    AccountDao customerAccountDao(@DaoKeyspace String keyspace);
+    AccountDao accountDao(@DaoKeyspace String keyspace);
 
     @DaoFactory
-    AssocAccountDao customerAssocAccountDao(@DaoKeyspace String keyspace);
+    AssocAccountDao assocAccountDao(@DaoKeyspace String keyspace);
 
     @DaoFactory
-    NationalAccountDao customerNationalAccountDao(@DaoKeyspace String keyspace);
+    NationalAccountDao nationalAccountDao(@DaoKeyspace String keyspace);
 
     @DaoFactory
-    ApplyDiscountDao customerApplyDiscountDao(@DaoKeyspace String keyspace);
+    ApplyDiscountDao applyDiscountDao(@DaoKeyspace String keyspace);
 }

@@ -1,8 +1,9 @@
-package datastax.com;
+package datastax.com.DAOs;
 
 import com.datastax.oss.driver.api.core.MappedAsyncPagingIterable;
 import com.datastax.oss.driver.api.core.PagingIterable;
 import com.datastax.oss.driver.api.mapper.annotations.*;
+import datastax.com.dataObjects.ApplyDiscount;
 
 import java.time.Instant;
 import java.util.concurrent.CompletableFuture;

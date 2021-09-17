@@ -1,4 +1,4 @@
-package datastax.com;
+package datastax.com.dataObjects;
 
 import com.datastax.oss.driver.api.mapper.annotations.CqlName;
 import com.datastax.oss.driver.api.mapper.annotations.Entity;

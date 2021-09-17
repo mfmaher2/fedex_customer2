@@ -1,6 +1,8 @@
-package datastax.com;
+package datastax.com.DAOs;
 
 import com.datastax.oss.driver.api.mapper.annotations.*;
+import datastax.com.dataObjects.PaymentInfo;
+
 import java.util.concurrent.CompletableFuture;
 
 @Dao
