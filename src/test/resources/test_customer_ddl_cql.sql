@@ -61,6 +61,26 @@ CREATE TYPE IF NOT EXISTS time_event_additional_details_items(
     value text
 );
 
+CREATE TYPE IF NOT EXISTS potential_revenue_type (
+    shipping_revenue_type text,
+    time_period text,
+    shipping_package_quantity int,
+    shipping_weight_quantity int,
+    shipping_carrier text,
+    shipping_unit_code text,
+    express_freight_oversize boolean,
+    supplies_services_amt int,
+    shipping_package_percent int
+);
+
+CREATE TYPE IF NOT EXISTS other_potential_info_type (
+    revenue_event_source text,
+    revenue_comments text,
+    comment_sequence_nbr int,
+    revenue_lead_type text,
+    program text
+);
+
 CREATE TABLE IF NOT EXISTS cust_acct_v1 (
     account_number text,
     opco text,
@@ -335,7 +355,7 @@ CREATE TABLE IF NOT EXISTS cust_acct_v1 (
     -- ***** OPERATIONS STREAM  *****
     -- smart_post_operations_profile
     profile__distribution_id int,
-    profile__mailer_id int,
+    profile__mailer_id text,
     profile__pickup_carrier text,
     profile__return_eligibility_flag boolean,
     profile__return_svc_flag text,
@@ -395,7 +415,7 @@ CREATE TABLE IF NOT EXISTS cust_acct_v1 (
 
     -- tnt_operations_profile
     profile__source_name text,
-    profile__tnt_customer_number int,
+    profile__tnt_customer_number text,
     profile__migration_date date,
     profile__deactivation_date date,
 
@@ -476,12 +496,22 @@ CREATE TABLE IF NOT EXISTS cust_acct_v1 (
     eligibility__freight boolean,
     eligibility__office boolean,
 
+    -- ***** SALES STREAM *****
     -- expressSalesProfile
-   profile__geoTerr text,
-   profile__marketingCd text,
-   profile__correspondenceCd boolean,
+    profile__geoTerr text,
+    profile__marketingCd text,
+    profile__correspondenceCd boolean,
 
-    -- nationalAccount   -- QUESTION . We need another table...... ?
+    -- potentialRevenue
+    potential_revenue_detail__opening_acct_reason text,
+    potential_revenue_detail__opening_acct_comment text,
+    potential_revenue_detail__potential_revenue set<frozen<potential_revenue_type>>,
+    potential_revenue_detail__lead_employee_opco text,
+    potential_revenue_detail__lead_employee_number text,
+    potential_revenue_detail__revenue_source_system text,
+    potential_revenue_detail__potential_revenue_account_type text,
+    potential_revenue_detail__other_potential_info set<frozen<other_potential_info_type>>,
+
     PRIMARY KEY(account_number, opco))
 WITH CLUSTERING ORDER BY (opco ASC)
     AND bloom_filter_fp_chance = 0.01
