@@ -467,7 +467,7 @@ CREATE TABLE IF NOT EXISTS cust_acct_v1 (
 
     -- ***** SALES STREAM *****
     -- expressSalesProfile
-    profile__geoTerr exp`text,
+    profile__geoTerr text,
     profile__marketingCd text,
     profile__correspondenceCd boolean,
 
