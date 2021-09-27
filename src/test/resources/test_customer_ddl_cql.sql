@@ -176,37 +176,6 @@ CREATE TABLE IF NOT EXISTS cust_acct_v1 (
     credit_detail__receivership_date date,
     credit_detail__rev_auth_id text,
 
-    --express_direct_debit
-    direct_debit_detail__person__first_name text,
-    direct_debit_detail__person__last_name text,
-    direct_debit_detail__bank_account_holder_name text,
-    direct_debit_detail__bank_name text,
-    direct_debit_detail__address__street_line text,
-    direct_debit_detail__address__additional_line1 text,
-    direct_debit_detail__address__additional_line2 text,
-    direct_debit_detail__address__secondary__unit1 text,
-    direct_debit_detail__address__secondary__value1 text,
-    direct_debit_detail__address__secondary__unit2 text,
-    direct_debit_detail__address__secondary__value2 text,
-    direct_debit_detail__address__secondary__unit3 text,
-    direct_debit_detail__address__secondary__value3 text,
-    direct_debit_detail__address__secondary__unit4 text,
-    direct_debit_detail__address__secondary__value4 text,
-    direct_debit_detail__address__geo_political_subdivision1 text,
-    direct_debit_detail__address__geo_political_subdivision2 text,
-    direct_debit_detail__address__geo_political_subdivision3 text,
-    direct_debit_detail__address__postal_code text,
-    direct_debit_detail__address__country_code text,
-    direct_debit_detail__iban__swift_code text,
-    direct_debit_detail__iban_iban text,
-    direct_debit_detail__noiban__bank_code text,
-    direct_debit_detail__noiban__branch_code text,
-    direct_debit_detail__account_number text,
-    direct_debit_detail__sort_code text,
-    direct_debit_detail__mandate_id text,
-    direct_debit_detail__mandate_start_date date,
-    direct_debit_detail__legal_entity text,
-
     --express_duty_tax
     --  duty_tax_info_country_code -> duty_tax_info_duty_tax_number
     duty_tax_info map<text,text>,
@@ -498,7 +467,7 @@ CREATE TABLE IF NOT EXISTS cust_acct_v1 (
 
     -- ***** SALES STREAM *****
     -- expressSalesProfile
-    profile__geoTerr text,
+    profile__geoTerr exp`text,
     profile__marketingCd text,
     profile__correspondenceCd boolean,
 
@@ -672,6 +641,37 @@ CREATE TABLE IF NOT EXISTS payment_info_v1 (
     fpan__last_four_digits text,
     fpan__exp_date_month int,
     fpan__exp_date_year int,
+
+    --express_direct_debit
+    direct_debit_detail__person__first_name text,
+    direct_debit_detail__person__last_name text,
+    direct_debit_detail__bank_account_holder_name text,
+    direct_debit_detail__bank_name text,
+    direct_debit_detail__address__street_line text,
+    direct_debit_detail__address__additional_line1 text,
+    direct_debit_detail__address__additional_line2 text,
+    direct_debit_detail__address__secondary__unit1 text,
+    direct_debit_detail__address__secondary__value1 text,
+    direct_debit_detail__address__secondary__unit2 text,
+    direct_debit_detail__address__secondary__value2 text,
+    direct_debit_detail__address__secondary__unit3 text,
+    direct_debit_detail__address__secondary__value3 text,
+    direct_debit_detail__address__secondary__unit4 text,
+    direct_debit_detail__address__secondary__value4 text,
+    direct_debit_detail__address__geo_political_subdivision1 text,
+    direct_debit_detail__address__geo_political_subdivision2 text,
+    direct_debit_detail__address__geo_political_subdivision3 text,
+    direct_debit_detail__address__postal_code text,
+    direct_debit_detail__address__country_code text,
+    direct_debit_detail__iban__swift_code text,
+    direct_debit_detail__iban_iban text,
+    direct_debit_detail__noiban__bank_code text,
+    direct_debit_detail__noiban__branch_code text,
+    direct_debit_detail__account_number text,
+    direct_debit_detail__sort_code text,
+    direct_debit_detail__mandate_id text,
+    direct_debit_detail__mandate_start_date date,
+    direct_debit_detail__legal_entity text,
 
     PRIMARY KEY(account_number, opco, record_type_cd, record_key, record_seq))
 WITH CLUSTERING ORDER BY(opco ASC, record_type_cd ASC, record_key ASC, record_seq ASC)
