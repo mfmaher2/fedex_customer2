@@ -35,9 +35,9 @@ public class CustomerTest {
     static NationalAccountDao daoNational = null;
     static ApplyDiscountDao daoApplyDiscount = null;
 
-    private static boolean skipSchemaCreation = false;
-    private static boolean skipDataLoad = false;
-    private static boolean skipKeyspaceDrop = false;
+    private static boolean skipSchemaCreation = true;
+    private static boolean skipDataLoad = true;
+    private static boolean skipKeyspaceDrop = true;
     private static String keyspaceName = "customer";
     private static String productName = "Customer" ;
 
@@ -230,16 +230,20 @@ public class CustomerTest {
         assert(foundDutyTax2.get(keyC).equals(valC));
 
         //working, hard-coded map update
-        daoAccount.addDutyTaxInfoEntry(acctNum, opco);
+        daoAccount.addDutyTaxInfoEntryFixed(acctNum, opco);
+
+        Map<String, String> dutyTaxNewEntries = new HashMap<>();
+        dutyTaxNewEntries.put("key6", "val6");
+        daoAccount.addDutyTaxInfoMapTypeEntry(acctNum, opco, dutyTaxNewEntries);
 
         //non-working options attempted
-//        daoAccount.addDutyTaxInfoEntry(acctNum, opco, keyC, valC);
+       // daoAccount.addDutyTaxInfoEntry(acctNum, opco, keyC, valC);
 //        String newMapEnt = "{'key5': 'val5'}";
 //        daoAccount.addDutyTaxInfoMapEntry(acctNum, opco, newMapEnt);
 
 
         //cleanup
-        daoAccount.delete(custAcct);
+//        daoAccount.delete(custAcct);
 
         //reference for CQL manipulation for map type fields
         //https://docs.datastax.com/en/dse/5.1/cql/cql/cql_using/useInsertMap.html
