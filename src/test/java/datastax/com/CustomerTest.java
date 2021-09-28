@@ -193,9 +193,11 @@ public class CustomerTest {
         String keyA = "key1";
         String keyB = "key2";
         String keyC = "key3";
+        String keyD = "key4";
         String valA = "val1";
         String valB = "val2";
         String valC = "val3";
+        String valD = "val4";
 
         dutyTax.put(keyA, valA);
         dutyTax.put(keyB, valB);
@@ -204,7 +206,6 @@ public class CustomerTest {
         custAcct.setAccountNumber(acctNum);
         custAcct.setOpco(opco);
         custAcct.setDutyTaxInfo(dutyTax);
-
         daoAccount.save(custAcct);
 
         Account foundAcct = daoAccount.findByAccountNumber(acctNum);
@@ -229,21 +230,17 @@ public class CustomerTest {
         Map<String, String> foundDutyTax2 = foundAcct2.getDutyTaxInfo();
         assert(foundDutyTax2.get(keyC).equals(valC));
 
-        //working, hard-coded map update
-        daoAccount.addDutyTaxInfoEntryFixed(acctNum, opco);
-
+        //Java Mapper upsert example
         Map<String, String> dutyTaxNewEntries = new HashMap<>();
-        dutyTaxNewEntries.put("key6", "val6");
-        daoAccount.addDutyTaxInfoMapTypeEntry(acctNum, opco, dutyTaxNewEntries);
+        dutyTaxNewEntries.put(keyD, valD);
+        daoAccount.upsertDutyTaxInfoMapEntries(acctNum, opco, dutyTaxNewEntries);
 
-        //non-working options attempted
-       // daoAccount.addDutyTaxInfoEntry(acctNum, opco, keyC, valC);
-//        String newMapEnt = "{'key5': 'val5'}";
-//        daoAccount.addDutyTaxInfoMapEntry(acctNum, opco, newMapEnt);
-
+        Account foundAcct3 = daoAccount.findByAccountNumber(acctNum);
+        Map<String, String> foundDutyTax3 = foundAcct3.getDutyTaxInfo();
+        assert(foundDutyTax3.get(keyD).equals(valD));
 
         //cleanup
-//        daoAccount.delete(custAcct);
+        daoAccount.delete(custAcct);
 
         //reference for CQL manipulation for map type fields
         //https://docs.datastax.com/en/dse/5.1/cql/cql/cql_using/useInsertMap.html
