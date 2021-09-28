@@ -64,13 +64,13 @@ CREATE TYPE IF NOT EXISTS time_event_additional_details_items(
 CREATE TYPE IF NOT EXISTS potential_revenue_type (
     shipping_revenue_type text,
     time_period text,
-    shipping_package_quantity int,
-    shipping_weight_quantity int,
+    shipping_package_quantity text,
+    shipping_weight_quantity text,
     shipping_carrier text,
     shipping_unit_code text,
     express_freight_oversize boolean,
     supplies_services_amt int,
-    shipping_package_percent int
+    shipping_package_percent text
 );
 
 CREATE TYPE IF NOT EXISTS other_potential_info_type (
@@ -323,7 +323,7 @@ CREATE TABLE IF NOT EXISTS cust_acct_v1 (
 
     -- ***** OPERATIONS STREAM  *****
     -- smart_post_operations_profile
-    profile__distribution_id int,
+    profile__distribution_id text,
     profile__mailer_id text,
     profile__pickup_carrier text,
     profile__return_eligibility_flag boolean,
@@ -344,7 +344,7 @@ CREATE TABLE IF NOT EXISTS cust_acct_v1 (
     profile__alcohol_flag boolean,
     profile__cut_flowers_flag boolean,
     profile__declared_value_exception boolean,
-    profile__derived_station int,
+    profile__derived_station text,
     profile__drop_ship_flag boolean,
     profile__emerge_flag boolean,
     profile__doc_prep_service_flag boolean,
@@ -369,8 +369,8 @@ CREATE TABLE IF NOT EXISTS cust_acct_v1 (
     profile__tpc_flag boolean,
     profile__emp_ship_emp_number text,
     profile__supply_no_cut_flag text,
-    profile__starter_kit int,
-    profile__starter_kit_quantity int,
+    profile__starter_kit text,
+    profile__starter_kit_quantity text,
     profile__exception_flag boolean,
     profile__international_shipper text,
     profile__special_dist_flag text,
@@ -467,8 +467,8 @@ CREATE TABLE IF NOT EXISTS cust_acct_v1 (
 
     -- ***** SALES STREAM *****
     -- expressSalesProfile
-    profile__geoTerr text,
-    profile__marketingCd text,
+    profile__geo_terr text,
+    profile__marketing_cd text,
     profile__correspondenceCd boolean,
 
     -- potentialRevenue
