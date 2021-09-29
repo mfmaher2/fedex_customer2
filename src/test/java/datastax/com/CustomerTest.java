@@ -185,6 +185,63 @@ public class CustomerTest {
     }
 
     @Test
+    public void mappedDutyTaxTest() {
+        String acctNum = "654321987";
+        String opco = "testOpcoAcctTypes";
+
+        String keyUS = "US";
+        String keyCA = "CA";
+        String keyIN = "IN";
+        String keyMX = "MX";
+
+        String usDutyTax= "123123123";
+        String caDutyTax_v1= "123123123";
+        String caDutyTax_v2= "124124124";
+        String inDutyTax= "123123123";
+        String mxDutyTax= "345678901";
+
+        //create initial state
+        Map<String, String> dutyTax = new HashMap<>();
+        dutyTax.put(keyUS, usDutyTax);
+        dutyTax.put(keyCA, caDutyTax_v1);
+        dutyTax.put(keyIN, inDutyTax);
+
+        Account custAcct = new Account();
+        custAcct.setAccountNumber(acctNum);
+        custAcct.setOpco(opco);
+        custAcct.setDutyTaxInfo(dutyTax);
+        daoAccount.save(custAcct);
+
+        System.out.println("\nExpress Duty Tax Test\nInitial Map State:\n" + dutyTax.toString());
+
+        Account foundAcct = daoAccount.findByAccountNumber(acctNum);
+        Map<String, String> foundDutyTax = foundAcct.getDutyTaxInfo();
+        assert(foundDutyTax.get(keyUS).equals(usDutyTax));
+        assert(foundDutyTax.get(keyCA).equals(caDutyTax_v1));
+        assert(foundDutyTax.get(keyIN).equals(inDutyTax));
+        assert(foundDutyTax.get(mxDutyTax) == null);
+
+        Map<String, String> dutyTaxNewEntries = new HashMap<>();
+        dutyTaxNewEntries.put(keyCA, caDutyTax_v2);
+        dutyTaxNewEntries.put(keyMX, mxDutyTax);
+        daoAccount.upsertDutyTaxInfoMapEntries(acctNum, opco, dutyTaxNewEntries);
+
+        Account foundAcctUpdated = daoAccount.findByAccountNumber(acctNum);
+        Map<String, String> foundDutyTaxUpdated = foundAcctUpdated.getDutyTaxInfo();
+        assert(foundDutyTaxUpdated.get(keyUS).equals(usDutyTax));
+        assert(foundDutyTaxUpdated.get(keyCA).equals(caDutyTax_v2));
+        assert(foundDutyTaxUpdated.get(keyIN).equals(inDutyTax));
+        assert(foundDutyTaxUpdated.get(keyMX).equals(mxDutyTax));
+
+        System.out.println("\nFinal Map State:\n" + foundDutyTaxUpdated.toString());
+
+
+        //cleanup
+        daoAccount.delete(custAcct);
+    }
+
+
+    @Test
     public void mappedCollectionsTest() {
         String acctNum = "9876543344";
         String opco = "testOpcoAcctTypes";
