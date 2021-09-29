@@ -35,9 +35,9 @@ public class CustomerTest {
     static NationalAccountDao daoNational = null;
     static ApplyDiscountDao daoApplyDiscount = null;
 
-    private static boolean skipSchemaCreation = true;
-    private static boolean skipDataLoad = true;
-    private static boolean skipKeyspaceDrop = true;
+    private static boolean skipSchemaCreation = false;
+    private static boolean skipDataLoad = false;
+    private static boolean skipKeyspaceDrop = false;
     private static String keyspaceName = "customer";
     private static String productName = "Customer" ;
 
