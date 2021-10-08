@@ -19,7 +19,7 @@ CREATE TYPE IF NOT EXISTS social_media_type (
 
 CREATE TYPE IF NOT EXISTS tax_data_type (
     tax_id text,
-    tax_id_desc text,
+    tax_id_desc text
 );
 
 CREATE TYPE IF NOT EXISTS tax_exempt_code_type (
@@ -48,7 +48,7 @@ CREATE TYPE IF NOT EXISTS history_field_type (
     action text,
     stanza_name text,
     previous_value text,
-    new_value text,
+    new_value text
 );
 
 CREATE TYPE IF NOT EXISTS centralized_opco_description_type (
