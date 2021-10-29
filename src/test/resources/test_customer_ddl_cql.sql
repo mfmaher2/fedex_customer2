@@ -425,8 +425,8 @@ CREATE TABLE IF NOT EXISTS cust_acct_v1 (
     customer_id__customer_id_doc_nbr text,
 
     -- expressRegulatory AND freightRegulatory
-    account_regulatory__regulated_agentRegimeEffYearMonth date,  -- QUESTION . FORMAT IS YEAR/MONTH , is date type correct.
-    account_regulatory__regulated_agentRegimeExpYearMonth date,
+    account_regulatory__regulated_agentRegimeEffYearMonth text,
+    account_regulatory__regulated_agentRegimeExpYearMonth text,
     account_regulatory__bus_registration_id text,
     account_regulatory__broker_date date,
     account_regulatory__canadian_broker_id text,
@@ -546,7 +546,6 @@ CREATE TABLE IF NOT EXISTS payment_info_v1 (
     additional_credit_card_info__address__street_line text,
     additional_credit_card_info__address__additional_line1 text,
     additional_credit_card_info__address__additional_line2 text,
-    additional_credit_card_info__address__geo_political_subdivision1 text,
     additional_credit_card_info__address__geo_political_subdivision2 text,
     additional_credit_card_info__address__geo_political_subdivision3 text,
     additional_credit_card_info__address__postal_code text,
