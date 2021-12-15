@@ -48,47 +48,69 @@ public class SequenceNumberGenerator {
 
     private Boolean lwtCurrentNumberUpdate(int count, int currentNum, String domain, String sequenceName){
 
-        System.out.println("Running retry count=" + count);
+        if(count > 0) {
+            //output retry count if error previously encountered
+            System.out.println("Running retry count=" + count);
+        }
         if(count >= RETRY_LIMIT){
             return false;
         }
 
-        if((currentNum + blockSize) < endNumber){
-            try{
+        if((currentNum + blockSize) < endNumber) {
+            try {
                 ResultSet results = session.execute(lwdUpdateCurNumberStmt.bind((currentNum + blockSize), domain, sequenceName, currentNum));
                 Row resultDetails = results.one();
-                if(resultDetails.getBoolean(0)){  //true if applied, otherwise false
+                if (resultDetails.getBoolean(0)) {  //true if applied, otherwise false
                     System.out.println("Done");
-                    for(int x = currentNum; x<(currentNum + blockSize); x++){
-                        System.out.println("Current Number=" + x + " :: Block Size=" + blockSize + " host: " + hostName);
+                    for (int x = currentNum; x < (currentNum + blockSize); x++) {
+                        System.out.println("\tCurrent Number=" + x + " :: Block Size=" + blockSize + " host: " + hostName);
                     }
                     return true;
-                }
-                else{
+                } else {
                     int returnedNumVal = resultDetails.getInt(1);
                     System.out.println("Failed LWT Current Number=" + currentNum + ", Returned Number= " + returnedNumVal);
-                    return(lwtCurrentNumberUpdate((count +1), returnedNumVal, domain, sequenceName));
+                    return (lwtCurrentNumberUpdate((count + 1), returnedNumVal, domain, sequenceName));
                 }
-            }
-            catch(Exception e){
+            } catch (Exception e) {
                 System.out.println(e.getMessage());
                 return false;
             }
         }
+        else{
+            System.out.println("** ERROR ** Requested sequence greater than allowed end number");
+            System.out.println("\tCurrent Number=" + currentNum);
+            System.out.println("\tBlock Size=" + blockSize);
+            System.out.println("\tEndNumber=" + endNumber);
+
+            return false;
+        }
 
         //if method reaches this point then an error has occurred
-        return false;
+//        return false;
     }
 
     public Boolean getSequenceNumbers(int blockSize, int repeatCount){
-
         //variable initialization
-        startNumber = 0;
+        startNumber = 0;  //todo - cleanup what is member variable vs passed parameter
         endNumber = 500;
         currentSeq = 0;
+        this.blockSize = blockSize;
+        String domain  = "customer";
+        String sequenceName = "CAM_TEST_1";
 
-        return lwtCurrentNumberUpdate(0, 1, "customer", "CAM_TEST_1");
+        Boolean noFailures = true;
+
+        for(int i=1; i<repeatCount; i++){
+            ResultSet results = session.execute(getCurNumberStmt.bind(domain, sequenceName));
+            Row resultDetails = results.one();
+            currentSeq = resultDetails.getInt(0);
+            startNumber = resultDetails.getInt(1);
+            endNumber = resultDetails.getInt(2);
+
+            noFailures = noFailures & lwtCurrentNumberUpdate(0, currentSeq, domain, sequenceName);
+            //todo sleep for a random time
+        }
+
+        return noFailures;
     }
-
-
 }

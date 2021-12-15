@@ -102,6 +102,7 @@ public class CustomerTest {
 
             runScript(schemaScriptPath);//TODO get resource path programmatically
 
+            //todo modify table and property names
             String lwtTestSchema =
                     "   CREATE TABLE " + keyspaceName + ".seqnbr_tbl (\n" +
                     "        domain text,\n" +
@@ -150,7 +151,7 @@ public class CustomerTest {
     @Test
     public void lwtUpdateTest(){
         SequenceNumberGenerator generator = new SequenceNumberGenerator(session, keyspaceName, "seqnbr_tbl", "localHost");
-        Boolean results =  generator.getSequenceNumbers(3, 10);
+        Boolean results =  generator.getSequenceNumbers(5, 100);
 
         assert(results);
     }
