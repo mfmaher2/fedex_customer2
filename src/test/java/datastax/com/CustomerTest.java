@@ -101,6 +101,17 @@ public class CustomerTest {
             session.execute(keyspaceCreate);
 
             runScript(schemaScriptPath);//TODO get resource path programmatically
+
+            String lwtTestSchema =
+                    "   CREATE TABLE " + keyspaceName + ".seqnbr_tbl (\n" +
+                    "        domain text,\n" +
+                    "        sequencename text,\n" +
+                    "        currentnbr int,\n" +
+                    "        endnbr int,\n" +
+                    "        startnbr int,\n" +
+                    "        wrapped boolean,\n" +
+                    "        PRIMARY KEY ((domain, sequencename)))\n"  ;
+            session.execute(lwtTestSchema);
         }
     }
 
@@ -134,6 +145,14 @@ public class CustomerTest {
 
         dropTestKeyspace();
         if (session != null) session.close();
+    }
+
+    @Test
+    public void lwtUpdateTest(){
+        SequenceNumberGenerator generator = new SequenceNumberGenerator(session, keyspaceName, "seqnbr_tbl", "localHost");
+        Boolean results =  generator.getSequenceNumbers(3, 10);
+
+        assert(results);
     }
 
     @Test
