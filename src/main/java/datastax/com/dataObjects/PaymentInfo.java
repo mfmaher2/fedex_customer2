@@ -1,4 +1,4 @@
-package datastax.com;
+package datastax.com.dataObjects;
 
 import com.datastax.oss.driver.api.mapper.annotations.ClusteringColumn;
 import com.datastax.oss.driver.api.mapper.annotations.CqlName;
@@ -7,16 +7,16 @@ import com.datastax.oss.driver.api.mapper.annotations.PartitionKey;
 
 @Entity
 @CqlName("payment_info_v1")
-public class CustomerPaymentInfo {
+public class PaymentInfo {
 
     @PartitionKey private String accountNumber;
     @ClusteringColumn(0) private String opco;
     @ClusteringColumn(1) @CqlName("record_type_cd") private String recordType;
     @ClusteringColumn(2) private String recordKey;
-    @ClusteringColumn(3) @CqlName("record_seqa") private int recordSeq;
+    @ClusteringColumn(3) @CqlName("record_seq") private int recordSeq;
     @CqlName("credit_card_id") private String creditCardID;
 
-    CustomerPaymentInfo() {};
+    PaymentInfo() {};
 
     public String getAccountNumber() { return accountNumber; }
     public void setAccountNumber(String val) {accountNumber = val;}

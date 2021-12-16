@@ -1,8 +1,8 @@
-package datastax.com;
+package datastax.com.dataObjects;
 
 import java.time.Instant;
 
-public class CustomerApplyDiscountHelper {
+public class ApplyDiscountHelper {
 
     static String opocParam = "__opco";
     static String discountFlag = "__discoungFlag";
@@ -20,7 +20,7 @@ public class CustomerApplyDiscountHelper {
                     "        \"sort\": \"apply_discount__effective_date_time desc\"}";
 
 
-    static String constructSearchQuery(String opco){
+    static public String constructSearchQuery(String opco){
         String parameterQuery;
 
         parameterQuery = solrQuery.replace(opocParam, opco);
@@ -31,7 +31,7 @@ public class CustomerApplyDiscountHelper {
         return parameterQuery;
     }
 
-    static String constructSearchQuery(String opco, Boolean applyDiscount){
+    static public String constructSearchQuery(String opco, Boolean applyDiscount){
         String parameterQuery;
 
         parameterQuery = solrQuery.replace(opocParam, opco);
@@ -42,7 +42,7 @@ public class CustomerApplyDiscountHelper {
         return parameterQuery;
     }
 
-    static String constructSearchQuery(String opco, Instant effectiveDateTime){
+    static public String constructSearchQuery(String opco, Instant effectiveDateTime){
         String parameterQuery;
 
         parameterQuery = solrQuery.replace(opocParam, opco);
@@ -53,7 +53,7 @@ public class CustomerApplyDiscountHelper {
         return parameterQuery;
     }
 
-    static String constructSearchQuery(String opco, Boolean applyDiscount, Instant effectiveDateTime, Instant expirationDateTime){
+    static public String constructSearchQuery(String opco, Boolean applyDiscount, Instant effectiveDateTime, Instant expirationDateTime){
         String parameterQuery;
 
         parameterQuery = solrQuery.replace(opocParam, opco);

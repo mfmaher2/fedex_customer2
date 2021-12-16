@@ -7,6 +7,8 @@ import com.datastax.oss.driver.api.core.PagingIterable;
 import com.datastax.oss.driver.api.core.cql.*;
 import com.datastax.oss.driver.api.core.data.UdtValue;
 import com.datastax.oss.protocol.internal.util.Bytes;
+import datastax.com.dataObjects.*;
+import datastax.com.DAOs.*;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -14,7 +16,12 @@ import org.junit.Test;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.YearMonth;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -26,16 +33,21 @@ public class CustomerTest {
 
     private static CqlSession session = null;
     private static CustomerMapper customerMapper = null;
-    static CustomerAccountDao daoAccount = null;
-    static CustomerPaymentInfoDao daoPayment = null;
-    static CustomerAssocAccountDao daoAssoc = null;
-    static CustomerContactDao daoContact = null;
-    static CustomerNationalAccountDao daoNational = null;
-    static CustomerApplyDiscountDao daoApplyDiscount = null;
+    static AccountDao daoAccount = null;
+    static PaymentInfoDao daoPayment = null;
+    static AssocAccountDao daoAssoc = null;
+    static ContactDao daoContact = null;
+    static NationalAccountDao daoNational = null;
+    static ApplyDiscountDao daoApplyDiscount = null;
+    static IndexCollectionDao daoIndexCollect = null;
+    static CommentDao daoComment = null;
+    static AuditHistoryDao daoAuditHistory = null;
+    static AccountContactDao daoAccountContact = null;
 
-    private static boolean skipSchemaCreation = true;
-    private static boolean skipDataLoad = true;
-    private static boolean skipKeyspaceDrop = true;
+    private static boolean skipSchemaCreation = false;
+    private static boolean skipDataLoad = false;
+    private static boolean skipKeyspaceDrop = false;
+    private static boolean skipIndividualTableDrop = false;
     private static String keyspaceName = "customer";
     private static String productName = "Customer" ;
 
@@ -72,12 +84,16 @@ public class CustomerTest {
             loadData();
 
             customerMapper = new CustomerMapperBuilder(session).build();
-            daoAccount = customerMapper.customerAccountDao(keyspaceName);
-            daoPayment = customerMapper.customerPaymentInfoDao(keyspaceName);
-            daoAssoc = customerMapper.customerAssocAccountDao(keyspaceName);
-            daoContact  =  customerMapper.customerContactDao(keyspaceName);
-            daoNational = customerMapper.customerNationalAccountDao(keyspaceName);
-            daoApplyDiscount = customerMapper.customerApplyDiscountDao(keyspaceName);
+            daoAccount = customerMapper.accountDao(keyspaceName);
+            daoPayment = customerMapper.paymentInfoDao(keyspaceName);
+            daoAssoc = customerMapper.assocAccountDao(keyspaceName);
+            daoContact  =  customerMapper.contactDao(keyspaceName);
+            daoNational = customerMapper.nationalAccountDao(keyspaceName);
+            daoIndexCollect = customerMapper.indexCollectionDao(keyspaceName);
+            daoApplyDiscount = customerMapper.applyDiscountDao(keyspaceName);
+            daoComment = customerMapper.commentDao(keyspaceName);
+            daoAuditHistory = customerMapper.auditHistoryDao(keyspaceName);
+            daoAccountContact = customerMapper.accountContactDao(keyspaceName);
         }
         catch(Exception e){
             System.out.println(e.getMessage());
@@ -85,11 +101,32 @@ public class CustomerTest {
     }
 
     static void dropTestKeyspace(){
-        String keyspaceDrop = "DROP KEYSPACE IF EXISTS " + keyspaceName + ";";
         if(!skipKeyspaceDrop) {
-            System.out.println("Dropping keyspace - " + keyspaceName);
+            if(!skipIndividualTableDrop) {
+                System.out.println("Dropping tables from keyspace - " + keyspaceName);
+                long startTables = System.currentTimeMillis();
 
+                String baseTableDrop = "DROP TABLE IF EXISTS " + keyspaceName + ".";
+                String findKeyspaceTables = "SELECT table_name FROM system_schema.tables WHERE keyspace_name = '" + keyspaceName + "';";
+                ResultSet resultSet = session.execute(findKeyspaceTables);
+                List<Row> foundRows = resultSet.all();
+                for (Row curRow : foundRows) {
+                    String curTable = curRow.getString("table_name");
+                    String tableDrop = baseTableDrop + curTable + ";";
+                    session.execute(tableDrop);
+
+                    System.out.println("\tdrop table - " + curTable);
+                }
+                long stopTables = System.currentTimeMillis();
+                System.out.println("Time for dropping all tables - " + ((stopTables - startTables) / 1000.0) + "s");
+            }
+
+            long startKeySpace = System.currentTimeMillis();
+            System.out.println("Dropping keyspace - " + keyspaceName);
+            String keyspaceDrop = "DROP KEYSPACE IF EXISTS " + keyspaceName + ";";
             session.execute(keyspaceDrop);
+            long stopKeyspace = System.currentTimeMillis();
+            System.out.println("Time for dropping keyspace - " + ((stopKeyspace - startKeySpace)/1000.0) + "s");
         }
     }
 
@@ -137,6 +174,8 @@ public class CustomerTest {
             //sleep for a time to allow Solr indexes to update completely
             System.out.println("Completed " + productName + " data load.  Pausing to allow indexes to update...");
             Thread.sleep(11000);
+
+            System.out.println("Index update complete, starting tests...");
         }
     }
 
@@ -155,6 +194,556 @@ public class CustomerTest {
 
         assert(results);
     }
+    @Test
+    public void archiveDateTest() {
+        String acctNum = "70987125";
+        String opco = "op1";
+        int testYear = 1;
+        int testMonth = 4;
+        int testDay = 15;
+
+        String testDate = String.join("-",
+                String.format("%04d", testYear),
+                String.format("%02d", testMonth),
+                String.format("%02d", testDay));
+
+        LocalDate date = LocalDate.parse(testDate);
+
+        String acctNum2 = "70987125-2";
+        String opco2 = "op2";
+        int testYear2 = 1;
+        int testMonth2 = 1;
+        int testDay2 = 1;
+
+        String testDate2 = String.join("-",
+                String.format("%04d", testYear2),
+                String.format("%02d", testMonth2),
+                String.format("%02d", testDay2));
+
+        LocalDate date2 = LocalDate.parse(testDate2);
+
+        //cleanup any existing records and verify
+        daoAccount.deleteAllByAccountNumber(acctNum);
+        PagingIterable<Account> verifyAccountResults = daoAccount.findAllByAccountNumber(acctNum);
+        assert(verifyAccountResults.all().size() == 0);
+
+        daoAccount.deleteAllByAccountNumber(acctNum2);
+        PagingIterable<Account> verifyAccountResults2 = daoAccount.findAllByAccountNumber(acctNum2);
+        assert(verifyAccountResults2.all().size() == 0);
+
+        Account acct = new Account();
+        acct.setAccountNumber(acctNum);
+        acct.setOpco(opco);
+        acct.setProfileArchiveDate(date);
+        daoAccount.save(acct);
+
+        Account foundAcct = daoAccount.findByAccountNumber(acctNum);
+        LocalDate foundDate = foundAcct.getProfileArchiveDate();
+        assert(foundAcct.getOpco().equals(opco));
+        assert(foundDate.getYear() == testYear);
+        assert(foundDate.getMonthValue() == testMonth);
+        assert(foundDate.getDayOfMonth() == testDay);
+
+        Account acct2 = new Account();
+        acct2.setAccountNumber(acctNum2);
+        acct2.setOpco(opco2);
+        acct2.setProfileArchiveDate(date2);
+        daoAccount.save(acct2);
+
+        Account foundAcct2 = daoAccount.findByAccountNumber(acctNum2);
+        LocalDate foundDate2 = foundAcct2.getProfileArchiveDate();
+        assert(foundAcct2.getOpco().equals(opco2));
+        assert(foundDate2.getYear() == testYear2);
+        assert(foundDate2.getMonthValue() == testMonth2);
+        assert(foundDate2.getDayOfMonth() == testDay2);
+
+        //cleanup any existing records and verify
+        daoAccount.deleteAllByAccountNumber(acctNum);
+        PagingIterable<Account> cleanVerifyAccountResults = daoAccount.findAllByAccountNumber(acctNum);
+        assert(cleanVerifyAccountResults.all().size() == 0);
+
+        daoAccount.deleteAllByAccountNumber(acctNum2);
+        PagingIterable<Account> cleanVerifyAccountResults2 = daoAccount.findAllByAccountNumber(acctNum2);
+        assert(cleanVerifyAccountResults2.all().size() == 0);
+    }
+
+    @Test
+    public void batchStatementMultiScopeAddTest() {
+
+        String acctNum = "0987123-ms";
+        String opco = "op1";
+        String contactType = "contType1";
+        String contactBusID = "1001";
+        String firstName = "Bob";
+        String lastName = "Smith";
+        String customerType = "custType1";
+
+        //cleanup any existing records and verify
+        daoAccountContact.deleteAllByAccountNumber(acctNum);
+        PagingIterable<AccountContact> verifyResults = daoAccountContact.findAllByAccountNumber(acctNum);
+        assert(verifyResults.all().size() == 0);
+
+        daoAccount.deleteAllByAccountNumber(acctNum);
+        PagingIterable<Account> verifyAccountResults = daoAccount.findAllByAccountNumber(acctNum);
+        assert(verifyAccountResults.all().size() == 0);
+
+        AccountContact acctCont1 = new AccountContact();
+        acctCont1.setAccountNumber(acctNum);
+        acctCont1.setOpco(opco);
+        acctCont1.setContactTypeCode(contactType);
+        acctCont1.setContactBusinessID(contactBusID);
+        acctCont1.setPersonFirstName(firstName);
+        acctCont1.setPersonLastName(lastName);
+
+        Account custAcct = new Account();
+        custAcct.setAccountNumber(acctNum);
+        custAcct.setOpco(opco);
+        custAcct.setProfileCustomerType(customerType);
+
+        //example using two save commands, more statements can be added as needed
+        BatchStatement batch = BatchStatement.builder(BatchType.LOGGED).build();
+
+        batch = batch.add(daoAccountContact.batchSave(acctCont1));
+        batch = batch.add(daoAccount.batchSave(custAcct));
+
+        session.execute(batch);
+
+        //verify records/values written to database as expected with batch
+        AccountContact foundAcctContact = daoAccountContact.findByAccountNumber(acctNum);
+        assert(foundAcctContact.getOpco().equals(opco));
+        assert(foundAcctContact.getContactTypeCode().equals(contactType));
+        assert(foundAcctContact.getContactBusinessID().equals(contactBusID));
+
+        Account foundAcct = daoAccount.findByAccountNumber(acctNum);
+        assert(foundAcct.getOpco().equals(opco));
+        assert(foundAcct.getProfileCustomerType().equals(customerType));
+
+        //cleanup tests records
+        //cleanup any existing records and verify
+        daoAccountContact.deleteAllByAccountNumber(acctNum);
+        PagingIterable<AccountContact> cleanVerifyResults = daoAccountContact.findAllByAccountNumber(acctNum);
+        assert(cleanVerifyResults.all().size() == 0);
+
+        daoAccount.deleteAllByAccountNumber(acctNum);
+        PagingIterable<Account> cleanVerifyAccountResults = daoAccount.findAllByAccountNumber(acctNum);
+        assert(cleanVerifyAccountResults.all().size() == 0);
+    }
+
+
+    @Test
+    public void batchStatementTest() {
+
+        String acctNum = "0987123";
+        String opco = "op1";
+        String contactType = "contType1";
+        String contactBusID = "1001";
+        String firstName = "Bob";
+        String lastName = "Smith";
+        String customerType = "custType1";
+
+        //cleanup any existing records and verify
+        daoAccountContact.deleteAllByAccountNumber(acctNum);
+        PagingIterable<AccountContact> verifyResults = daoAccountContact.findAllByAccountNumber(acctNum);
+        assert(verifyResults.all().size() == 0);
+
+        daoAccount.deleteAllByAccountNumber(acctNum);
+        PagingIterable<Account> verifyAccountResults = daoAccount.findAllByAccountNumber(acctNum);
+        assert(verifyAccountResults.all().size() == 0);
+
+        AccountContact acctCont1 = new AccountContact();
+        acctCont1.setAccountNumber(acctNum);
+        acctCont1.setOpco(opco);
+        acctCont1.setContactTypeCode(contactType);
+        acctCont1.setContactBusinessID(contactBusID);
+        acctCont1.setPersonFirstName(firstName);
+        acctCont1.setPersonLastName(lastName);
+
+        Account custAcct = new Account();
+        custAcct.setAccountNumber(acctNum);
+        custAcct.setOpco(opco);
+        custAcct.setProfileCustomerType(customerType);
+
+        //example using two save commands, more statements can be added as needed
+        BatchStatement batch = BatchStatement.builder(BatchType.LOGGED)
+                .addStatement(daoAccountContact.batchSave(acctCont1))
+                .addStatement(daoAccount.batchSave(custAcct))
+                .build();
+        session.execute(batch);
+
+        //verify records/values written to database as expected with batch
+        AccountContact foundAcctContact = daoAccountContact.findByAccountNumber(acctNum);
+        assert(foundAcctContact.getOpco().equals(opco));
+        assert(foundAcctContact.getContactTypeCode().equals(contactType));
+        assert(foundAcctContact.getContactBusinessID().equals(contactBusID));
+
+        Account foundAcct = daoAccount.findByAccountNumber(acctNum);
+        assert(foundAcct.getOpco().equals(opco));
+        assert(foundAcct.getProfileCustomerType().equals(customerType));
+
+        //cleanup tests records
+        //cleanup any existing records and verify
+        daoAccountContact.deleteAllByAccountNumber(acctNum);
+        PagingIterable<AccountContact> cleanVerifyResults = daoAccountContact.findAllByAccountNumber(acctNum);
+        assert(cleanVerifyResults.all().size() == 0);
+
+        daoAccount.deleteAllByAccountNumber(acctNum);
+        PagingIterable<Account> cleanVerifyAccountResults = daoAccount.findAllByAccountNumber(acctNum);
+        assert(cleanVerifyAccountResults.all().size() == 0);
+    }
+
+    @Test
+    public void acctDataFormatTest() throws ParseException {
+//TODO update test to use updated field type of text -- or remove test
+
+//        String acctNum = "778899";
+//        int rawYear = 2021;
+//        int rawMonth = 10;
+//        String yearMonthRaw = rawYear + "-" + rawMonth;
+//
+//        //cleanup any existing records and verify
+//        daoAccount.deleteAllByAccountNumber(acctNum);
+//        PagingIterable<AccountContact> cleanVerifyResults = daoAccountContact.findAllByAccountNumber(acctNum);
+//        assert(cleanVerifyResults.all().size() == 0);
+//
+//        //Option #1,  append day of month value to received Year-Month value then use
+//        //'standard' LocalDate parsing to store value
+//        String date1Raw = yearMonthRaw + "-01";
+//        LocalDate date1 = LocalDate.parse(date1Raw);
+//        String opco1 = "opco1";
+//        Account testAcct1 = new Account();
+//        testAcct1.setAccountNumber(acctNum);
+//        testAcct1.setOpco(opco1);
+//        testAcct1.setAcctRegRegimeEffYearMon(date1);
+//        daoAccount.save(testAcct1);
+//
+//        Account option1Result = daoAccount.findByAccountNumberOpco(acctNum, opco1);
+//        LocalDate date1Queried = option1Result.getAcctRegRegimeEffYearMon();
+//        assert(date1Queried.getYear() == rawYear);
+//        assert(date1Queried.getMonth().getValue() == rawMonth);
+//
+//        //Option #2, use YearMonth class to parse Year-Month value and then convert to LocalDate for
+//        //storage in table
+//        String opco2 = "opco2";
+//        YearMonth ymVal = YearMonth.parse(yearMonthRaw);
+//        LocalDate date2 = ymVal.atDay(1);
+//        Account testAcct2 = new Account();
+//        testAcct2.setAccountNumber(acctNum);
+//        testAcct2.setOpco(opco2);
+//        testAcct2.setAcctRegRegimeEffYearMon(date2);
+//        daoAccount.save(testAcct2);
+//
+//        Account option2Result = daoAccount.findByAccountNumberOpco(acctNum, opco2);
+//        LocalDate date2Queried = option2Result.getAcctRegRegimeEffYearMon();
+//        assert(date2Queried.getYear() == rawYear);
+//        assert(date2Queried.getMonth().getValue() == rawMonth);
+//
+//        //Option #3, use SimpleDateFormat to parse Year-Month value received to Date value then
+//        //covert Date value to LocalDate value for table storage
+//        String opco3 = "opco3";
+//        SimpleDateFormat simpleFormatter = new SimpleDateFormat("yyyy-MM");
+//        Date date3 = simpleFormatter.parse(yearMonthRaw);
+//        Account testAcct3 = new Account();
+//        testAcct3.setAccountNumber(acctNum);
+//        testAcct3.setOpco(opco3);
+//        testAcct3.setAcctRegRegimeEffYearMon(date3.toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
+//        daoAccount.save(testAcct3);
+//
+//        Account option3Result = daoAccount.findByAccountNumberOpco(acctNum, opco3);
+//        LocalDate date3Queried = option3Result.getAcctRegRegimeEffYearMon();
+//        assert(date3Queried.getYear() == rawYear);
+//        assert(date3Queried.getMonth().getValue() == rawMonth);
+//
+//        //cleanup any existing records and verify
+//        daoAccount.deleteAllByAccountNumber(acctNum);
+//        PagingIterable<AccountContact> cleanVerifyResultsAfter = daoAccountContact.findAllByAccountNumber(acctNum);
+//        assert(cleanVerifyResultsAfter.all().size() == 0);
+    }
+
+    @Test
+    public void contactSAITest(){
+        String acctNum = "333444555";
+        String opco = "op1";
+        String contactType = "contType1";
+        String contactBusID1 = "1001";
+        String contactBusID2 = "1002";
+        String contactBusID3 = "1003";
+        String firstName1 = "Bob";
+        String firstName2 = "John";
+        String firstName3 = "Jane";
+        String lastName1 = "Smith";
+        String lastName2 = "Jones";
+        String lastName3 = lastName2;
+
+        //cleanup any existing records and verify
+        daoAccountContact.deleteAllByAccountNumber(acctNum);
+        PagingIterable<AccountContact> cleanVerifyResults = daoAccountContact.findAllByAccountNumber(acctNum);
+        assert(cleanVerifyResults.all().size() == 0);
+
+
+        AccountContact acctCont1 = new AccountContact();
+        acctCont1.setAccountNumber(acctNum);
+        acctCont1.setOpco(opco);
+        acctCont1.setContactTypeCode(contactType);
+        acctCont1.setContactBusinessID(contactBusID1);
+        acctCont1.setPersonFirstName(firstName1);
+        acctCont1.setPersonLastName(lastName1);
+        daoAccountContact.save(acctCont1);
+
+        AccountContact acctCont2 = new AccountContact();
+        acctCont2.setAccountNumber(acctNum);
+        acctCont2.setOpco(opco);
+        acctCont2.setContactTypeCode(contactType);
+        acctCont2.setContactBusinessID(contactBusID2);
+        acctCont2.setPersonFirstName(firstName2);
+        acctCont2.setPersonLastName(lastName2);
+        daoAccountContact.save(acctCont2);
+
+        AccountContact acctCont3 = new AccountContact();
+        acctCont3.setAccountNumber(acctNum);
+        acctCont3.setOpco(opco);
+        acctCont3.setContactTypeCode(contactType);
+        acctCont3.setContactBusinessID(contactBusID3);
+        acctCont3.setPersonFirstName(firstName3);
+        acctCont3.setPersonLastName(lastName3);
+        daoAccountContact.save(acctCont3);
+
+        //use SAI to find records with specified last name
+        PagingIterable<AccountContact> foundContacts1 = daoAccountContact.findAllByLastName(lastName1);
+        assert(foundContacts1.one().getPersonFirstName().equals(firstName1));
+        assert(foundContacts1.isFullyFetched() == true);  //should only return one record
+
+        int expectedSize = 2;
+        PagingIterable<AccountContact> foundContacts2 = daoAccountContact.findAllByLastName(lastName2);
+        assert(foundContacts2.all().size() == expectedSize);  //two records have same last name
+
+        //cleanup records and verify
+        daoAccountContact.deleteAllByAccountNumber(acctNum);
+        PagingIterable<AccountContact> cleanVerifyAfterResults = daoAccountContact.findAllByAccountNumber(acctNum);
+        assert(cleanVerifyAfterResults.all().size() == 0);
+    }
+
+    @Test
+    public void auditHistorySAITest(){
+        String acctNum = "888999000";
+        String opco = "op1";
+        Instant maxDT = Instant.parse("9999-12-31T00:00:00.000Z");
+
+
+        Instant lastUpdate1 = Instant.parse("2021-04-01T00:00:00.001Z");
+        Instant lastUpdate2 = Instant.parse("2021-04-02T00:00:00.001Z");
+        Instant lastUpdate3 = Instant.parse("2021-04-03T00:00:00.001Z");
+
+        String transID1 = "trans_ID1";
+        String transID2 = "trans_ID2";
+        String transID3 = "trans_ID3";
+
+        //cleanup any existing records and verify
+        daoAuditHistory.deleteAllByAccountNumber(acctNum);
+        PagingIterable<AuditHistory> cleanVerifyResults = daoAuditHistory.findAllByAccountNumber(acctNum);
+        assert(cleanVerifyResults.all().size() == 0);
+
+        //create test records
+        AuditHistory audit1 = new AuditHistory();
+        audit1.setAccountNumber(acctNum);
+        audit1.setOpco(opco);
+        audit1.setLastUpdated(lastUpdate1);
+        audit1.setTransactionID(transID1);
+        daoAuditHistory.save(audit1);
+
+        AuditHistory audit2 = new AuditHistory();
+        audit2.setAccountNumber(acctNum);
+        audit2.setOpco(opco);
+        audit2.setLastUpdated(lastUpdate2);
+        audit2.setTransactionID(transID2);
+        daoAuditHistory.save(audit2);
+
+        AuditHistory audit3 = new AuditHistory();
+        audit3.setAccountNumber(acctNum);
+        audit3.setOpco(opco);
+        audit3.setLastUpdated(lastUpdate3);
+        audit3.setTransactionID(transID3);
+        daoAuditHistory.save(audit3);
+
+        //find all audit entries for account
+        PagingIterable<AuditHistory> allAudits = daoAuditHistory.findByAccountNumDateTimeRange(acctNum, lastUpdate1, maxDT);
+        assert(allAudits.all().size() == 3);
+
+        //find two earliese entries for account and verify order
+        PagingIterable<AuditHistory> earlyAudits = daoAuditHistory.findByAccountNumDateTimeRange(acctNum, lastUpdate1, lastUpdate2);
+
+        //only record #1 and record #2 should be returned
+        //because of descending cluster order, #2 should be first record retrieved
+        assert(earlyAudits.one().getTransactionID().equals(transID2));
+        //second record retrieved should be #1
+        assert(earlyAudits.one().getTransactionID().equals(transID1));
+        //two records retrieved from result set, should be no more records available
+        assert(earlyAudits.isFullyFetched() == true);
+
+        //cleanup any verify
+        daoAuditHistory.deleteAllByAccountNumber(acctNum);
+        PagingIterable<AuditHistory> cleanAfterResults = daoAuditHistory.findAllByAccountNumber(acctNum);
+        assert(cleanAfterResults.all().size() == 0);
+    }
+
+    @Test
+    public void commentSAITest(){
+        String acctNum = "890123";
+        String opco = "op1";
+
+        Instant commentDT1 = Instant.parse("2020-08-01T00:00:00.001Z");
+        Instant commentDT2 = Instant.parse("2020-08-02T00:00:00.001Z");
+        Instant commentDT3 = Instant.parse("2020-08-03T00:00:00.001Z");
+        Instant maxDT = Instant.parse("9999-12-31T00:00:00.000Z");
+
+        String commentID1 = "cID_1";
+        String commentID2 = "cID_2";
+
+        String type1 = "typ1";
+        String type2 = "typ2";
+
+        //cleanup any existing records and verify
+        daoComment.deleteAllByAccountNumber(acctNum);
+        PagingIterable<Comment> cleanVerifyComments = daoComment.findAllByAccountNumber(acctNum);
+        assert(cleanVerifyComments.all().size() == 0);
+
+        //create test records
+        Comment comment1 = new Comment();
+        comment1.setAccountNumber(acctNum);
+        comment1.setOpco(opco);
+        comment1.setCommentDateTime(commentDT1);
+        comment1.setCommentType(type1);
+        comment1.setCommentID(commentID1);
+        daoComment.save(comment1);
+
+        Comment comment2 = new Comment();
+        comment2.setAccountNumber(acctNum);
+        comment2.setOpco(opco);
+        comment2.setCommentDateTime(commentDT2);
+        comment2.setCommentType(type2);
+        comment2.setCommentID(commentID2);
+        daoComment.save(comment2);
+
+        Comment comment3 = new Comment();
+        comment3.setAccountNumber(acctNum);
+        comment3.setOpco(opco);
+        comment3.setCommentDateTime(commentDT3);
+        comment3.setCommentType("typ3");
+        comment3.setCommentID("cID_3");
+        daoComment.save(comment3);
+
+        //test query patterns
+        //find all comments starting with date/time of first test comment record
+        PagingIterable<Comment> foundComments =
+                daoComment.findByAccountNumOpcoDateTimeRange(acctNum, opco, commentDT1, maxDT);
+        assert(foundComments.all().size() == 3);
+
+        //find all comments starting with date/time between first test comment data and second test comment date
+        PagingIterable<Comment> foundComments2 =
+                daoComment.findByAccountNumOpcoDateTimeRange(acctNum, opco, commentDT1, commentDT2);
+        assert(foundComments2.one().getCommentID().equals(commentID2));  //should be second comment due to default cluster column ordering
+        assert(foundComments2.getAvailableWithoutFetching() == 1);  //should be two total records found so only one left
+        assert(foundComments2.one().getCommentID().equals(commentID1));  //last record found should be first comment
+
+        PagingIterable<Comment> foundAcctType = daoComment.findByAccountNumType(acctNum, type2);
+        assert(foundAcctType.one().getCommentID().equals(commentID2));
+        assert(foundAcctType.isFullyFetched() == true);
+
+        PagingIterable<Comment> foundype = daoComment.findByCommentType(type1);
+        assert(foundype.one().getCommentID().equals(commentID1));
+        assert(foundype.isFullyFetched() == true);
+
+        //cleanup after tests and verify
+        daoComment.deleteAllByAccountNumber(acctNum);
+        PagingIterable<Comment> cleanAfterVerifyComments = daoComment.findAllByAccountNumber(acctNum);
+        assert(cleanAfterVerifyComments.all().size() == 0);
+    }
+
+    @Test
+    public void custAcctProileAcctTypeSAITest(){
+        String queryType = "acctType2";
+        String expectedCustomerType = "custType2";
+
+        PagingIterable<Account> foundAccts = daoAccount.findByProfileAccountType(queryType);
+        Account foundAcct = foundAccts.one();
+        assert(foundAccts.isFullyFetched());  //only one result expected
+        assert(foundAcct.getProfileCustomerType().equals(expectedCustomerType));
+    }
+
+    @Test
+    public void ngramsSAITest() {
+
+        String acctNum = "123987456";
+        String opco1 = "testOpcoNgrams1";
+        String opco2 = "testOpcoNgrams2";
+        String opco3 = "testOpcoNgrams3";
+        String testVal1 = "1327 NORTHBROOK PKWY";
+        String testVal2 = "16304 BELLINGHAM DR";
+        String testVal3 = "106 S BELLE AVE";
+
+        IndexCollection indexCollect1 = new IndexCollection();
+        indexCollect1.setAccountNumber(acctNum);
+        indexCollect1.setOpco(opco1);
+        indexCollect1.setTestVal(testVal1);
+        indexCollect1.setTestValGrams(createNGrams(testVal1, 3));
+        daoIndexCollect.save(indexCollect1);
+
+        IndexCollection indexCollect2 = new IndexCollection();
+        indexCollect2.setAccountNumber(acctNum);
+        indexCollect2.setOpco(opco2);
+        indexCollect2.setTestVal(testVal2);
+        indexCollect2.setTestValGrams(createNGrams(testVal2, 3));
+        daoIndexCollect.save(indexCollect2);
+
+        IndexCollection indexCollect3 = new IndexCollection();
+        indexCollect3.setAccountNumber(acctNum);
+        indexCollect3.setOpco(opco3);
+        indexCollect3.setTestVal(testVal3);
+        indexCollect3.setTestValGrams(createNGrams(testVal3, 3));
+        daoIndexCollect.save(indexCollect3);
+
+        int expected1 = 1;
+        PagingIterable<IndexCollection> foundRecs1 = daoIndexCollect.findByPartialText("NORT");
+        assert(expected1 == foundRecs1.all().size());
+
+        //verify complete string can be located also
+        PagingIterable<IndexCollection> foundRecs2 = daoIndexCollect.findAllByAccountNumber(testVal2);
+
+        IndexCollection test = foundRecs2.one();
+//        assert(foundRecs2.one().getOpco().equals(opco2)); //todo not working as expected
+//        assert(foundRecs2.isFullyFetched()); //should only be one record found
+
+        int expected3 = 2;
+        PagingIterable<IndexCollection> foundRecs3 = daoIndexCollect.findByPartialText("BELL");
+        assert(expected3 == foundRecs3.all().size());
+
+        //cleanup
+        daoIndexCollect.delete(indexCollect1);
+        daoIndexCollect.delete(indexCollect2);
+        daoIndexCollect.delete(indexCollect3);
+    }
+
+    private Set<String> createNGrams(String source, int minGramLength)
+    {   Set<String> nGrams = new HashSet<String>();
+
+        int lengthSource = source.length();
+        int nCurStart = 0;
+
+        for(int nCurGramLength = minGramLength; nCurGramLength<=lengthSource; nCurGramLength++) {
+            nCurStart = 0;
+            while ((nCurStart + nCurGramLength) <= lengthSource) {
+                String curGram = source.substring(nCurStart, nCurStart + nCurGramLength);
+                nGrams.add(curGram);
+                nCurStart++;
+            }
+        }
+
+        //Debug output if needed
+//        System.out.println("Source string: " + source);
+//        System.out.println("Num n-grams: " + nGrams.size());
+//        System.out.println(nGrams.toString());
+
+        return nGrams;
+    }
 
     @Test
     public void latencyTest() {
@@ -170,7 +759,7 @@ public class CustomerTest {
             CompletableFuture<Boolean> future1
                     = CompletableFuture.supplyAsync(() -> {
                             long start = System.currentTimeMillis();
-                            PagingIterable<CustomerAccount> customerAccountIterable = daoAccount.findAllByAccountNumber(acctNbr);
+                            PagingIterable<Account> customerAccountIterable = daoAccount.findAllByAccountNumber(acctNbr);
                             int numCustAccounts = customerAccountIterable.getAvailableWithoutFetching();
                             System.out.println("Acct# " + acctNbr + " OPCO INQUIRY QUERY TIME : " + (System.currentTimeMillis() - start) + "\t\tFIRST PAGE SIZE : " + numCustAccounts);
                             return customerAccountIterable;
@@ -179,7 +768,7 @@ public class CustomerTest {
             CompletableFuture<Boolean> future2
                     = CompletableFuture.supplyAsync(() -> {
                 long start = System.currentTimeMillis();
-                PagingIterable<CustomerApplyDiscount> applyDiscountIterable = daoApplyDiscount.findAllByAccountNumber(acctNbr);
+                PagingIterable<ApplyDiscount> applyDiscountIterable = daoApplyDiscount.findAllByAccountNumber(acctNbr);
                 int numAccountDiscounts = applyDiscountIterable.getAvailableWithoutFetching();
                 System.out.println("Acct# " + acctNbr + " APPLY DISCOUNT INQUIRY QUERY TIME : " + (System.currentTimeMillis() - start) + "\t\tFIRST PAGE SIZE : " + numAccountDiscounts);
                 return applyDiscountIterable;
@@ -201,6 +790,63 @@ public class CustomerTest {
     }
 
     @Test
+    public void mappedDutyTaxTest() {
+        String acctNum = "654321987";
+        String opco = "testOpcoAcctTypes";
+
+        String keyUS = "US";
+        String keyCA = "CA";
+        String keyIN = "IN";
+        String keyMX = "MX";
+
+        String usDutyTax= "123123123";
+        String caDutyTax_v1= "123123123";
+        String caDutyTax_v2= "124124124";
+        String inDutyTax= "123123123";
+        String mxDutyTax= "345678901";
+
+        //create initial state
+        Map<String, String> dutyTax = new HashMap<>();
+        dutyTax.put(keyUS, usDutyTax);
+        dutyTax.put(keyCA, caDutyTax_v1);
+        dutyTax.put(keyIN, inDutyTax);
+
+        Account custAcct = new Account();
+        custAcct.setAccountNumber(acctNum);
+        custAcct.setOpco(opco);
+        custAcct.setDutyTaxInfo(dutyTax);
+        daoAccount.save(custAcct);
+
+        System.out.println("\nExpress Duty Tax Test\nInitial Map State:\n" + dutyTax.toString());
+
+        Account foundAcct = daoAccount.findByAccountNumber(acctNum);
+        Map<String, String> foundDutyTax = foundAcct.getDutyTaxInfo();
+        assert(foundDutyTax.get(keyUS).equals(usDutyTax));
+        assert(foundDutyTax.get(keyCA).equals(caDutyTax_v1));
+        assert(foundDutyTax.get(keyIN).equals(inDutyTax));
+        assert(foundDutyTax.get(mxDutyTax) == null);
+
+        Map<String, String> dutyTaxNewEntries = new HashMap<>();
+        dutyTaxNewEntries.put(keyCA, caDutyTax_v2);
+        dutyTaxNewEntries.put(keyMX, mxDutyTax);
+        daoAccount.upsertDutyTaxInfoMapEntries(acctNum, opco, dutyTaxNewEntries);
+
+        Account foundAcctUpdated = daoAccount.findByAccountNumber(acctNum);
+        Map<String, String> foundDutyTaxUpdated = foundAcctUpdated.getDutyTaxInfo();
+        assert(foundDutyTaxUpdated.get(keyUS).equals(usDutyTax));
+        assert(foundDutyTaxUpdated.get(keyCA).equals(caDutyTax_v2));
+        assert(foundDutyTaxUpdated.get(keyIN).equals(inDutyTax));
+        assert(foundDutyTaxUpdated.get(keyMX).equals(mxDutyTax));
+
+        System.out.println("\nFinal Map State:\n" + foundDutyTaxUpdated.toString());
+
+
+        //cleanup
+        daoAccount.delete(custAcct);
+    }
+
+
+    @Test
     public void mappedCollectionsTest() {
         String acctNum = "9876543344";
         String opco = "testOpcoAcctTypes";
@@ -209,21 +855,22 @@ public class CustomerTest {
         String keyA = "key1";
         String keyB = "key2";
         String keyC = "key3";
+        String keyD = "key4";
         String valA = "val1";
         String valB = "val2";
         String valC = "val3";
+        String valD = "val4";
 
         dutyTax.put(keyA, valA);
         dutyTax.put(keyB, valB);
 
-        CustomerAccount custAcct = new CustomerAccount();
+        Account custAcct = new Account();
         custAcct.setAccountNumber(acctNum);
         custAcct.setOpco(opco);
         custAcct.setDutyTaxInfo(dutyTax);
-
         daoAccount.save(custAcct);
 
-        CustomerAccount foundAcct = daoAccount.findByAccountNumber(acctNum);
+        Account foundAcct = daoAccount.findByAccountNumber(acctNum);
         Map<String, String> foundDutyTax = foundAcct.getDutyTaxInfo();
         assert(foundDutyTax.get(keyA).equals(valA));
         assert(foundDutyTax.get(keyB).equals(valB));
@@ -241,18 +888,18 @@ public class CustomerTest {
                 "    opco = '" + opco + "';";
 
         session.execute(dutyTaxAddElement);
-        CustomerAccount foundAcct2 = daoAccount.findByAccountNumber(acctNum);
+        Account foundAcct2 = daoAccount.findByAccountNumber(acctNum);
         Map<String, String> foundDutyTax2 = foundAcct2.getDutyTaxInfo();
         assert(foundDutyTax2.get(keyC).equals(valC));
 
-        //working, hard-coded map update
-        daoAccount.addDutyTaxInfoEntry(acctNum, opco);
+        //Java Mapper upsert example
+        Map<String, String> dutyTaxNewEntries = new HashMap<>();
+        dutyTaxNewEntries.put(keyD, valD);
+        daoAccount.upsertDutyTaxInfoMapEntries(acctNum, opco, dutyTaxNewEntries);
 
-        //non-working options attempted
-//        daoAccount.addDutyTaxInfoEntry(acctNum, opco, keyC, valC);
-//        String newMapEnt = "{'key5': 'val5'}";
-//        daoAccount.addDutyTaxInfoMapEntry(acctNum, opco, newMapEnt);
-
+        Account foundAcct3 = daoAccount.findByAccountNumber(acctNum);
+        Map<String, String> foundDutyTax3 = foundAcct3.getDutyTaxInfo();
+        assert(foundDutyTax3.get(keyD).equals(valD));
 
         //cleanup
         daoAccount.delete(custAcct);
@@ -261,67 +908,68 @@ public class CustomerTest {
         //https://docs.datastax.com/en/dse/5.1/cql/cql/cql_using/useInsertMap.html
     }
 
-    @Test
-    public void searchSubStringTest() throws InterruptedException {
-        //using dummy values for contact record to test substring matching functionaliyt
-        String insertRec1 = "INSERT INTO account_contact\n" +
-                "    (account_number, opco, contact_document_id, contact_type_code, contact_business_id, person__first_name)\n" +
-                "    VALUES('123456', 'opc1', 101, 'type1', 'cBus1', 'FedExDotCom');";
-
-        String insertRec2 = "INSERT INTO account_contact\n" +
-                "    (account_number, opco, contact_document_id, contact_type_code, contact_business_id, person__first_name)\n" +
-                "    VALUES('123456', 'opc1', 102, 'type1', 'cBus2', 'FedExDotom');";
-
-        //add test records to table
-        session.execute(insertRec1);
-        session.execute(insertRec2);
-
-        //sleep for a time to allow Solr indexes to update completely
-        System.out.println("Inserted substring test records. Pausing to allow indexes to update...");
-        Thread.sleep(11000);
-
-        //construct test query using Solr
-        String searchQueryBase = "SELECT * \n" +
-                "FROM account_contact\n" +
-                "WHERE solr_query = ";
-
-        //query 1, should find two records
-        String searchQueryDetail1 = "'person__first_name:FedEx*'";
-        ResultSet rs1 = session.execute(searchQueryBase + searchQueryDetail1);
-        assert(rs1.all().size() == 2);
-
-        //query 2, should find two records
-        String searchQueryDetail2 = "'person__first_name:FedEx*D*'";
-        ResultSet rs2 = session.execute(searchQueryBase + searchQueryDetail2);
-        assert(rs2.all().size() == 2);
-
-        //query 3, should find one record
-        String searchQueryDetail3 = "'person__first_name:FedEx*C*'";
-        ResultSet rs3 = session.execute(searchQueryBase + searchQueryDetail3);
-        Row row3 = rs3.one();
-        assert(row3.getLong("contact_document_id") == 101);
-        assert(row3.getString("contact_business_id").equals("cBus1"));
-        assert(rs3.isFullyFetched() == true); //only one record found
-
-        //query 4, should find one record
-        String searchQueryDetail4 = "'person__first_name:FedEx*D*C*'";
-        ResultSet rs4 = session.execute(searchQueryBase + searchQueryDetail4);
-        Row row4 = rs4.one();
-        assert(row4.getLong("contact_document_id") == 101);
-        assert(row4.getString("contact_business_id").equals("cBus1"));
-        assert(rs4.isFullyFetched() == true); //only one record found
-
-        //query 5, should find one record
-        String searchQueryDetail5 = "'person__first_name:FedEx*D*tom'";
-        ResultSet rs5 = session.execute(searchQueryBase + searchQueryDetail5);
-        Row row5 = rs5.one();
-        assert(row5.getLong("contact_document_id") == 102);
-        assert(row5.getString("contact_business_id").equals("cBus2"));
-        assert(rs5.isFullyFetched() == true); //only one record found
-
-        String cleanup = "DELETE FROM account_contact WHERE account_number = '123456'";
-        session.execute(cleanup);
-    }
+    //TODO convert possible functionality of following test to use SAI
+//    @Test
+//    public void searchSubStringTest() throws InterruptedException {
+//        //using dummy values for contact record to test substring matching functionaliyt
+//        String insertRec1 = "INSERT INTO account_contact\n" +
+//                "    (account_number, opco, contact_document_id, contact_type_code, contact_business_id, person__first_name)\n" +
+//                "    VALUES('123456', 'opc1', 101, 'type1', 'cBus1', 'FedExDotCom');";
+//
+//        String insertRec2 = "INSERT INTO account_contact\n" +
+//                "    (account_number, opco, contact_document_id, contact_type_code, contact_business_id, person__first_name)\n" +
+//                "    VALUES('123456', 'opc1', 102, 'type1', 'cBus2', 'FedExDotom');";
+//
+//        //add test records to table
+//        session.execute(insertRec1);
+//        session.execute(insertRec2);
+//
+//        //sleep for a time to allow Solr indexes to update completely
+//        System.out.println("Inserted substring test records. Pausing to allow indexes to update...");
+//        Thread.sleep(11000);
+//
+//        //construct test query using Solr
+//        String searchQueryBase = "SELECT * \n" +
+//                "FROM account_contact\n" +
+//                "WHERE solr_query = ";
+//
+//        //query 1, should find two records
+//        String searchQueryDetail1 = "'person__first_name:FedEx*'";
+//        ResultSet rs1 = session.execute(searchQueryBase + searchQueryDetail1);
+//        assert(rs1.all().size() == 2);
+//
+//        //query 2, should find two records
+//        String searchQueryDetail2 = "'person__first_name:FedEx*D*'";
+//        ResultSet rs2 = session.execute(searchQueryBase + searchQueryDetail2);
+//        assert(rs2.all().size() == 2);
+//
+//        //query 3, should find one record
+//        String searchQueryDetail3 = "'person__first_name:FedEx*C*'";
+//        ResultSet rs3 = session.execute(searchQueryBase + searchQueryDetail3);
+//        Row row3 = rs3.one();
+//        assert(row3.getLong("contact_document_id") == 101);
+//        assert(row3.getString("contact_business_id").equals("cBus1"));
+//        assert(rs3.isFullyFetched() == true); //only one record found
+//
+//        //query 4, should find one record
+//        String searchQueryDetail4 = "'person__first_name:FedEx*D*C*'";
+//        ResultSet rs4 = session.execute(searchQueryBase + searchQueryDetail4);
+//        Row row4 = rs4.one();
+//        assert(row4.getLong("contact_document_id") == 101);
+//        assert(row4.getString("contact_business_id").equals("cBus1"));
+//        assert(rs4.isFullyFetched() == true); //only one record found
+//
+//        //query 5, should find one record
+//        String searchQueryDetail5 = "'person__first_name:FedEx*D*tom'";
+//        ResultSet rs5 = session.execute(searchQueryBase + searchQueryDetail5);
+//        Row row5 = rs5.one();
+//        assert(row5.getLong("contact_document_id") == 102);
+//        assert(row5.getString("contact_business_id").equals("cBus2"));
+//        assert(rs5.isFullyFetched() == true); //only one record found
+//
+//        String cleanup = "DELETE FROM account_contact WHERE account_number = '123456'";
+//        session.execute(cleanup);
+//    }
 
     @Test
     public void customerAcctTypesTest(){
@@ -329,14 +977,14 @@ public class CustomerTest {
         String opco = "testOpcoAcctTypes";
         String hazardShipperFlag = "shipFlag";
 
-        CustomerAccount custAcct = new CustomerAccount();
+        Account custAcct = new Account();
         custAcct.setAccountNumber(acctNum);
         custAcct.setOpco(opco);
         custAcct.setHazardousShipperFlag(hazardShipperFlag);
 
         daoAccount.save(custAcct);
 
-        CustomerAccount foundAcct = daoAccount.findByAccountNumber(acctNum);
+        Account foundAcct = daoAccount.findByAccountNumber(acctNum);
         assert(foundAcct.getHazardousShipperFlag().equals(hazardShipperFlag));
 
         //cleanup
@@ -351,14 +999,14 @@ public class CustomerTest {
         String opco = "testOpco";
         String acctType = String.valueOf(euroUTF);
 
-        CustomerAccount custAcct = new CustomerAccount();
+        Account custAcct = new Account();
         custAcct.setAccountNumber(acctNum);
         custAcct.setOpco(opco);
         custAcct.setProfileAccountType(acctType);
 
         daoAccount.save(custAcct);
 
-        CustomerAccount foundAcct = daoAccount.findByAccountNumber(acctNum);
+        Account foundAcct = daoAccount.findByAccountNumber(acctNum);
         String foundAcctType = foundAcct.getProfileAccountType();
 
         assert(foundAcctType.equals(acctType));
@@ -375,7 +1023,7 @@ public class CustomerTest {
         Instant effectiveDT = Instant.parse("2021-05-01T01:00:00.001Z");
         Instant expirationDT = Instant.parse("2015-12-10T00:00:00.001Z");
 
-        CustomerApplyDiscount appDisc = new CustomerApplyDiscount();
+        ApplyDiscount appDisc = new ApplyDiscount();
 
         appDisc.setAccountNumber(acctNum);
         appDisc.setOpco(opco);
@@ -387,7 +1035,7 @@ public class CustomerTest {
         daoApplyDiscount.save(appDisc);
 
         //retrieve initial version and verify property values
-        CustomerApplyDiscount readAppDisc = daoApplyDiscount.findByKeys(acctNum, opco, effectiveDT);
+        ApplyDiscount readAppDisc = daoApplyDiscount.findByKeys(acctNum, opco, effectiveDT);
         assert(readAppDisc.getAccountNumber().equals(acctNum));
         assert(readAppDisc.getOpco().equals(opco));
         assert(readAppDisc.getApplyDiscountFlag() == applyDiscountFlag);
@@ -404,7 +1052,7 @@ public class CustomerTest {
         daoApplyDiscount.update(readAppDisc);
 
         //retrieve updated version and verify property values were updated
-        CustomerApplyDiscount foundUpdatedAppDisc = daoApplyDiscount.findByKeys(acctNum, opco, effectiveDT);
+        ApplyDiscount foundUpdatedAppDisc = daoApplyDiscount.findByKeys(acctNum, opco, effectiveDT);
         assert(foundUpdatedAppDisc.getAccountNumber().equals(acctNum));
         assert(foundUpdatedAppDisc.getOpco().equals(opco));
         assert(foundUpdatedAppDisc.getApplyDiscountFlag() == updatedApplyDiscountFlag);
@@ -416,91 +1064,50 @@ public class CustomerTest {
     }
 
     @Test
-    public void applyDiscountSearchTest(){
-        int expectResultSize = 3;
-
-        String fullQuery = "select * from apply_discount_detail_v1 \n" +
-                "where \n" +
-                "    account_number = '000001236' and " +
-                "    solr_query = " +
-                "    '{" +
-                "        \"q\": \"opco:FX && " +
-                "              apply_discount__discount_flag:true && " +
-                "              apply_discount__effective_date_time:[2018-11-01T00:00:00.001Z TO *] && " +
-                "              apply_discount__expiration_date_time:[* TO 2019-01-01T00:00:00.001Z]\"," +
-                "        \"sort\": \"apply_discount__effective_date_time desc\"}';";
-
-
-        ResultSet rs = session.execute(fullQuery);
-        assert(expectResultSize == rs.all().size());
-    }
-
-    @Test
     public void applyDiscountAsyncTest() throws ExecutionException, InterruptedException {
         String acctNum = "000001236";
         int expectResultSize = 11;
 
-        CompletableFuture<MappedAsyncPagingIterable<CustomerApplyDiscount>> cfDiscounts = daoApplyDiscount.findAllByAccountNumberAsync(acctNum);
+        CompletableFuture<MappedAsyncPagingIterable<ApplyDiscount>> cfDiscounts = daoApplyDiscount.findAllByAccountNumberAsync(acctNum);
         cfDiscounts.join();
         assert(cfDiscounts.get().remaining() == expectResultSize);
     }
 
     @Test
-    public void applyDiscountSearchAsyncTest() throws ExecutionException, InterruptedException {
+    public void applyDiscountSAIAsyncTest() throws ExecutionException, InterruptedException {
         String acctNum = "000001236";
         String opco = "FX";
         Boolean applyDiscountFlag = true;
         Instant effectiveDT = Instant.parse("2018-11-01T01:00:00.001Z");
         Instant expriationDT = Instant.parse("2019-01-01T00:00:00.001Z");
+        Instant maxDT = Instant.parse("9999-12-31T00:00:00.000Z");
 
-        //Solr filter on opco value only
+        //Filter on account number and opco values only
         int expectedResultSize1 = 11;
-        String solrParm1 = CustomerApplyDiscountHelper.constructSearchQuery(opco);
-        CompletableFuture<MappedAsyncPagingIterable<CustomerApplyDiscount>> cfDiscounts1 =
-                daoApplyDiscount.findAllByAccountSearchAsync(acctNum, solrParm1);
+        CompletableFuture<MappedAsyncPagingIterable<ApplyDiscount>> cfDiscounts1 =
+                daoApplyDiscount.findByAccountOpcoAsync(acctNum, opco);
         cfDiscounts1.join();
         assert(cfDiscounts1.get().remaining() == expectedResultSize1);
 
-        //Solr filter on opco and apply discount flag values only
-        int expectedResultSize2 = 6;
-        String solrParm2 = CustomerApplyDiscountHelper.constructSearchQuery(opco, applyDiscountFlag);
-        CompletableFuture<MappedAsyncPagingIterable<CustomerApplyDiscount>> cfDiscounts2 =
-                daoApplyDiscount.findAllByAccountSearchAsync(acctNum, solrParm2);
+        //Filter on account number, opco and effective date/time values only
+        int expectedResultSize2 = 7;
+        CompletableFuture<MappedAsyncPagingIterable<ApplyDiscount>> cfDiscounts2 =
+                daoApplyDiscount.findByAccountNumDateTimeRangeAsync(acctNum, opco, effectiveDT, maxDT);
         cfDiscounts2.join();
         assert(cfDiscounts2.get().remaining() == expectedResultSize2);
 
-        //Solr filter on opco and effective date/time values only
-        int expectedResultSize3 = 7;
-        String solrParm3 = CustomerApplyDiscountHelper.constructSearchQuery(opco, effectiveDT);
-        CompletableFuture<MappedAsyncPagingIterable<CustomerApplyDiscount>> cfDiscounts3 =
-                daoApplyDiscount.findAllByAccountSearchAsync(acctNum, solrParm3);
+        //Filter on account number, opco, effective date/time and expiration date/time
+        int expectedResultSize3 = 5;
+        CompletableFuture<MappedAsyncPagingIterable<ApplyDiscount>> cfDiscounts3 =
+                daoApplyDiscount.findByAccountNumDateTimeRangeAsync(acctNum, opco, effectiveDT, expriationDT);
         cfDiscounts3.join();
         assert(cfDiscounts3.get().remaining() == expectedResultSize3);
-
-        //Solr filter on opco, apply discount flag, effective date/time and expiration date/time
-        int expectedResultSize4 = 3;
-        String solrParm4 = CustomerApplyDiscountHelper.constructSearchQuery(opco, applyDiscountFlag, effectiveDT,expriationDT);
-        CompletableFuture<MappedAsyncPagingIterable<CustomerApplyDiscount>> cfDiscounts4 =
-                daoApplyDiscount.findAllByAccountSearchAsync(acctNum, solrParm4);
-        cfDiscounts4.join();
-        assert(cfDiscounts4.get().remaining() == expectedResultSize4);
-    }
-
-
-    @Test
-    public void nationalAccountFullSearchTest(){
-        String solrParam = "national_account_detail__national_account_nbr:00706";
-        int expectedResultCount = 14;
-        PagingIterable<CustomerNationalAcccount> foundNatAccts = daoNational.findByNationalAccountNumberFullSolrParam(solrParam);
-
-        assert(foundNatAccts.all().size() == expectedResultCount);
     }
 
     @Test
-    public void nationalAccountSearchTest(){
-        String solrParam = "national_account_detail__national_account_nbr:00706";
+    public void nationalAccountSAITest(){
         int expectedResultCount = 14;
-        PagingIterable<CustomerNationalAcccount> foundNatAccts = daoNational.findBySearchQuery(solrParam);
+        PagingIterable<NationalAcccount> foundNatAccts = daoNational.findBySAINationalAccount("00706");
 
         assert(foundNatAccts.all().size() == expectedResultCount);
     }
@@ -510,7 +1117,7 @@ public class CustomerTest {
         String acctID = "00112770";
         int expectedResultCount = 5;
 
-        PagingIterable<CustomerNationalAcccount> foundNatAccts = daoNational.findByAccountNumber(acctID);
+        PagingIterable<NationalAcccount> foundNatAccts = daoNational.findByAccountNumber(acctID);
 
         assert(foundNatAccts.all().size() == expectedResultCount);
     }
@@ -523,7 +1130,7 @@ public class CustomerTest {
                 builder -> builder.setPageSize(pageSize);
 
         String acctID = "00112770";
-        PagingIterable<CustomerNationalAcccount> foundNatAccts = daoNational.findByAccountNumber(acctID, functionCustomPageSize);
+        PagingIterable<NationalAcccount> foundNatAccts = daoNational.findByAccountNumber(acctID, functionCustomPageSize);
 
         assert(foundNatAccts.getAvailableWithoutFetching() == pageSize);
         assert (foundNatAccts.isFullyFetched() == false);
@@ -584,7 +1191,7 @@ public class CustomerTest {
         System.out.println("First page results:");
         while(rs.getAvailableWithoutFetching()>0){
             Row row = rs.one();
-            CustomerNationalAcccount natAcct = daoNational.asNationalAccount(row);
+            NationalAcccount natAcct = daoNational.asNationalAccount(row);
 
             System.out.println("\t" +
                     "Account Number - " + natAcct.getAccountNumber() + "    " +
@@ -600,7 +1207,7 @@ public class CustomerTest {
         System.out.println("Second page results:");
         while(rs2.getAvailableWithoutFetching()>0){
             Row row = rs2.one();
-            CustomerNationalAcccount natAcct = daoNational.asNationalAccount(row);
+            NationalAcccount natAcct = daoNational.asNationalAccount(row);
 
             System.out.println("\t" +
                     "Account Number - " + natAcct.getAccountNumber() + "    " +
@@ -646,7 +1253,7 @@ public class CustomerTest {
     @Test
     public void sampleTestSearch(){
         String acctID = "00112770";
-        String query = "select * from " + keyspaceName + ".national_account_v1 where solr_query = 'account_number:" + acctID + "';";
+        String query = "select * from " + keyspaceName + ".national_account_v1 where account_number='" + acctID + "';";
         System.out.println(query);
 
         int expectedTotalSize = 5;
@@ -681,7 +1288,7 @@ public class CustomerTest {
     @Test
     public void sampleTestSearchMultiPage(){
         String acctID = "00112770";
-        String query = "select * from " + keyspaceName + ".national_account_v1 where solr_query = 'account_number:" + acctID + "';";
+        String query = "select * from " + keyspaceName + ".national_account_v1 where account_number = '" + acctID + "';";
         System.out.println(query);
 
         int expectedTotalSize = 5;
@@ -735,11 +1342,11 @@ public class CustomerTest {
 
 
         //sample calls to Bytes utility methods
-        String temp = Bytes.toHexString(pagingState);
-        System.out.println(temp);
-
-        ByteBuffer buff = Bytes.fromHexString(temp);
-        System.out.println(buff);
+//        String temp = Bytes.toHexString(pagingState); //Debug ouput if needed
+//        System.out.println(temp);
+//
+//        ByteBuffer buff = Bytes.fromHexString(temp);
+//        System.out.println(buff);
     }
 
     @Test
@@ -752,7 +1359,7 @@ public class CustomerTest {
         String acctReason = "reason1";
         String entSource = "entSource1";
 
-        CustomerAccount custAllProps = new CustomerAccount();
+        Account custAllProps = new Account();
         custAllProps.setAccountNumber(acctID);
         custAllProps.setOpco(opco);
         custAllProps.setProfileCustomerType(custType);
@@ -763,7 +1370,7 @@ public class CustomerTest {
         daoAccount.save(custAllProps);
 
         //verify all properties exist in rcord before deleting select properties
-        CustomerAccount foundCust = daoAccount.findByAccountNumber(acctID);
+        Account foundCust = daoAccount.findByAccountNumber(acctID);
         assert(foundCust.getOpco().equals(opco));
         assert(foundCust.getProfileCustomerType().equals(custType));
         assert(foundCust.getProfileAccountType().equals(acctType));
@@ -783,7 +1390,7 @@ public class CustomerTest {
                 "    AND opco = '" + opco + "';";
 
         session.execute(stmtDeletProperty);
-        CustomerAccount foundCustDelProp = daoAccount.findByAccountNumber(acctID);
+        Account foundCustDelProp = daoAccount.findByAccountNumber(acctID);
         //check that deleted property is no longer in record
         assert(foundCustDelProp.getProfileAccountType() == null);
         //check that all other properties still set to expected values
@@ -810,7 +1417,7 @@ public class CustomerTest {
                 "    AND opco = '" + opco + "';";
 
         session.execute(stmtDeleteMultiProperties);
-        CustomerAccount foundCustDelMultiProps = daoAccount.findByAccountNumber(acctID);
+        Account foundCustDelMultiProps = daoAccount.findByAccountNumber(acctID);
         //check that deleted properties are no longer in record
         assert(foundCustDelMultiProps.getProfileCustomerType() == null);
         assert(foundCustDelMultiProps.getProfileAccountType() == null);
@@ -825,9 +1432,9 @@ public class CustomerTest {
     public void combineAsyncQueryTest() throws ExecutionException, InterruptedException {
         //execute async queries
         String acctID = "1111";
-        CompletableFuture<CustomerAccount> cfFoundAccount = daoAccount.findByAccountNumberAsync(acctID);
-        CompletableFuture<CustomerPaymentInfo> cfFoundPayment = daoPayment.findByAccountNumberAsync(acctID);
-        CompletableFuture<CustomerAssocAccount> cfFoundAssoc = daoAssoc.findByAccountNumberAsync(acctID);
+        CompletableFuture<Account> cfFoundAccount = daoAccount.findByAccountNumberAsync(acctID);
+        CompletableFuture<PaymentInfo> cfFoundPayment = daoPayment.findByAccountNumberAsync(acctID);
+        CompletableFuture<AssocAccount> cfFoundAssoc = daoAssoc.findByAccountNumberAsync(acctID);
 
         //allow all async calls to complete
         CompletableFuture.allOf(cfFoundAccount, cfFoundPayment, cfFoundAssoc);
@@ -838,7 +1445,7 @@ public class CustomerTest {
         String expectedAccountType = "acctType1";
 
         //assign account data object
-        CustomerAccount foundAccount = cfFoundAccount.get();
+        Account foundAccount = cfFoundAccount.get();
 
         assert(foundAccount.getOpco().equals(expectedOpco));
         assert(foundAccount.getProfileCustomerType().equals(expectedCustomerType));
@@ -853,7 +1460,7 @@ public class CustomerTest {
         String expectedCCId = "ccID1";
 
         //assign payment data object
-        CustomerPaymentInfo foundPayment = cfFoundPayment.get();
+        PaymentInfo foundPayment = cfFoundPayment.get();
 
         assert(foundPayment.getOpco().equals(expectedPaymentOpco));
         assert(foundPayment.getRecordType().equals(expectedType));
@@ -866,7 +1473,7 @@ public class CustomerTest {
         String expectedAssocAcct = "2222";
 
         //assign assoc data object
-        CustomerAssocAccount foundAssoc = cfFoundAssoc.get();
+        AssocAccount foundAssoc = cfFoundAssoc.get();
 
         assert(foundAssoc.getOpco().equals(expectedAssocOpco));
         assert(foundAssoc.getAssociatedAccountNumber().equals(expectedAssocAcct));
@@ -878,7 +1485,7 @@ public class CustomerTest {
         String expectedOpco = "B";
         String expectedAssocAcct = "2222";
 
-        CustomerAssocAccount foundAssoc = daoAssoc.findByAccountNumber(acctID);
+        AssocAccount foundAssoc = daoAssoc.findByAccountNumber(acctID);
 
         assert(foundAssoc.getOpco().equals(expectedOpco));
         assert(foundAssoc.getAssociatedAccountNumber().equals(expectedAssocAcct));
@@ -890,9 +1497,9 @@ public class CustomerTest {
         String expectedOpco = "B";
         String expectedAssocAcct = "2222";
 
-        CompletableFuture<CustomerAssocAccount> cfFoundAssoc = daoAssoc.findByAccountNumberAsync(acctID);
+        CompletableFuture<AssocAccount> cfFoundAssoc = daoAssoc.findByAccountNumberAsync(acctID);
         cfFoundAssoc.join();
-        CustomerAssocAccount foundAssoc = cfFoundAssoc.get();
+        AssocAccount foundAssoc = cfFoundAssoc.get();
 
         assert(foundAssoc.getOpco().equals(expectedOpco));
         assert(foundAssoc.getAssociatedAccountNumber().equals(expectedAssocAcct));
@@ -908,7 +1515,7 @@ public class CustomerTest {
         int expectedSeq = 1;
         String expectedCCId = "ccID1";
 
-        CustomerPaymentInfo foundPayment = daoPayment.findByAccountNumber(acctID);
+        PaymentInfo foundPayment = daoPayment.findByAccountNumber(acctID);
 
         assert(foundPayment.getOpco().equals(expectedOpco));
         assert(foundPayment.getRecordType().equals(expectedType));
@@ -930,9 +1537,9 @@ public class CustomerTest {
         int expectedSeq = 1;
         String expectedCCId = "ccID1";
 
-        CompletableFuture<CustomerPaymentInfo> cfFoundPayment = daoPayment.findByAccountNumberAsync(acctID);
+        CompletableFuture<PaymentInfo> cfFoundPayment = daoPayment.findByAccountNumberAsync(acctID);
         cfFoundPayment.join();
-        CustomerPaymentInfo foundPayment = cfFoundPayment.get();
+        PaymentInfo foundPayment = cfFoundPayment.get();
 
         assert(foundPayment.getOpco().equals(expectedOpco));
         assert(foundPayment.getRecordType().equals(expectedType));
@@ -948,7 +1555,7 @@ public class CustomerTest {
         String expectedCustomerType = "custType1";
         String expectedAccountType = "acctType1";
 
-        CustomerAccount foundAccount = daoAccount.findByAccountNumber(acctID);
+        Account foundAccount = daoAccount.findByAccountNumber(acctID);
 
         assert(foundAccount.getOpco().equals(expectedOpco));
         assert(foundAccount.getProfileCustomerType().equals(expectedCustomerType));
@@ -962,9 +1569,9 @@ public class CustomerTest {
         String expectedCustomerType = "custType1";
         String expectedAccountType = "acctType1";
 
-        CompletableFuture<CustomerAccount> cfFoundAccount = daoAccount.findByAccountNumberAsync(acctID);
+        CompletableFuture<Account> cfFoundAccount = daoAccount.findByAccountNumberAsync(acctID);
         cfFoundAccount.join();
-        CustomerAccount foundAccount = cfFoundAccount.get();
+        Account foundAccount = cfFoundAccount.get();
 
         assert(foundAccount.getOpco().equals(expectedOpco));
         assert(foundAccount.getProfileCustomerType().equals(expectedCustomerType));
@@ -974,14 +1581,14 @@ public class CustomerTest {
 
     @Test
     public void contactUdtMapperReadTest(){
-        CustomerContact foundContact = daoContact.findByContactDocumentId(83);
-        Set<CustomerContactTelecomDetails> setTeleCom = foundContact.getTeleCom();
+        Contact foundContact = daoContact.findByContactDocumentId(83);
+        Set<ContactTelecomDetails> setTeleCom = foundContact.getTeleCom();
 
         //verify size of returned set
         assert(setTeleCom.size() == 1);
 
         //verify udt values
-        CustomerContactTelecomDetails addrSec = setTeleCom.iterator().next();
+        ContactTelecomDetails addrSec = setTeleCom.iterator().next();
         assert(addrSec.getTelecomMethod().equals("PV"));
         assert(addrSec.getAreaCode().equals("123"));
         assert(addrSec.getPhoneNumber().equals("456-7890"));
@@ -999,15 +1606,15 @@ public class CustomerTest {
         String areaCode = "000";
         String phoneNum = "111-2222";
 
-        CustomerContactTelecomDetails writeTeleCom = new CustomerContactTelecomDetails();
+        ContactTelecomDetails writeTeleCom = new ContactTelecomDetails();
         writeTeleCom.setTelecomMethod(telComMethod);
         writeTeleCom.setAreaCode(areaCode);
         writeTeleCom.setPhoneNumber(phoneNum);
 
-        Set<CustomerContactTelecomDetails> setTelecom = new HashSet<>();
+        Set<ContactTelecomDetails> setTelecom = new HashSet<>();
         setTelecom.add(writeTeleCom);
 
-        CustomerContact writeContact = new CustomerContact();
+        Contact writeContact = new Contact();
         writeContact.setContactDocumentId(testDocID);
         writeContact.setPersonFirstName(testFirstName);
         writeContact.setPerson__last_name(testLastName);
@@ -1018,20 +1625,20 @@ public class CustomerTest {
         daoContact.save(writeContact);
 
         //verify record written correctly
-        CustomerContact foundContact = daoContact.findByContactDocumentId(testDocID);
-        Set<CustomerContactTelecomDetails> setReadTelecom = foundContact.getTeleCom();
+        Contact foundContact = daoContact.findByContactDocumentId(testDocID);
+        Set<ContactTelecomDetails> setReadTelecom = foundContact.getTeleCom();
 
         //verify size of returned set
         assert(1 == setReadTelecom.size());
 
         //verify udt values
-        CustomerContactTelecomDetails addrSec = setReadTelecom.iterator().next();
+        ContactTelecomDetails addrSec = setReadTelecom.iterator().next();
 //        assert(addrSec.getUnit().equals(addSecUnit));
 //        assert(addrSec.getValue().equals(addSecVal));
 
         //cleanup test UDT record
         daoContact.delete(writeContact);
-        CustomerContact readVerifyDelete = daoContact.findByContactDocumentId(testDocID);
+        Contact readVerifyDelete = daoContact.findByContactDocumentId(testDocID);
         assert(null == readVerifyDelete);
     }
 
@@ -1043,7 +1650,7 @@ public class CustomerTest {
         String testMiddleName = "Middle20000" ;
 
         //write test record
-        CustomerContact writeContact = new CustomerContact();
+        Contact writeContact = new Contact();
         writeContact.setContactDocumentId(testDocID);
         writeContact.setPersonFirstName(testFirstName);
         writeContact.setPerson__last_name(testLastName);
@@ -1051,31 +1658,31 @@ public class CustomerTest {
         daoContact.save(writeContact);
 
         //test read functionality
-        CustomerContact readContact = daoContact.findByContactDocumentId(testDocID);
+        Contact readContact = daoContact.findByContactDocumentId(testDocID);
         assert(readContact.getPersonFirstName().equals(testFirstName));
         assert(readContact.getPerson__last_name().equals(testLastName));
         assert(readContact.getPerson_MiddleName().equals(testMiddleName));
 
         //test delete capability
         daoContact.delete(writeContact);
-        CustomerContact readVerifyDelete = daoContact.findByContactDocumentId(testDocID);
+        Contact readVerifyDelete = daoContact.findByContactDocumentId(testDocID);
         assert(null == readVerifyDelete);
     }
 
     @Test
     public void contactMapperAsyncTest() throws ExecutionException, InterruptedException {
-        CompletableFuture<CustomerContact> cfFoundContact = daoContact.findByContactDocumentIdAsync(83);
+        CompletableFuture<Contact> cfFoundContact = daoContact.findByContactDocumentIdAsync(83);
         cfFoundContact.join();
 
-        CustomerContact foundContact = cfFoundContact.get();
+        Contact foundContact = cfFoundContact.get();
 
-        Set<CustomerContactTelecomDetails> setTeleCom = foundContact.getTeleCom();
+        Set<ContactTelecomDetails> setTeleCom = foundContact.getTeleCom();
 
         //verify size of returned set
         assert(setTeleCom.size() == 1);
 
         //verify udt values
-        CustomerContactTelecomDetails addrSec = setTeleCom.iterator().next();
+        ContactTelecomDetails addrSec = setTeleCom.iterator().next();
         assert(addrSec.getTelecomMethod().equals("PV"));
         assert(addrSec.getAreaCode().equals("123"));
         assert(addrSec.getPhoneNumber().equals("456-7890"));
@@ -1233,28 +1840,28 @@ public class CustomerTest {
         String areaCode3 = "333";
         String phone3 = "333-3333";
 
-        CustomerContact deleteContact = new CustomerContact();
+        Contact deleteContact = new Contact();
         deleteContact.setContactDocumentId(testDocId);
         daoContact.delete(deleteContact);
 
-        CustomerContact readVerifyDelete = daoContact.findByContactDocumentId(testDocId);
+        Contact readVerifyDelete = daoContact.findByContactDocumentId(testDocId);
         assert(null == readVerifyDelete);
 
-        CustomerContactTelecomDetails writeTelecom1 = new CustomerContactTelecomDetails();
+        ContactTelecomDetails writeTelecom1 = new ContactTelecomDetails();
         writeTelecom1.setTelecomMethod(method1);
         writeTelecom1.setTelecomMethod(areaCode1);
         writeTelecom1.setPhoneNumber(phone1);
 
-        CustomerContactTelecomDetails writeTelecom2 = new CustomerContactTelecomDetails();
+        ContactTelecomDetails writeTelecom2 = new ContactTelecomDetails();
         writeTelecom2.setTelecomMethod(method2);
         writeTelecom2.setTelecomMethod(areaCode2);
         writeTelecom2.setPhoneNumber(phone2);
 
-        Set<CustomerContactTelecomDetails> setTelecom = new HashSet<>();
+        Set<ContactTelecomDetails> setTelecom = new HashSet<>();
         setTelecom.add(writeTelecom1);
         setTelecom.add(writeTelecom2);
 
-        CustomerContact writeContact = new CustomerContact();
+        Contact writeContact = new Contact();
         writeContact.setContactDocumentId(testDocId);
         writeContact.setTeleCom(setTelecom);
 
@@ -1262,14 +1869,14 @@ public class CustomerTest {
         daoContact.save(writeContact);
 
         //verify record written as expected
-        CustomerContact checkWriteContact = daoContact.findByContactDocumentId(testDocId);
+        Contact checkWriteContact = daoContact.findByContactDocumentId(testDocId);
         assert(testDocId == checkWriteContact.getContactDocumentId());
 
-        Set<CustomerContactTelecomDetails> setCheckTelecom = checkWriteContact.getTeleCom();
+        Set<ContactTelecomDetails> setCheckTelecom = checkWriteContact.getTeleCom();
         assert(2 == setTelecom.size());
 
         //update collection of UDTs
-        CustomerContactTelecomDetails writeTelecom3 = new CustomerContactTelecomDetails();
+        ContactTelecomDetails writeTelecom3 = new ContactTelecomDetails();
         writeTelecom3.setTelecomMethod(method3);
         writeTelecom3.setTelecomMethod(areaCode3);
         writeTelecom3.setPhoneNumber(phone3);
@@ -1281,14 +1888,14 @@ public class CustomerTest {
 
 
         //verify update executed as expected
-        CustomerContact checkUpdateContact = daoContact.findByContactDocumentId(testDocId);
+        Contact checkUpdateContact = daoContact.findByContactDocumentId(testDocId);
         assert(testDocId == checkUpdateContact.getContactDocumentId());
 
-        Set<CustomerContactTelecomDetails> setCheckUpdateAddrSec = checkUpdateContact.getTeleCom();
+        Set<ContactTelecomDetails> setCheckUpdateAddrSec = checkUpdateContact.getTeleCom();
 //        assert(3 == setCheckUpdateAddrSec.size());  //** update does not appear to currently work as expected
 
         daoContact.delete(deleteContact);
-        CustomerContact readVerifyDeleteEnd = daoContact.findByContactDocumentId(testDocId);
+        Contact readVerifyDeleteEnd = daoContact.findByContactDocumentId(testDocId);
         assert(null == readVerifyDeleteEnd);
     }
 

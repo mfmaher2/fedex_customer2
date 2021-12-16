@@ -1,4 +1,4 @@
-package datastax.com;
+package datastax.com.dataObjects;
 
 import com.datastax.oss.driver.api.mapper.annotations.ClusteringColumn;
 import com.datastax.oss.driver.api.mapper.annotations.CqlName;
@@ -8,17 +8,16 @@ import java.time.Instant;
 
 @Entity
 @CqlName("national_account_v1")
-public class CustomerNationalAcccount {
+public class NationalAcccount {
 
     @PartitionKey @CqlName("account_number") private String accountNumber;
     @ClusteringColumn(0) @CqlName("opco") private String opco;
-    @CqlName("national_account_detail__national_account_company_cd") private String nationalAccountCompanyCode;
+    @ClusteringColumn(1)  @CqlName("national_account_detail__membership_eff_date_time") private Instant membershipEffectiveDateTime;
     @ClusteringColumn(2) @CqlName("national_account_detail__national_account_nbr") private String nationalAccountNumber;
     @ClusteringColumn(3)@CqlName("national_account_detail__national_priority_cd") private String nationalPriorityCode;
-    @ClusteringColumn(1)  @CqlName("national_account_detail__membership_eff_date_time") private Instant membershipEffectiveDateTime;
-    @CqlName("national_account_detail__membership_eff_date_time") private Instant membershipExpirationDateTime;
+    @CqlName("national_account_detail__national_account_company_cd") private String nationalAccountCompanyCode;
 
-    public CustomerNationalAcccount() {};
+    public NationalAcccount() {};
 
     public String getAccountNumber() { return accountNumber; }
     public void setAccountNumber(String val) {accountNumber = val; }

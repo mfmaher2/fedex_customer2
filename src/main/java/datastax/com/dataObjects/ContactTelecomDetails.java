@@ -1,4 +1,4 @@
-package datastax.com;
+package datastax.com.dataObjects;
 
 import com.datastax.oss.driver.api.mapper.annotations.CqlName;
 import com.datastax.oss.driver.api.mapper.annotations.Entity;
@@ -7,12 +7,12 @@ import com.datastax.oss.driver.api.mapper.annotations.SchemaHint;
 @Entity
 @CqlName("telecom_details_type")
 @SchemaHint(targetElement = SchemaHint.TargetElement.UDT)
-public class CustomerContactTelecomDetails {
+public class ContactTelecomDetails {
     private String telecomMethod;
     private String areaCode;
     private String phoneNumber;
 
-    public CustomerContactTelecomDetails() {};
+    public ContactTelecomDetails() {};
 
     public String getTelecomMethod() { return telecomMethod; }
     public void setTelecomMethod(String val) { telecomMethod = val;}

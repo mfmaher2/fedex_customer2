@@ -19,7 +19,7 @@ CREATE TYPE IF NOT EXISTS social_media_type (
 
 CREATE TYPE IF NOT EXISTS tax_data_type (
     tax_id text,
-    tax_id_desc text,
+    tax_id_desc text
 );
 
 CREATE TYPE IF NOT EXISTS tax_exempt_code_type (
@@ -48,17 +48,32 @@ CREATE TYPE IF NOT EXISTS history_field_type (
     action text,
     stanza_name text,
     previous_value text,
-    new_value text,
-);
-
-CREATE TYPE IF NOT EXISTS centralized_opco_description_type (
-    opco_code text,
-    opco_account_number text
+    new_value text
 );
 
 CREATE TYPE IF NOT EXISTS time_event_additional_details_items(
     name text,
     value text
+);
+
+CREATE TYPE IF NOT EXISTS potential_revenue_type (
+    shipping_revenue_type text,
+    time_period text,
+    shipping_package_quantity text,
+    shipping_weight_quantity text,
+    shipping_carrier text,
+    shipping_unit_code text,
+    express_freight_oversize boolean,
+    supplies_services_amt int,
+    shipping_package_percent text
+);
+
+CREATE TYPE IF NOT EXISTS other_potential_info_type (
+    revenue_event_source text,
+    revenue_comments text,
+    comment_sequence_nbr int,
+    revenue_lead_type text,
+    program text
 );
 
 CREATE TABLE IF NOT EXISTS cust_acct_v1 (
@@ -105,6 +120,9 @@ CREATE TABLE IF NOT EXISTS cust_acct_v1 (
     profile__scac_code text,
     profile_special_instructions text,
 
+    profile_service_restrictions set<text>,
+    profile_view_restrictions set<text>,
+    profile_tax_exempt boolean,
 
     --cargoAccountReceivables
     --express_account_receivables
@@ -155,37 +173,6 @@ CREATE TABLE IF NOT EXISTS cust_acct_v1 (
     credit_detail__receivership_account_number text,
     credit_detail__receivership_date date,
     credit_detail__rev_auth_id text,
-
-    --express_direct_debit
-    direct_debit_detail__person__first_name text,
-    direct_debit_detail__person__last_name text,
-    direct_debit_detail__bank_account_holder_name text,
-    direct_debit_detail__bank_name text,
-    direct_debit_detail__address__street_line text,
-    direct_debit_detail__address__additional_line1 text,
-    direct_debit_detail__address__additional_line2 text,
-    direct_debit_detail__address__secondary__unit1 text,
-    direct_debit_detail__address__secondary__value1 text,
-    direct_debit_detail__address__secondary__unit2 text,
-    direct_debit_detail__address__secondary__value2 text,
-    direct_debit_detail__address__secondary__unit3 text,
-    direct_debit_detail__address__secondary__value3 text,
-    direct_debit_detail__address__secondary__unit4 text,
-    direct_debit_detail__address__secondary__value4 text,
-    direct_debit_detail__address__geo_political_subdivision1 text,
-    direct_debit_detail__address__geo_political_subdivision2 text,
-    direct_debit_detail__address__geo_political_subdivision3 text,
-    direct_debit_detail__address__postal_code text,
-    direct_debit_detail__address__country_code text,
-    direct_debit_detail__iban__swift_code text,
-    direct_debit_detail__iban_iban text,
-    direct_debit_detail__noiban__bank_code text,
-    direct_debit_detail__noiban__branch_code text,
-    direct_debit_detail__account_number text,
-    direct_debit_detail__sort_code text,
-    direct_debit_detail__mandate_id text,
-    direct_debit_detail__mandate_start_date date,
-    direct_debit_detail__legal_entity text,
 
     --express_duty_tax
     --  duty_tax_info_country_code -> duty_tax_info_duty_tax_number
@@ -300,6 +287,7 @@ CREATE TABLE IF NOT EXISTS cust_acct_v1 (
     --supplyChainTaxInfo
     --freightTaxInfo
     --techConnectTaxInfo
+    -- tax_data needs to be converted to Map
     tax_info__tax_data set<frozen<tax_data_type>>,
     tax_info__tax_exempt_detail set<frozen<tax_exempt_data_type>>,
     tax_info__tax_exempt_code map<text, text>,
@@ -317,25 +305,10 @@ CREATE TABLE IF NOT EXISTS cust_acct_v1 (
     tax_info__vat__category_code int,
     tax_info__vat__threshold_amount float,
 
-    --expressElectronicPay
-    addl_bank_info__abi_code text,
-    addl_bank_info__addl_bank_id text,
-    bank_number text,
-    cab_code text,
-    giro_account text,
-    domicile_number text,
-    alt_payment__alt_payment_type text,
-    alt_payment__billing_agreement_id text,
-    alt_payment__billing_agreement_date date,
-    alt_payment__client_id text,
-    alt_payment__auto_sched_term text,
-    alt_payment__auto_sched_thresh_amt text,
-
-
     -- ***** OPERATIONS STREAM  *****
     -- smart_post_operations_profile
-    profile__distribution_id int,
-    profile__mailer_id int,
+    profile__distribution_id text,
+    profile__mailer_id text,
     profile__pickup_carrier text,
     profile__return_eligibility_flag boolean,
     profile__return_svc_flag text,
@@ -355,7 +328,7 @@ CREATE TABLE IF NOT EXISTS cust_acct_v1 (
     profile__alcohol_flag boolean,
     profile__cut_flowers_flag boolean,
     profile__declared_value_exception boolean,
-    profile__derived_station int,
+    profile__derived_station text,
     profile__drop_ship_flag boolean,
     profile__emerge_flag boolean,
     profile__doc_prep_service_flag boolean,
@@ -380,8 +353,8 @@ CREATE TABLE IF NOT EXISTS cust_acct_v1 (
     profile__tpc_flag boolean,
     profile__emp_ship_emp_number text,
     profile__supply_no_cut_flag text,
-    profile__starter_kit int,
-    profile__starter_kit_quantity int,
+    profile__starter_kit text,
+    profile__starter_kit_quantity text,
     profile__exception_flag boolean,
     profile__international_shipper text,
     profile__special_dist_flag text,
@@ -395,7 +368,7 @@ CREATE TABLE IF NOT EXISTS cust_acct_v1 (
 
     -- tnt_operations_profile
     profile__source_name text,
-    profile__tnt_customer_number int,
+    profile__tnt_customer_number text,
     profile__migration_date date,
     profile__deactivation_date date,
 
@@ -436,8 +409,8 @@ CREATE TABLE IF NOT EXISTS cust_acct_v1 (
     customer_id__customer_id_doc_nbr text,
 
     -- expressRegulatory AND freightRegulatory
-    account_regulatory__regulated_agentRegimeEffYearMonth date,  -- QUESTION . FORMAT IS YEAR/MONTH , is date type correct.
-    account_regulatory__regulated_agentRegimeExpYearMonth date,
+    account_regulatory__regulated_agentRegimeEffYearMonth text,
+    account_regulatory__regulated_agentRegimeExpYearMonth text,
     account_regulatory__bus_registration_id text,
     account_regulatory__broker_date date,
     account_regulatory__canadian_broker_id text,
@@ -476,12 +449,22 @@ CREATE TABLE IF NOT EXISTS cust_acct_v1 (
     eligibility__freight boolean,
     eligibility__office boolean,
 
+    -- ***** SALES STREAM *****
     -- expressSalesProfile
-   profile__geoTerr text,
-   profile__marketingCd text,
-   profile__correspondenceCd boolean,
+    profile__geo_terr text,
+    profile__marketing_cd text,
+    profile__correspondenceCd boolean,
 
-    -- nationalAccount   -- QUESTION . We need another table...... ?
+    -- potentialRevenue
+    potential_revenue_detail__opening_acct_reason text,
+    potential_revenue_detail__opening_acct_comment text,
+    potential_revenue_detail__potential_revenue set<frozen<potential_revenue_type>>,
+    potential_revenue_detail__lead_employee_opco text,
+    potential_revenue_detail__lead_employee_number text,
+    potential_revenue_detail__revenue_source_system text,
+    potential_revenue_detail__potential_revenue_account_type text,
+    potential_revenue_detail__other_potential_info set<frozen<other_potential_info_type>>,
+
     PRIMARY KEY(account_number, opco))
 WITH CLUSTERING ORDER BY (opco ASC)
     AND bloom_filter_fp_chance = 0.01
@@ -527,8 +510,8 @@ WITH CLUSTERING ORDER BY(opco ASC, apply_discount__effective_date_time DESC)
 CREATE TABLE IF NOT EXISTS payment_info_v1 (
     account_number text,
     opco text,
-    record_type_cd text,  --account, express electronic, etc.
-    record_key text,
+    record_type_cd text,  -- expressCreditCard, expressDirectDebit, expressElectronic pay etc. i.e. stanza names
+    record_key text,   -- creditCard,eftBankInfo,addlBankInfo,amexCheckout,altPayment i.e. sub fields
     record_seq int,
 
     --express_credit_card
@@ -541,9 +524,6 @@ CREATE TABLE IF NOT EXISTS payment_info_v1 (
     exp_date_month int,
     exp_date_year int,
     order_of_usage int,
-    profile_type text,
-    profile_name text,
-    auto_sched_thresh_amt text,
     additional_credit_card_info__address__street_line text,
     additional_credit_card_info__address__additional_line1 text,
     additional_credit_card_info__address__additional_line2 text,
@@ -569,8 +549,15 @@ CREATE TABLE IF NOT EXISTS payment_info_v1 (
     additional_credit_card_info__holder_phone__ftc_ok_to_call_flag boolean,
     last_authentication_date date,
 
+    -- COMMON TO CC FIELDS credit card profile, amex checkout etc
+    profile_type text,
+    profile_name text,
+    cc_seq text,
+    auto_sched_thresh_amt text,
+    auto_sched_term text,
 
-    --eftBankInfo
+    --Authorization
+    --expressElectronicPay
     authorization__person__first_name text,
     authorization__person__last_name text,
     authorization__person__middle_name text,
@@ -602,7 +589,12 @@ CREATE TABLE IF NOT EXISTS payment_info_v1 (
     authorization__phone__pin text,
     authorization__phone__ftc_ok_to_call_flag boolean,
     authorization__phone__text_message_flag boolean,
+
+    -- Bank
+    -- expressElectronicPay
     bank__account text,
+    bank__bank_name text,
+    bank__routing_number text,
     bank__address__street_line text,
     bank__address__additional_line1 text,
     bank__address__additional_line2 text,
@@ -619,8 +611,32 @@ CREATE TABLE IF NOT EXISTS payment_info_v1 (
     bank__address__geo_political_subdivision3 text,
     bank__address__postal_code text,
     bank__address__country_code text,
-    bank__bank_name text,
-    bank__routing_number text,
+
+    --expressDirectDebit specific fields
+    direct_debit_detail__bank_name text,
+    direct_debit_detail__bankAccountHolderName text,
+    direct_debit_detail__iban__swift_code text,
+    direct_debit_detail__iban_iban text,
+    direct_debit_detail__non_iban__bank_code text,
+    direct_debit_detail__non_iban__branch_code text,
+    direct_debit_detail__non_iban__account_number text,
+    direct_debit_detail__non_iban__sort_code text,
+    direct_debit_detail__directDebitTypeCode text,
+    direct_debit_detail__mandate_id text,
+    direct_debit_detail__mandate_start_date date,
+    direct_debit_detail__legal_entity text,
+
+    -- Additional Info
+    -- expressElectronicPay
+    addl_bank_info__abi_code text,
+    addl_bank_info__addl_bank_id text,
+    addl_bank_info__bank_number text,
+    addl_bank_info__cab_code text,
+    addl_bank_info__giro_account text,
+    addl_bank_info__domicile_number text,
+
+    -- EFTBank Info
+    -- expressElectronicPay
     days_to_debit int,
     eft_alias_name text,
     eft_seq int,
@@ -628,20 +644,21 @@ CREATE TABLE IF NOT EXISTS payment_info_v1 (
     name_on_account text,
     threshhold_amount text,
 
-    --amexCheckout
-    credit_card__type text,
-    credit_card__credit_card_id text,
-    credit_card__exp_date_month int,
-    credit_card__exp_date_year int,
-    -- profile_name text,
-    auto_sched_term text,
+    -- altPayment
+    alt_payment__alt_payment_type text,
+    alt_payment__billing_agreement_id text,
+    alt_payment__billing_agreement_date date,
+    alt_payment__client_id text,
+    alt_payment__profileName text,
+    alt_payment__auto_sched_term text,
+    alt_payment__auto_sched_thresh_amt text,
 
-    -- auto_sched_thresh_amt text,
-    cc_seq text,
+    --amexCheckout
     fpan__first_six_digits text,
     fpan__last_four_digits text,
     fpan__exp_date_month int,
     fpan__exp_date_year int,
+
 
     PRIMARY KEY(account_number, opco, record_type_cd, record_key, record_seq))
 WITH CLUSTERING ORDER BY(opco ASC, record_type_cd ASC, record_key ASC, record_seq ASC)
@@ -723,6 +740,7 @@ CREATE TABLE IF NOT EXISTS account_contact (
     additional_email_info2__html_use text,
     additional_email_info2__email_marketing_flag text,
     social_media set<frozen<social_media_type>>,
+    name_line map<text, text>,  --maps source field name -> source field value, used for search/query filtering
 
     PRIMARY KEY(account_number, opco, contact_type_code, contact_business_id))
 WITH CLUSTERING ORDER BY(opco ASC, contact_type_code ASC, contact_business_id ASC)
@@ -762,7 +780,7 @@ WITH CLUSTERING ORDER BY(associated_account__opco ASC, associated_account__numbe
     AND read_repair_chance = 0.0
     AND speculative_retry = '99PERCENTILE';
 
-CREATE TABLE IF NOT EXISTS national_account_v1 (
+CREATE TABLE IF NOT EXISTS national_account_v1  (
     account_number text,
     opco text,
     last_update_tmstp timestamp,
@@ -883,10 +901,10 @@ CREATE TABLE IF NOT EXISTS centralized_view_v1 (
      account_number text,
      account_status__status_code text,
      account_status__status_date date,
-     opco_description set<frozen<centralized_opco_description_type>>,
-    PRIMARY KEY(account_number, account_status__status_date, account_status__status_code))
- WITH CLUSTERING ORDER BY(account_status__status_date DESC, account_status__status_code ASC)
-     AND bloom_filter_fp_chance = 0.01
+     opco_description map<text, text>,
+
+    PRIMARY KEY(account_number))
+     WITH bloom_filter_fp_chance = 0.01
      AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
      AND comment = ''
      AND compaction = {'class': 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy', 'enabled': 'true', 'sstable_size_in_mb': '160', 'tombstone_compaction_interval': '86400', 'tombstone_threshold': '0.2', 'unchecked_tombstone_compaction': 'false'}
@@ -1147,73 +1165,6 @@ CREATE TABLE IF NOT EXISTS cam_search_v1 (
     PRIMARY KEY(account_number, opco, contact_type_code, contact_business_id))
 WITH CLUSTERING ORDER BY(opco ASC, contact_type_code ASC, contact_business_id ASC)
     AND bloom_filter_fp_chance = 0.01
-    AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
-    AND comment = ''
-    AND compaction = {'class': 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy', 'enabled': 'true', 'sstable_size_in_mb': '160', 'tombstone_compaction_interval': '86400', 'tombstone_threshold': '0.2', 'unchecked_tombstone_compaction': 'false'}
-    AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
-    AND crc_check_chance = 1.0
-    AND dclocal_read_repair_chance = 0.0
-    AND default_time_to_live = 0
-    AND gc_grace_seconds = 864000
-    AND max_index_interval = 2048
-    AND memtable_flush_period_in_ms = 0
-    AND min_index_interval = 128
-    AND read_repair_chance = 0.0
-    AND speculative_retry = '99PERCENTILE';
-
---Temporary table for sample code and sample data functionality
-CREATE TABLE IF NOT EXISTS contact (
-    contact_document_id bigint, --added field for key
-    person__first_name text,
-    person__last_name text,
-    person__middle_name text,
-    person__prefix text,
-    person__suffix text,
-    person__title text,
-    person__gender text,
-    company_name text,
-    job_department text,
-    address__street_line text,
-    address__additional_line1 text,
-    address__additional_line2 text,
-    address__secondary__unit1 text,
-    address__secondary__value1 text,
-    address__secondary__unit2 text,
-    address__secondary__value2 text,
-    address__secondary__unit3 text,
-    address__secondary__value3 text,
-    address__secondary__unit4 text,
-    address__secondary__value4 text,
-    address__geo_political_subdivision1 text,
-    address__geo_political_subdivision2 text,
-    address__geo_political_subdivision3 text,
-    address__postal_code text,
-    address__country_code text,
-    address__override__reason_code text,
-    address__override__problem_flag text,
-    address__usps_carrier_route_id text,  -- does not follow standard capitalization pattern
-    address__usps_delivery_point_code text, -- does not follow standard capitalization pattern
-    address__usps_check_digit text, -- does not follow standard capitalization pattern
-    tele_com set<frozen<telecom_details_type>>,
-    pager_use text,
-    email text,
-    html_use text,
-    email_marketing_flag text,
-    language text,
-    written_marketing_method_type text,
-    store_id text,
-    division text,
-    attention_to text,
-    contact_preference_flag text,
-    additional_email_info__email text,  --these could also be a set of UDTs
-    additional_email_info__html_use text,
-    additional_email_info__email_marketing_flag text,
-    additional_email_info_2_email text,
-    additional_email_info2__html_use text,
-    additional_email_info2__email_marketing_flag text,
-    social_media set<frozen<social_media_type>>,
-    PRIMARY KEY(contact_document_id))
-WITH bloom_filter_fp_chance = 0.01
     AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
     AND comment = ''
     AND compaction = {'class': 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy', 'enabled': 'true', 'sstable_size_in_mb': '160', 'tombstone_compaction_interval': '86400', 'tombstone_threshold': '0.2', 'unchecked_tombstone_compaction': 'false'}
