@@ -12,7 +12,6 @@ import java.util.function.Function;
 @Dao
 public interface NationalAccountDao {
 
-//    @Query("select * from national_account_v1 where account_number = :accountNum")
     @Select
     PagingIterable<NationalAcccount> findByAccountNumber(String accountNum);
 
@@ -22,15 +21,11 @@ public interface NationalAccountDao {
     @Select
     CompletableFuture<NationalAcccount> findByAccountNumberAsync(String accountNum);
 
-    @Query("select * from national_account_v1 where solr_query = :nationalAcct")
-    PagingIterable<NationalAcccount> findByNationalAccountNumberFullSolrParam(String nationalAcct);
-
-    @Select(customWhereClause = "solr_query = :solrParam")
-    PagingIterable<NationalAcccount> findBySearchQuery(String solrParam);
+    @Select(customWhereClause = "national_account_detail__national_account_nbr = :queryParam")
+    PagingIterable<NationalAcccount> findBySAINationalAccount(String queryParam);
 
     @GetEntity
     NationalAcccount asNationalAccount(Row row);
-
 
 //    @Insert
 //    void save(CustomerNationalAcccount account);

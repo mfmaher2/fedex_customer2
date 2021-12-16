@@ -5,6 +5,8 @@ import com.datastax.oss.driver.api.mapper.annotations.CqlName;
 import com.datastax.oss.driver.api.mapper.annotations.Entity;
 import com.datastax.oss.driver.api.mapper.annotations.PartitionKey;
 
+import java.time.LocalDate;
+import java.util.Date;
 import java.util.Map;
 
 @Entity
@@ -20,7 +22,8 @@ public class Account {
     @CqlName("profile__enterprise_source") private String profileEnterpriseSource;
     @CqlName("profile__hazardous_shipper_flag") private String hazardousShipperFlag;
     @CqlName("duty_tax_info") private Map<String, String> dutyTaxInfo;
-
+    @CqlName("profile__archive_date") private LocalDate profileArchiveDate;
+//    @CqlName("account_regulatory__regulated_agentRegimeEffYearMonth") private LocalDate acctRegRegimeEffYearMon;
 
     public Account() {};
 
@@ -50,4 +53,13 @@ public class Account {
 
     public Map<String, String> getDutyTaxInfo() { return dutyTaxInfo; }
     public void setDutyTaxInfo(Map<String, String> val) { dutyTaxInfo = val; }
+
+    public LocalDate getProfileArchiveDate() { return profileArchiveDate; }
+    public void setProfileArchiveDate(LocalDate val) { profileArchiveDate = val; }
+
+//    public LocalDate getAcctRegRegimeEffYearMon() { return acctRegRegimeEffYearMon; }
+//    public void setAcctRegRegimeEffYearMon(LocalDate val) { acctRegRegimeEffYearMon = val; }
+
+//    public Date getAcctRegRegimeEffYearMon() { return acctRegRegimeEffYearMon; }
+//    public void setAcctRegRegimeEffYearMon(Date val) { acctRegRegimeEffYearMon = val; }
 }

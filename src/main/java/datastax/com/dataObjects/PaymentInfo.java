@@ -13,7 +13,7 @@ public class PaymentInfo {
     @ClusteringColumn(0) private String opco;
     @ClusteringColumn(1) @CqlName("record_type_cd") private String recordType;
     @ClusteringColumn(2) private String recordKey;
-    @ClusteringColumn(3) @CqlName("record_seqa") private int recordSeq;
+    @ClusteringColumn(3) @CqlName("record_seq") private int recordSeq;
     @CqlName("credit_card_id") private String creditCardID;
 
     PaymentInfo() {};

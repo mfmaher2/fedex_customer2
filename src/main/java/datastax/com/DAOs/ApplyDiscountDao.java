@@ -25,8 +25,14 @@ public interface ApplyDiscountDao {
     @Select
     CompletableFuture<MappedAsyncPagingIterable<ApplyDiscount>> findAllByAccountNumberAsync(String accountNum);
 
-    @Select(customWhereClause = "account_number = :accountNum and solr_query = :solrParam")
-    CompletableFuture<MappedAsyncPagingIterable<ApplyDiscount>> findAllByAccountSearchAsync(String accountNum, String solrParam);
+    @Select(customWhereClause = "account_number = :accountNum AND opco = :opco AND apply_discount__effective_date_time >= :startDateTime AND apply_discount__expiration_date_time <= :endDateTime")
+    PagingIterable<ApplyDiscount> findByAccountNumDateTimeRange(String accountNum, String opco, Instant startDateTime, Instant endDateTime);
+
+    @Select(customWhereClause = "account_number = :accountNum AND opco = :opco")
+    CompletableFuture<MappedAsyncPagingIterable<ApplyDiscount>> findByAccountOpcoAsync(String accountNum, String opco);
+
+    @Select(customWhereClause = "account_number = :accountNum AND opco = :opco AND apply_discount__effective_date_time >= :startDateTime AND apply_discount__expiration_date_time <= :endDateTime")
+    CompletableFuture<MappedAsyncPagingIterable<ApplyDiscount>> findByAccountNumDateTimeRangeAsync(String accountNum, String opco, Instant startDateTime, Instant endDateTime);
 
     @Insert
     void save(ApplyDiscount applyDiscount);

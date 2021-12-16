@@ -12,11 +12,10 @@ public class NationalAcccount {
 
     @PartitionKey @CqlName("account_number") private String accountNumber;
     @ClusteringColumn(0) @CqlName("opco") private String opco;
-    @CqlName("national_account_detail__national_account_company_cd") private String nationalAccountCompanyCode;
+    @ClusteringColumn(1)  @CqlName("national_account_detail__membership_eff_date_time") private Instant membershipEffectiveDateTime;
     @ClusteringColumn(2) @CqlName("national_account_detail__national_account_nbr") private String nationalAccountNumber;
     @ClusteringColumn(3)@CqlName("national_account_detail__national_priority_cd") private String nationalPriorityCode;
-    @ClusteringColumn(1)  @CqlName("national_account_detail__membership_eff_date_time") private Instant membershipEffectiveDateTime;
-    @CqlName("national_account_detail__membership_eff_date_time") private Instant membershipExpirationDateTime;
+    @CqlName("national_account_detail__national_account_company_cd") private String nationalAccountCompanyCode;
 
     public NationalAcccount() {};
 

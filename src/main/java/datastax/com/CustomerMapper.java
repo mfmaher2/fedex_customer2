@@ -25,4 +25,16 @@ public interface CustomerMapper {
 
     @DaoFactory
     ApplyDiscountDao applyDiscountDao(@DaoKeyspace String keyspace);
+
+    @DaoFactory
+    IndexCollectionDao indexCollectionDao(@DaoKeyspace String keyspace);
+
+    @DaoFactory
+    CommentDao commentDao(@DaoKeyspace String keyspace);
+
+    @DaoFactory
+    AuditHistoryDao auditHistoryDao(@DaoKeyspace String keyspace);
+
+    @DaoFactory
+    AccountContactDao accountContactDao(@DaoKeyspace String keyspace);
 }
