@@ -1,26 +1,24 @@
 package datastax.com;
 
+import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 
+import java.time.Duration;
+
 public class SequenceNumberGenerator {
 
     private CqlSession session;
-    private int blockSize = 1;
-    private int repeatCount;
     private String hostName;
     private final int RETRY_LIMIT = 3;
 
-    private int startNumber;
-    private int endNumber;
-    private int currentSeq;
     private String keyspace;
     private String tableName;
     private PreparedStatement getCurNumberStmt;
     private PreparedStatement lwdUpdateCurNumberStmt;
-
 
     SequenceNumberGenerator(CqlSession session, String keyspace, String testTable, String hostName) {
         this.session = session;
@@ -29,13 +27,6 @@ public class SequenceNumberGenerator {
         this.hostName = hostName;
         initializeStatements();
     };
-
-//    SequenceNumberGenerator(CqlSession session, int blockSize, int repeatCount) {
-//        this.session = session;
-//        this.blockSize = blockSize;
-//        this.repeatCount = repeatCount;
-//        initializeStatements();
-//    };
 
     private void initializeStatements(){
 
@@ -46,13 +37,20 @@ public class SequenceNumberGenerator {
         lwdUpdateCurNumberStmt = session.prepare(lwtUpdateCurNumberCQL);
     }
 
-    private Boolean lwtCurrentNumberUpdate(int count, int currentNum, String domain, String sequenceName){
+    private ResultSet executeLwtStatement(BoundStatement statement){
+        return session.execute(statement
+                                .setSerialConsistencyLevel(ConsistencyLevel.LOCAL_SERIAL)
+                                .setTimeout(Duration.ofSeconds(15L))
+                                );
+    }
 
-        if(count > 0) {
+    private Boolean lwtCurrentNumberUpdate(int retryCount, int currentNum, int blockSize, int endNumber, String domain, String sequenceName){
+
+        if(retryCount > 0) {
             //output retry count if error previously encountered
-            System.out.println("Running retry count=" + count);
+            System.out.println("Running with retry count=" + retryCount);
         }
-        if(count >= RETRY_LIMIT){
+        if(retryCount >= RETRY_LIMIT){
             return false;
         }
 
@@ -69,7 +67,7 @@ public class SequenceNumberGenerator {
                 } else {
                     int returnedNumVal = resultDetails.getInt(1);
                     System.out.println("Failed LWT Current Number=" + currentNum + ", Returned Number= " + returnedNumVal);
-                    return (lwtCurrentNumberUpdate((count + 1), returnedNumVal, domain, sequenceName));
+                    return (lwtCurrentNumberUpdate((retryCount + 1), returnedNumVal, blockSize, endNumber, domain, sequenceName));
                 }
             } catch (Exception e) {
                 System.out.println(e.getMessage());
@@ -84,30 +82,24 @@ public class SequenceNumberGenerator {
 
             return false;
         }
-
-        //if method reaches this point then an error has occurred
-//        return false;
     }
 
-    public Boolean getSequenceNumbers(int blockSize, int repeatCount){
+    public Boolean getSequenceNumbers(int blockSize, int repeatCount, String domain, String sequenceName){
         //variable initialization
-        startNumber = 0;  //todo - cleanup what is member variable vs passed parameter
-        endNumber = 500;
-        currentSeq = 0;
-        this.blockSize = blockSize;
-        String domain  = "customer";
-        String sequenceName = "CAM_TEST_1";
+        int startNumber = 0;  //todo - cleanup what is member variable vs passed parameter
+        int endNumber = 0;
+        int currentSeqNum = 0;
 
         Boolean noFailures = true;
 
         for(int i=1; i<repeatCount; i++){
             ResultSet results = session.execute(getCurNumberStmt.bind(domain, sequenceName));
             Row resultDetails = results.one();
-            currentSeq = resultDetails.getInt(0);
+            currentSeqNum = resultDetails.getInt(0);
             startNumber = resultDetails.getInt(1);
             endNumber = resultDetails.getInt(2);
 
-            noFailures = noFailures & lwtCurrentNumberUpdate(0, currentSeq, domain, sequenceName);
+            noFailures = noFailures & lwtCurrentNumberUpdate(0, currentSeqNum, blockSize, endNumber , domain, sequenceName);
             //todo sleep for a random time
         }
 

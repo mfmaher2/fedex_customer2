@@ -44,9 +44,9 @@ public class CustomerTest {
     static AuditHistoryDao daoAuditHistory = null;
     static AccountContactDao daoAccountContact = null;
 
-    private static boolean skipSchemaCreation = false;
-    private static boolean skipDataLoad = false;
-    private static boolean skipKeyspaceDrop = false;
+    private static boolean skipSchemaCreation = true;
+    private static boolean skipDataLoad = true;
+    private static boolean skipKeyspaceDrop = true;
     private static boolean skipIndividualTableDrop = false;
     private static String keyspaceName = "customer";
     private static String productName = "Customer" ;
@@ -188,9 +188,88 @@ public class CustomerTest {
     }
 
     @Test
+    public void batchPurgeTest(){
+        String acctNum = "192837-bp";
+        String opco = "opPurge";
+        String contactType = "contType1";
+        String contactBusID = "1001";
+        String firstName = "Bob";
+        String lastName = "Smith";
+        String customerType = "custType1";
+
+        //cleanup any existing records and verify
+        daoAccountContact.deleteAllByAccountNumber(acctNum);
+        PagingIterable<AccountContact> verifyResults = daoAccountContact.findAllByAccountNumber(acctNum);
+        assert(verifyResults.all().size() == 0);
+
+        daoAccount.deleteAllByAccountNumber(acctNum);
+        PagingIterable<Account> verifyAccountResults = daoAccount.findAllByAccountNumber(acctNum);
+        assert(verifyAccountResults.all().size() == 0);
+
+        AccountContact acctCont1 = new AccountContact();
+        acctCont1.setAccountNumber(acctNum);
+        acctCont1.setOpco(opco);
+        acctCont1.setContactTypeCode(contactType);
+        acctCont1.setContactBusinessID(contactBusID);
+        acctCont1.setPersonFirstName(firstName);
+        acctCont1.setPersonLastName(lastName);
+
+        Account custAcct = new Account();
+        custAcct.setAccountNumber(acctNum);
+        custAcct.setOpco(opco);
+        custAcct.setProfileCustomerType(customerType);
+        daoAccount.save(custAcct);
+
+        //verify new account record is created
+        PagingIterable<Account> verifyAccountCreated = daoAccount.findAllByAccountNumber(acctNum);
+        assert(verifyAccountCreated.all().size() == 1);
+
+        //example using one delete and one save command
+        BatchStatement batch = BatchStatement.builder(BatchType.LOGGED).build();
+        batch = batch.add(daoAccountContact.batchSave(acctCont1));
+        batch = batch.add(daoAccount.batchDelete(custAcct));
+        session.execute(batch);
+
+        //verify new account record is created
+        PagingIterable<Account> verifyAccountDeleted = daoAccount.findAllByAccountNumber(acctNum);
+        assert(verifyAccountDeleted.all().size() == 0);
+
+        //verify account contact created
+        PagingIterable<AccountContact> verifyContactCreated = daoAccountContact.findAllByAccountNumber(acctNum);
+        assert(verifyContactCreated.all().size() == 1);
+
+        //cleanup tests records
+        //cleanup any existing records and verify
+        daoAccountContact.deleteAllByAccountNumber(acctNum);
+        PagingIterable<AccountContact> cleanVerifyResults = daoAccountContact.findAllByAccountNumber(acctNum);
+        assert(cleanVerifyResults.all().size() == 0);
+
+        daoAccount.deleteAllByAccountNumber(acctNum);
+        PagingIterable<Account> cleanVerifyAccountResults = daoAccount.findAllByAccountNumber(acctNum);
+        assert(cleanVerifyAccountResults.all().size() == 0);
+    }
+
+    @Test
     public void lwtUpdateTest(){
+
+        //initialize sequence table record
+        String init =
+                "update seqnbr_tbl \n" +
+                "    set \n" +
+                "        currentnbr = 100,\n" +
+                "        startnbr = 0,\n" +
+                "        endnbr = 5000\n" +
+                "    where \n" +
+                "        domain = 'customer' and \n" +
+                "        sequencename = 'CAM_TEST_1';";
+        session.execute(init);
+
+        String domain  = "customer";
+        String sequenceName = "CAM_TEST_1";
+
+
         SequenceNumberGenerator generator = new SequenceNumberGenerator(session, keyspaceName, "seqnbr_tbl", "localHost");
-        Boolean results =  generator.getSequenceNumbers(5, 100);
+        Boolean results =  generator.getSequenceNumbers(3, 10, domain, sequenceName);
 
         assert(results);
     }

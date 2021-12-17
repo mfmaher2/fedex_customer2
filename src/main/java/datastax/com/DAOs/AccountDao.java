@@ -38,6 +38,9 @@ public interface AccountDao {
     @Delete
     void delete(Account account);
 
+    @Delete
+    BoundStatement batchDelete(Account account);
+
     @Query("UPDATE ${keyspaceId}.cust_acct_v1 SET duty_tax_info = duty_tax_info + :mapEnt WHERE account_number = :acctNum AND opco = :opco") //TODO use common table ID instead of hard coded value
     void upsertDutyTaxInfoMapEntries(String acctNum, String opco, Map<String, String> mapEnt);
 
@@ -46,5 +49,8 @@ public interface AccountDao {
 
     @Query("DELETE FROM ${keyspaceId}.cust_acct_v1 WHERE account_number = :accountNum")
     void deleteAllByAccountNumber(String accountNum);
+
+    @Query("DELETE FROM ${keyspaceId}.cust_acct_v1 WHERE account_number = :accountNum")
+    BoundStatement batchDeleteAllByAccountNumber(String accountNum);
 }
 
