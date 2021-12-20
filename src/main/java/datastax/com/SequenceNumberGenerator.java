@@ -8,7 +8,12 @@ import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 
 import java.time.Duration;
+import java.util.Random;
 
+
+/*
+Adapted from seqNum.py provided by Johnson Lu
+*/
 public class SequenceNumberGenerator {
 
     private CqlSession session;
@@ -29,14 +34,14 @@ public class SequenceNumberGenerator {
     };
 
     private void initializeStatements(){
-
-        String getCurNumberCQL = "select currentNbr, startnbr, endnbr from " + keyspace + "." +tableName + " where domain=? and sequencename=?";
-        String lwtUpdateCurNumberCQL = "update " + keyspace + "." + tableName + " set currentnbr = ? where domain = ? and sequencename = ? if currentnbr = ?";
+        String getCurNumberCQL = "SELECT currentNbr, startnbr, endnbr FROM " + keyspace + "." +tableName + " WHERE domain=? AND sequencename=?";
+        String lwtUpdateCurNumberCQL = "UPDATE " + keyspace + "." + tableName + " SET currentnbr = ? WHERE domain = ? AND sequencename = ? if currentnbr = ?";
 
         getCurNumberStmt = session.prepare(getCurNumberCQL);
         lwdUpdateCurNumberStmt = session.prepare(lwtUpdateCurNumberCQL);
     }
 
+    //method to set customized configuration parameters when executing LWT
     private ResultSet executeLwtStatement(BoundStatement statement){
         return session.execute(statement
                                 .setSerialConsistencyLevel(ConsistencyLevel.LOCAL_SERIAL)
@@ -56,7 +61,7 @@ public class SequenceNumberGenerator {
 
         if((currentNum + blockSize) < endNumber) {
             try {
-                ResultSet results = session.execute(lwdUpdateCurNumberStmt.bind((currentNum + blockSize), domain, sequenceName, currentNum));
+                ResultSet results = executeLwtStatement(lwdUpdateCurNumberStmt.bind((currentNum + blockSize), domain, sequenceName, currentNum));
                 Row resultDetails = results.one();
                 if (resultDetails.getBoolean(0)) {  //true if applied, otherwise false
                     System.out.println("Done");
@@ -84,23 +89,26 @@ public class SequenceNumberGenerator {
         }
     }
 
-    public Boolean getSequenceNumbers(int blockSize, int repeatCount, String domain, String sequenceName){
+    public Boolean getSequenceNumbers(int blockSize, int repeatCount, String domain, String sequenceName) throws InterruptedException {
         //variable initialization
-        int startNumber = 0;  //todo - cleanup what is member variable vs passed parameter
         int endNumber = 0;
         int currentSeqNum = 0;
+        int minSleep = 50; //sleep times in milliseconds
+        int maxSleep = 500;
 
         Boolean noFailures = true;
+        Random random = new Random();
 
-        for(int i=1; i<repeatCount; i++){
+        for(int i=0; i<repeatCount; i++){
             ResultSet results = session.execute(getCurNumberStmt.bind(domain, sequenceName));
             Row resultDetails = results.one();
             currentSeqNum = resultDetails.getInt(0);
-            startNumber = resultDetails.getInt(1);
             endNumber = resultDetails.getInt(2);
 
             noFailures = noFailures & lwtCurrentNumberUpdate(0, currentSeqNum, blockSize, endNumber , domain, sequenceName);
-            //todo sleep for a random time
+
+            //random sleep between min and max to simulate random access to the table.
+            Thread.sleep(random.nextInt(maxSleep-minSleep)+minSleep);
         }
 
         return noFailures;

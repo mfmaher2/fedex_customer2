@@ -250,7 +250,7 @@ public class CustomerTest {
     }
 
     @Test
-    public void lwtUpdateTest(){
+    public void lwtUpdateTest() throws InterruptedException {
 
         //initialize sequence table record
         String init =
@@ -269,7 +269,7 @@ public class CustomerTest {
 
 
         SequenceNumberGenerator generator = new SequenceNumberGenerator(session, keyspaceName, "seqnbr_tbl", "localHost");
-        Boolean results =  generator.getSequenceNumbers(3, 10, domain, sequenceName);
+        Boolean results =  generator.getSequenceNumbers(3, 4, domain, sequenceName);
 
         assert(results);
     }
