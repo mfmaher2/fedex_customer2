@@ -1,3 +1,6 @@
+#Command line usage #
+java -cp ./target/fedex_customer-1.0-SNAPSHOT.jar datastax.com.App
+
 # README #
 
 This README would normally document whatever steps are necessary to get your application up and running.

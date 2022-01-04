@@ -46,7 +46,7 @@ public class CustomerTest {
 
     private static boolean skipSchemaCreation = false;
     private static boolean skipDataLoad = false;
-    private static boolean skipKeyspaceDrop = false;
+    private static boolean skipKeyspaceDrop = true;
     private static boolean skipIndividualTableDrop = false;
     private static String keyspaceName = "customer";
     private static String productName = "Customer" ;
