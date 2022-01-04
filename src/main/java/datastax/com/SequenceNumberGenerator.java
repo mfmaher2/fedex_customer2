@@ -13,6 +13,7 @@ import java.util.Random;
 
 /*
 Adapted from seqNum.py provided by Johnson Lu
+Copy of original file found in test/resources of project
 */
 public class SequenceNumberGenerator {
 
@@ -34,8 +35,8 @@ public class SequenceNumberGenerator {
     };
 
     private void initializeStatements(){
-        String getCurNumberCQL = "SELECT currentNbr, startnbr, endnbr FROM " + keyspace + "." +tableName + " WHERE domain=? AND sequencename=?";
-        String lwtUpdateCurNumberCQL = "UPDATE " + keyspace + "." + tableName + " SET currentnbr = ? WHERE domain = ? AND sequencename = ? if currentnbr = ?";
+        String getCurNumberCQL = "SELECT current_num, start_num, end_num FROM " + keyspace + "." +tableName + " WHERE domain=? AND sequence_name=?";
+        String lwtUpdateCurNumberCQL = "UPDATE " + keyspace + "." + tableName + " SET current_num = ? WHERE domain = ? AND sequence_name = ? if current_num = ?";
 
         getCurNumberStmt = session.prepare(getCurNumberCQL);
         lwdUpdateCurNumberStmt = session.prepare(lwtUpdateCurNumberCQL);

@@ -44,9 +44,9 @@ public class CustomerTest {
     static AuditHistoryDao daoAuditHistory = null;
     static AccountContactDao daoAccountContact = null;
 
-    private static boolean skipSchemaCreation = true;
-    private static boolean skipDataLoad = true;
-    private static boolean skipKeyspaceDrop = true;
+    private static boolean skipSchemaCreation = false;
+    private static boolean skipDataLoad = false;
+    private static boolean skipKeyspaceDrop = false;
     private static boolean skipIndividualTableDrop = false;
     private static String keyspaceName = "customer";
     private static String productName = "Customer" ;
@@ -138,18 +138,6 @@ public class CustomerTest {
             session.execute(keyspaceCreate);
 
             runScript(schemaScriptPath);//TODO get resource path programmatically
-
-            //todo modify table and property names
-            String lwtTestSchema =
-                    "   CREATE TABLE " + keyspaceName + ".seqnbr_tbl (\n" +
-                    "        domain text,\n" +
-                    "        sequencename text,\n" +
-                    "        currentnbr int,\n" +
-                    "        endnbr int,\n" +
-                    "        startnbr int,\n" +
-                    "        wrapped boolean,\n" +
-                    "        PRIMARY KEY ((domain, sequencename)))\n"  ;
-            session.execute(lwtTestSchema);
         }
     }
 
@@ -252,24 +240,25 @@ public class CustomerTest {
     @Test
     public void lwtUpdateTest() throws InterruptedException {
 
-        //initialize sequence table record
-        String init =
-                "update seqnbr_tbl \n" +
-                "    set \n" +
-                "        currentnbr = 100,\n" +
-                "        startnbr = 0,\n" +
-                "        endnbr = 5000\n" +
-                "    where \n" +
-                "        domain = 'customer' and \n" +
-                "        sequencename = 'CAM_TEST_1';";
-        session.execute(init);
-
-        String domain  = "customer";
+        String seqNumTableName = "sequence_num_tbl";
+        String domainName  = "customer";
         String sequenceName = "CAM_TEST_1";
 
+        //initialize sequence table record
+        String init =
+                "UPDATE " + keyspaceName +  "." + seqNumTableName + "\n" +
+                "    SET \n" +
+                "        current_num = 100,\n" +
+                "        start_num = 0,\n" +
+                "        end_num = 5000\n" +
+                "    WHERE \n" +
+                "        domain = '" + domainName + "' AND \n" +
+                "        sequence_name = '" + sequenceName + "';";
+        session.execute(init);
 
-        SequenceNumberGenerator generator = new SequenceNumberGenerator(session, keyspaceName, "seqnbr_tbl", "localHost");
-        Boolean results =  generator.getSequenceNumbers(3, 4, domain, sequenceName);
+
+        SequenceNumberGenerator generator = new SequenceNumberGenerator(session, keyspaceName, seqNumTableName, "localHost");
+        Boolean results =  generator.getSequenceNumbers(3, 4, domainName, sequenceName);
 
         assert(results);
     }
