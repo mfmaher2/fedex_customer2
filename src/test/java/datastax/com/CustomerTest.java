@@ -7,6 +7,7 @@ import com.datastax.oss.driver.api.core.PagingIterable;
 import com.datastax.oss.driver.api.core.cql.*;
 import com.datastax.oss.driver.api.core.data.UdtValue;
 import com.datastax.oss.protocol.internal.util.Bytes;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import datastax.com.dataObjects.*;
 import datastax.com.DAOs.*;
 import org.junit.AfterClass;
@@ -44,9 +45,9 @@ public class CustomerTest {
     static AuditHistoryDao daoAuditHistory = null;
     static AccountContactDao daoAccountContact = null;
 
-    private static boolean skipSchemaCreation = false;
-    private static boolean skipDataLoad = false;
-    private static boolean skipKeyspaceDrop = false;
+    private static boolean skipSchemaCreation = true;
+    private static boolean skipDataLoad = true;
+    private static boolean skipKeyspaceDrop = true;
     private static boolean skipIndividualTableDrop = false;
     private static String keyspaceName = "customer";
     private static String productName = "Customer" ;
@@ -173,6 +174,81 @@ public class CustomerTest {
 
         dropTestKeyspace();
         if (session != null) session.close();
+    }
+
+    @Test
+    public void recordArchiveTest() throws IOException {
+        String acctNum = "321654789-ra";
+        String opco = "opRA";
+        String contactType = "contType1";
+        String contactBusID = "1101";
+        String firstName = "John";
+        String lastName = "Smithe";
+        String customerType = "custType1101";
+
+        //cleanup any existing records and verify
+//        daoAccountContact.deleteAllByAccountNumber(acctNum);
+//        PagingIterable<AccountContact> verifyResults = daoAccountContact.findAllByAccountNumber(acctNum);
+//        assert(verifyResults.all().size() == 0);
+//
+//        daoAccount.deleteAllByAccountNumber(acctNum);
+//        PagingIterable<Account> verifyAccountResults = daoAccount.findAllByAccountNumber(acctNum);
+//        assert(verifyAccountResults.all().size() == 0);
+
+        AccountContact acctCont1 = new AccountContact();
+        acctCont1.setAccountNumber(acctNum);
+        acctCont1.setOpco(opco);
+        acctCont1.setContactTypeCode(contactType);
+        acctCont1.setContactBusinessID(contactBusID);
+        acctCont1.setPersonFirstName(firstName);
+        acctCont1.setPersonLastName(lastName);
+
+        Account custAcct = new Account();
+        custAcct.setAccountNumber(acctNum);
+        custAcct.setOpco(opco);
+        custAcct.setProfileCustomerType(customerType);
+
+        //example using two save commands, more statements can be added as needed
+        BatchStatement batch = BatchStatement.builder(BatchType.LOGGED).build();
+
+        batch = batch.add(daoAccountContact.batchSave(acctCont1));
+        batch = batch.add(daoAccount.batchSave(custAcct));
+
+        session.execute(batch);
+
+        Account foundAcct =  daoAccount.findByAccountNumber(acctNum);
+        System.out.println(foundAcct.toString());
+
+        ResultSet foundAcctSet = daoAccount.getSelectPropsJSONByAccountNum(acctNum);
+        String acctJSON = foundAcctSet.one().getString("[json]");
+        System.out.println(acctJSON);
+
+        Account createdFromJSON = new ObjectMapper()
+                .readerFor(Account.class)
+                .readValue(acctJSON);
+
+
+        assert(createdFromJSON.getAccountNumber().equals(foundAcct.getAccountNumber()));
+//        System.out.println(createdFromJSON.toString());
+
+        /*tables with account_number partition key
+        -- cust_acct_v1  PRIMARY KEY(account_number, opco))
+        -- account_contact PRIMARY KEY(account_number, opco, contact_type_code, contact_business_id))
+        -- apply_discount_detail_v1 PRIMARY KEY(account_number, opco, apply_discount__effective_date_time))
+        -- payment_info_v1 PRIMARY KEY(account_number, opco, record_type_cd, record_key, record_seq))
+        -- line_of_business_v1 PRIMARY KEY(account_number, line_of_business__preference__invoice_type, opco, contact_document_id))
+        assoc_accounts_v1
+        national_account_v1
+        group_info_v1
+        comment_v1
+        audit_history_v1
+        centralized_view_v1
+        time_event_v1
+        account_dynamic_profile_v1
+        invoice_payment_profile_v1
+        cam_search_v1
+        */
+
     }
 
     @Test

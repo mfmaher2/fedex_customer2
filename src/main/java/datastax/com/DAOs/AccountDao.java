@@ -2,6 +2,7 @@ package datastax.com.DAOs;
 
 import com.datastax.oss.driver.api.core.PagingIterable;
 import com.datastax.oss.driver.api.core.cql.BoundStatement;
+import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.mapper.annotations.*;
 import datastax.com.dataObjects.Account;
 
@@ -22,6 +23,12 @@ public interface AccountDao {
 
     @Select
     CompletableFuture<Account> findByAccountNumberAsync(String accountNum);
+
+    @Query("SELECT JSON * FROM ${keyspaceId}.cust_acct_v1 WHERE account_number = :accountNum ")
+    ResultSet getJSONByAccountNum(String accountNum);
+
+    @Query("SELECT JSON account_number, opco FROM ${keyspaceId}.cust_acct_v1 WHERE account_number = :accountNum ")
+    ResultSet getSelectPropsJSONByAccountNum(String accountNum);
 
     @Query("SELECT * FROM ${keyspaceId}.cust_acct_v1 WHERE profile__account_type = :acctType ")
     PagingIterable<Account> findByProfileAccountType(String acctType);
