@@ -11,10 +11,19 @@ public class App
     public static void main( String[] args ) throws InterruptedException {
         System.out.println("Starting sequence number automated generation");
 
-        String keyspaceName = "customer";
-        String seqNumTableName = "sequence_num_tbl";
-        String domainName  = "customer";
-        String sequence_name = "CAM_TEST_1";
+        String keyspaceName = System.getProperty("keyspace", "customera");
+        String seqNumTableName = System.getProperty("sequenceTable", "sequence_num_tbla");
+        String domainName  = System.getProperty("domain", "customer");
+        String sequenceName = System.getProperty("sequenceName", "CAM_TEST_1");
+        String hostName = System.getProperty("hostReference", "localHost");  //used only for outputing results, not used to establish connection
+
+        System.out.println("Using following parameters:");
+        System.out.println("keyspace = " + keyspaceName);
+        System.out.println("sequenceTable = " + seqNumTableName);
+        System.out.println("domain = " + domainName);
+        System.out.println("sequenceName = " + sequenceName);
+        System.out.println("hostReference = " + hostName);
+
 
         CqlSession session = CqlSession.builder()
 //                    .addContactPoints("127.0.0.1") //should have multiple (2+) contactpoints listed
@@ -45,12 +54,12 @@ public class App
                         "        end_num = 5000\n" +
                         "    WHERE \n" +
                         "        domain = '" + domainName + "' AND \n" +
-                        "        sequence_name = '" + sequence_name + "';";
+                        "        sequence_name = '" + sequenceName + "';";
         session.execute(init);
 
 
-        SequenceNumberGenerator generator = new SequenceNumberGenerator(session, keyspaceName, seqNumTableName, "localHost");
-        Boolean results =  generator.getSequenceNumbers(3, 4, domainName, sequence_name);
+        SequenceNumberGenerator generator = new SequenceNumberGenerator(session, keyspaceName, seqNumTableName, hostName);
+        Boolean results =  generator.getSequenceNumbers(3, 4, domainName, sequenceName);
 
         if (session != null && !session.isClosed()) {
             session.close();
