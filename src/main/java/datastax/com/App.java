@@ -16,6 +16,9 @@ public class App
         String domainName  = System.getProperty("domain", "customer");
         String sequenceName = System.getProperty("sequenceName", "CAM_TEST_1");
         String hostName = System.getProperty("hostReference", "localHost");  //used only for outputing results, not used to establish connection
+        int blockSizeMin = Integer.valueOf(System.getProperty("blockSizeMin", "3"));
+        int blockSizeMax = Integer.valueOf(System.getProperty("blockSizeMax", "15"));
+        int repeatCount = Integer.valueOf(System.getProperty("repeatCount", "8"));
 
         System.out.println("Using following parameters:");
         System.out.println("keyspace = " + keyspaceName);
@@ -23,6 +26,9 @@ public class App
         System.out.println("domain = " + domainName);
         System.out.println("sequenceName = " + sequenceName);
         System.out.println("hostReference = " + hostName);
+        System.out.println("blockSizeMin = " + blockSizeMin);
+        System.out.println("blockSizeMax = " + blockSizeMax);
+        System.out.println("repeatCount = " + repeatCount);
 
 
         CqlSession session = CqlSession.builder()
@@ -57,9 +63,8 @@ public class App
                         "        sequence_name = '" + sequenceName + "';";
         session.execute(init);
 
-
         SequenceNumberGenerator generator = new SequenceNumberGenerator(session, keyspaceName, seqNumTableName, hostName);
-        Boolean results =  generator.getSequenceNumbers(3, 4, domainName, sequenceName);
+        Boolean results =  generator.getSequenceNumbers(blockSizeMin, blockSizeMax, repeatCount, domainName, sequenceName);
 
         if (session != null && !session.isClosed()) {
             session.close();

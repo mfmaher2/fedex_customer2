@@ -90,17 +90,23 @@ public class SequenceNumberGenerator {
         }
     }
 
-    public Boolean getSequenceNumbers(int blockSize, int repeatCount, String domain, String sequenceName) throws InterruptedException {
+    public Boolean getSequenceNumbers(int blockSizeMin, int blockSizeMax, int repeatCount, String domain, String sequenceName) throws InterruptedException {
         //variable initialization
         int endNumber = 0;
         int currentSeqNum = 0;
         int minSleep = 50; //sleep times in milliseconds
         int maxSleep = 500;
+        int blockSize = blockSizeMin;  //init to min size
 
         Boolean noFailures = true;
         Random random = new Random();
 
+
         for(int i=0; i<repeatCount; i++){
+
+            //get random block size number between min and max sizes
+            blockSize = random.nextInt(blockSizeMax - blockSizeMin) + blockSizeMin;
+
             ResultSet results = session.execute(getCurNumberStmt.bind(domain, sequenceName));
             Row resultDetails = results.one();
             currentSeqNum = resultDetails.getInt(0);

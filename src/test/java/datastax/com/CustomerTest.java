@@ -258,7 +258,7 @@ public class CustomerTest {
 
 
         SequenceNumberGenerator generator = new SequenceNumberGenerator(session, keyspaceName, seqNumTableName, "localHost");
-        Boolean results =  generator.getSequenceNumbers(3, 4, domainName, sequenceName);
+        Boolean results =  generator.getSequenceNumbers(3, 10, 4, domainName, sequenceName);
 
         assert(results);
     }
