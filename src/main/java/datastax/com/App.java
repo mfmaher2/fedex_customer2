@@ -49,21 +49,8 @@ public class App
                 //auth information may also be needed
                 .build();
 
-
-
-        //initialize sequence table record
-        String init =
-                "UPDATE " + keyspaceName +  "." + seqNumTableName + "\n" +
-                        "    SET \n" +
-                        "        current_num = 100,\n" +
-                        "        start_num = 0,\n" +
-                        "        end_num = 5000\n" +
-                        "    WHERE \n" +
-                        "        domain = '" + domainName + "' AND \n" +
-                        "        sequence_name = '" + sequenceName + "';";
-        session.execute(init);
-
         SequenceNumberGenerator generator = new SequenceNumberGenerator(session, keyspaceName, seqNumTableName, hostName);
+        generator.initDomainSequence(domainName, sequenceName, 100, 0, 500);
         Boolean results =  generator.getSequenceNumbers(blockSizeMin, blockSizeMax, repeatCount, domainName, sequenceName);
 
         if (session != null && !session.isClosed()) {

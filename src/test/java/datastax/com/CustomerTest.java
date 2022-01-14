@@ -244,20 +244,8 @@ public class CustomerTest {
         String domainName  = "customer";
         String sequenceName = "CAM_TEST_1";
 
-        //initialize sequence table record
-        String init =
-                "UPDATE " + keyspaceName +  "." + seqNumTableName + "\n" +
-                "    SET \n" +
-                "        current_num = 100,\n" +
-                "        start_num = 0,\n" +
-                "        end_num = 5000\n" +
-                "    WHERE \n" +
-                "        domain = '" + domainName + "' AND \n" +
-                "        sequence_name = '" + sequenceName + "';";
-        session.execute(init);
-
-
         SequenceNumberGenerator generator = new SequenceNumberGenerator(session, keyspaceName, seqNumTableName, "localHost");
+        generator.initDomainSequence(domainName, sequenceName, 100, 0, 5000);
         Boolean results =  generator.getSequenceNumbers(3, 10, 4, domainName, sequenceName);
 
         assert(results);

@@ -50,6 +50,20 @@ public class SequenceNumberGenerator {
                                 );
     }
 
+    public void initDomainSequence(String domain, String sequence, int currentNum, int startNum, int endNum){
+        //initialize sequence table record
+        String init =
+                "UPDATE " + keyspace +  "." + tableName + "\n" +
+                        "    SET \n" +
+                        "        current_num = " + currentNum + ",\n" +
+                        "        start_num = " + startNum + " ,\n" +
+                        "        end_num = " + endNum + "\n" +
+                        "    WHERE \n" +
+                        "        domain = '" + domain + "' AND \n" +
+                        "        sequence_name = '" + sequence + "';";
+        session.execute(init);
+    }
+
     private Boolean lwtCurrentNumberUpdate(int retryCount, int currentNum, int blockSize, int endNumber, String domain, String sequenceName){
 
         if(retryCount > 0) {
