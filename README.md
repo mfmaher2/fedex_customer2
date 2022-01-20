@@ -1,3 +1,6 @@
+#Command line usage #
+java -Dkeyspace=customer -DsequenceTable=sequence_num_tbl -Ddomain=customer -DsequenceName=CAM_TEST_1  -DhostReference=localHost -DblockSizeMin=4 -DblockSizeMax=12 -DrepeatCount=7 -cp ./target/fedex_customer-1.0-SNAPSHOT.jar datastax.com.App
+
 # README #
 
 This README would normally document whatever steps are necessary to get your application up and running.
