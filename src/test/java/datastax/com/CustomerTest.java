@@ -7,6 +7,7 @@ import com.datastax.oss.driver.api.core.PagingIterable;
 import com.datastax.oss.driver.api.core.cql.*;
 import com.datastax.oss.driver.api.core.data.UdtValue;
 import com.datastax.oss.protocol.internal.util.Bytes;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import datastax.com.dataObjects.*;
 import datastax.com.DAOs.*;
 import org.junit.AfterClass;
