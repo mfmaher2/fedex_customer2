@@ -12,7 +12,7 @@ public interface IndexCollectionDao {
     @Select
     PagingIterable<IndexCollection> findAllByAccountNumber(String accountNum);
 
-    @Query("SELECT * FROM index_collection_test WHERE test_val_grams CONTAINS :substring")
+    @Query("SELECT * FROM ${keyspaceId}.index_collection_test WHERE test_val_grams CONTAINS :substring")
     PagingIterable<IndexCollection> findByPartialText(String substring);
 
     @Insert

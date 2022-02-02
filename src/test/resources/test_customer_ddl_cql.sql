@@ -1,6 +1,4 @@
-USE customer;
-
-CREATE TYPE IF NOT EXISTS telecom_details_type (
+CREATE TYPE IF NOT EXISTS account_contact_ks.telecom_details_type (
     telecom_method text,
     numeric_country_code text,
     alpha_country_code text,
@@ -12,51 +10,75 @@ CREATE TYPE IF NOT EXISTS telecom_details_type (
     text_message_flag boolean
 );
 
-CREATE TYPE IF NOT EXISTS social_media_type (
+CREATE TYPE IF NOT EXISTS line_of_business_ks.telecom_details_type (
+    telecom_method text,
+    numeric_country_code text,
+    alpha_country_code text,
+    area_code text,
+    phone_number text,
+    extension text,
+    pin text,
+    ftc_ok_to_call_flag boolean,
+    text_message_flag boolean
+);
+
+CREATE TYPE IF NOT EXISTS search_ks.telecom_details_type (
+    telecom_method text,
+    numeric_country_code text,
+    alpha_country_code text,
+    area_code text,
+    phone_number text,
+    extension text,
+    pin text,
+    ftc_ok_to_call_flag boolean,
+    text_message_flag boolean
+);
+
+CREATE TYPE IF NOT EXISTS account_contact_ks.social_media_type (
     type_code text,
     value text
 );
 
-CREATE TYPE IF NOT EXISTS tax_data_type (
+CREATE TYPE IF NOT EXISTS line_of_business_ks.social_media_type (
+    type_code text,
+    value text
+);
+
+CREATE TYPE IF NOT EXISTS account_ks.tax_data_type (
     tax_id text,
     tax_id_desc text
 );
 
-CREATE TYPE IF NOT EXISTS tax_exempt_code_type (
-    type text,
-    value text
-);
-
-CREATE TYPE IF NOT EXISTS tax_exempt_data_type (
+CREATE TYPE IF NOT EXISTS account_ks.tax_exempt_data_type (
     tax_exempt_id text,
     tax_exempt_id_desc text,
     tax_exempt_flag boolean
 );
 
-CREATE TYPE IF NOT EXISTS history_additional_identifier_type (
+CREATE TYPE IF NOT EXISTS audit_history_ks.history_additional_identifier_type (
     type text,
     value text
 );
 
-CREATE TYPE IF NOT EXISTS history_entity_type (
+CREATE TYPE IF NOT EXISTS audit_history_ks.history_entity_type (
     action text,
     stanza_name text,
     stanza text
 );
 
-CREATE TYPE IF NOT EXISTS history_field_type (
+CREATE TYPE IF NOT EXISTS audit_history_ks.history_field_type (
     action text,
     stanza_name text,
     previous_value text,
     new_value text
 );
 
-CREATE TYPE IF NOT EXISTS time_event_additional_details_items(
+CREATE TYPE IF NOT EXISTS time_event_ks.time_event_additional_details_items(
     name text,
     value text
 );
 
-CREATE TYPE IF NOT EXISTS potential_revenue_type (
+CREATE TYPE IF NOT EXISTS account_ks.potential_revenue_type (
     shipping_revenue_type text,
     time_period text,
     shipping_package_quantity text,
@@ -68,7 +90,7 @@ CREATE TYPE IF NOT EXISTS potential_revenue_type (
     shipping_package_percent text
 );
 
-CREATE TYPE IF NOT EXISTS other_potential_info_type (
+CREATE TYPE IF NOT EXISTS account_ks.other_potential_info_type (
     revenue_event_source text,
     revenue_comments text,
     comment_sequence_nbr int,
@@ -76,7 +98,7 @@ CREATE TYPE IF NOT EXISTS other_potential_info_type (
     program text
 );
 
-CREATE TABLE IF NOT EXISTS cust_acct_v1 (
+CREATE TABLE IF NOT EXISTS account_ks.cust_acct_v1 (
     account_number text,
     opco text,
     last_update_timestamp timestamp,
@@ -464,7 +486,6 @@ CREATE TABLE IF NOT EXISTS cust_acct_v1 (
     potential_revenue_detail__revenue_source_system text,
     potential_revenue_detail__potential_revenue_account_type text,
     potential_revenue_detail__other_potential_info set<frozen<other_potential_info_type>>,
-
     PRIMARY KEY(account_number, opco))
 WITH CLUSTERING ORDER BY (opco ASC)
     AND bloom_filter_fp_chance = 0.01
@@ -483,7 +504,7 @@ WITH CLUSTERING ORDER BY (opco ASC)
     AND speculative_retry = '99PERCENTILE';
 
 
-CREATE TABLE IF NOT EXISTS apply_discount_detail_v1 (
+CREATE TABLE IF NOT EXISTS apply_discount_ks.apply_discount_detail_v1 (
     account_number text,
     opco text,
     last_update_tmstp timestamp,
@@ -507,7 +528,7 @@ WITH CLUSTERING ORDER BY(opco ASC, apply_discount__effective_date_time DESC)
     AND read_repair_chance = 0.0
     AND speculative_retry = '99PERCENTILE';
 
-CREATE TABLE IF NOT EXISTS payment_info_v1 (
+CREATE TABLE IF NOT EXISTS payment_info_ks.payment_info_v1 (
     account_number text,
     opco text,
     record_type_cd text,  -- expressCreditCard, expressDirectDebit, expressElectronic pay etc. i.e. stanza names
@@ -677,7 +698,7 @@ WITH CLUSTERING ORDER BY(opco ASC, record_type_cd ASC, record_key ASC, record_se
     AND read_repair_chance = 0.0
     AND speculative_retry = '99PERCENTILE';
 
-CREATE TABLE IF NOT EXISTS account_contact (
+CREATE TABLE IF NOT EXISTS account_contact_ks.account_contact (
     account_number text,
     opco text,
     last_update_tmstp timestamp,
@@ -741,7 +762,6 @@ CREATE TABLE IF NOT EXISTS account_contact (
     additional_email_info2__email_marketing_flag text,
     social_media set<frozen<social_media_type>>,
     name_line map<text, text>,  --maps source field name -> source field value, used for search/query filtering
-
     PRIMARY KEY(account_number, opco, contact_type_code, contact_business_id))
 WITH CLUSTERING ORDER BY(opco ASC, contact_type_code ASC, contact_business_id ASC)
     AND bloom_filter_fp_chance = 0.01
@@ -759,7 +779,7 @@ WITH CLUSTERING ORDER BY(opco ASC, contact_type_code ASC, contact_business_id AS
     AND read_repair_chance = 0.0
     AND speculative_retry = '99PERCENTILE';
 
-CREATE TABLE IF NOT EXISTS assoc_accounts_v1 (
+CREATE TABLE IF NOT EXISTS assoc_account_ks.assoc_accounts_v1 (
     account_number text,
     associated_account__opco text,
     associated_account__number text,
@@ -780,7 +800,7 @@ WITH CLUSTERING ORDER BY(associated_account__opco ASC, associated_account__numbe
     AND read_repair_chance = 0.0
     AND speculative_retry = '99PERCENTILE';
 
-CREATE TABLE IF NOT EXISTS national_account_v1  (
+CREATE TABLE IF NOT EXISTS account_ks.national_account_v1  (
     account_number text,
     opco text,
     last_update_tmstp timestamp,
@@ -808,7 +828,7 @@ CREATE TABLE IF NOT EXISTS national_account_v1  (
 
 --groupId
 --groupMembership
-CREATE TABLE IF NOT EXISTS group_info_v1 (
+CREATE TABLE IF NOT EXISTS group_ks.group_info_v1 (
      account_number text,
      opco text,
      last_update_tmstp timestamp,
@@ -837,7 +857,7 @@ CREATE TABLE IF NOT EXISTS group_info_v1 (
      AND speculative_retry = '99PERCENTILE';
 
 --comments
-CREATE TABLE IF NOT EXISTS comment_v1 (
+CREATE TABLE IF NOT EXISTS comment_ks.comment_v1 (
      account_number text,
      opco text,
      last_update_tmstp timestamp,
@@ -866,7 +886,7 @@ CREATE TABLE IF NOT EXISTS comment_v1 (
      AND read_repair_chance = 0.0
      AND speculative_retry = '99PERCENTILE';
 
-CREATE TABLE IF NOT EXISTS audit_history_v1 (
+CREATE TABLE IF NOT EXISTS audit_history_ks.audit_history_v1 (
      account_number text,
      opco text,                     --maps to history_detail__opco
      last_update_tmstp timestamp,
@@ -897,7 +917,7 @@ CREATE TABLE IF NOT EXISTS audit_history_v1 (
      AND read_repair_chance = 0.0
      AND speculative_retry = '99PERCENTILE';
 
-CREATE TABLE IF NOT EXISTS centralized_view_v1 (
+CREATE TABLE IF NOT EXISTS centralized_view_ks.centralized_view_v1 (
      account_number text,
      account_status__status_code text,
      account_status__status_date date,
@@ -919,7 +939,7 @@ CREATE TABLE IF NOT EXISTS centralized_view_v1 (
      AND read_repair_chance = 0.0
      AND speculative_retry = '99PERCENTILE';
 
-CREATE TABLE IF NOT EXISTS line_of_business_v1 (
+CREATE TABLE IF NOT EXISTS line_of_business_ks.line_of_business_v1 (
     account_number text,
     opco text,
     line_of_business__preference__direct_debit_day_of_month int,
@@ -1013,7 +1033,7 @@ CREATE TABLE IF NOT EXISTS line_of_business_v1 (
      AND read_repair_chance = 0.0
      AND speculative_retry = '99PERCENTILE';
 
-CREATE TABLE IF NOT EXISTS time_event_v1 (
+CREATE TABLE IF NOT EXISTS time_event_ks.time_event_v1 (
     account_number text,
     type text,
     status text,
@@ -1042,7 +1062,7 @@ WITH CLUSTERING ORDER BY (process_time DESC, type ASC, status ASC)
 
 -- expressCustomerAccountDynamicProfile
 -- groundCustomerAccountDynamicProfile
-CREATE TABLE IF NOT EXISTS account_dynamic_profile_v1 (  //need _v1 in table name?
+CREATE TABLE IF NOT EXISTS dynamic_profile_ks.account_dynamic_profile_v1 (  //need _v1 in table name?
     account_number text,
     opco text,
     last_update_timestamp timestamp,
@@ -1078,7 +1098,7 @@ WITH CLUSTERING ORDER BY (opco ASC, payor_type ASC, shipment_type ASC)
 -- expressCustomerEntityDynamicProfile
 -- groundCustomerEntityDynamicProfile
 -- freightCustomerEntityDynamicProfile
-CREATE TABLE IF NOT EXISTS entity_dynamic_profile_v1 ( //need _v1 in table name?
+CREATE TABLE IF NOT EXISTS dynamic_profile_ks.entity_dynamic_profile_v1 ( //need _v1 in table name?
     entity_number text,
     opco text,
     last_update_timestamp timestamp,
@@ -1105,7 +1125,7 @@ CREATE TABLE IF NOT EXISTS entity_dynamic_profile_v1 ( //need _v1 in table name?
 
 -- expressInvoicePaymentProfile
 -- need _v1 in table name?
-CREATE TABLE IF NOT EXISTS invoice_payment_profile_v1 (
+CREATE TABLE IF NOT EXISTS payment_info_ks.invoice_payment_profile_v1 (
     account_number text,
     opco text,
     last_update_timestamp timestamp,
@@ -1133,7 +1153,7 @@ WITH CLUSTERING ORDER BY (opco ASC, payor_type ASC, shipment_type ASC)
 
 
 --Possible search use case specific table
-CREATE TABLE IF NOT EXISTS cam_search_v1 (
+CREATE TABLE IF NOT EXISTS search_ks.cam_search_v1 (
        account_number text,
        opco text,
        profile__archive_reason_code text,

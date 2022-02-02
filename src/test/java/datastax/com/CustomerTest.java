@@ -6,10 +6,18 @@ import com.datastax.oss.driver.api.core.MappedAsyncPagingIterable;
 import com.datastax.oss.driver.api.core.PagingIterable;
 import com.datastax.oss.driver.api.core.cql.*;
 import com.datastax.oss.driver.api.core.data.UdtValue;
+import com.datastax.oss.driver.api.querybuilder.delete.Delete;
+import com.datastax.oss.driver.api.querybuilder.schema.CreateKeyspace;
+import com.datastax.oss.driver.api.querybuilder.select.Select;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.protocol.internal.util.Bytes;
+import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.*;
+import static com.datastax.oss.driver.api.querybuilder.SchemaBuilder.*;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import datastax.com.dataObjects.*;
 import datastax.com.DAOs.*;
+import datastax.com.schemaElements.Keyspaces;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -17,18 +25,14 @@ import org.junit.Test;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.file.Paths;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.YearMonth;
-import java.time.ZoneId;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class CustomerTest {
 
@@ -48,13 +52,11 @@ public class CustomerTest {
     private static boolean skipSchemaCreation = false;
     private static boolean skipDataLoad = false;
     private static boolean skipKeyspaceDrop = false;
-    private static boolean skipIndividualTableDrop = false;
-    private static String keyspaceName = "customer";
+    private static boolean skipIndividualTableDrop = true;
     private static String productName = "Customer" ;
 
-    //** paths needs to be updated or revised to use relative project path
-    private static String schemaScriptPath = "/Users/michaeldownie/Documents/DataStax/Projects/FedEx/code/fedex_customer/src/test/resources/create_customer_schema.sh" ;
-    private static String dataScriptPath = "/Users/michaeldownie/Documents/DataStax/Projects/FedEx/code/fedex_customer/src/test/resources/load_customer_data.sh" ;
+    private static String SCHEMA_SCRIPT_PATH = "src/test/resources/create_customer_schema.sh" ;
+    private static String DATA_SCRIPT_PATH = "src/test/resources/load_customer_data.sh" ;
 
     @BeforeClass
     public static void init() {
@@ -81,20 +83,19 @@ public class CustomerTest {
 
             dropTestKeyspace();
             loadSchema();
-            session.execute("USE " + keyspaceName + ";");
             loadData();
 
             customerMapper = new CustomerMapperBuilder(session).build();
-            daoAccount = customerMapper.accountDao(keyspaceName);
-            daoPayment = customerMapper.paymentInfoDao(keyspaceName);
-            daoAssoc = customerMapper.assocAccountDao(keyspaceName);
-            daoContact  =  customerMapper.contactDao(keyspaceName);
-            daoNational = customerMapper.nationalAccountDao(keyspaceName);
-            daoIndexCollect = customerMapper.indexCollectionDao(keyspaceName);
-            daoApplyDiscount = customerMapper.applyDiscountDao(keyspaceName);
-            daoComment = customerMapper.commentDao(keyspaceName);
-            daoAuditHistory = customerMapper.auditHistoryDao(keyspaceName);
-            daoAccountContact = customerMapper.accountContactDao(keyspaceName);
+            daoAccount = customerMapper.accountDao(Keyspaces.ACCOUNT_KS.keyspaceName());
+            daoPayment = customerMapper.paymentInfoDao(Keyspaces.PAYMENT_INFO_KS.keyspaceName());
+            daoAssoc = customerMapper.assocAccountDao(Keyspaces.ASSOC_ACCOUNT_KS.keyspaceName());
+            daoContact  =  customerMapper.contactDao(Keyspaces.CUSTOMER.keyspaceName());
+            daoNational = customerMapper.nationalAccountDao(Keyspaces.ACCOUNT_KS.keyspaceName());
+            daoIndexCollect = customerMapper.indexCollectionDao(Keyspaces.CUSTOMER.keyspaceName());
+            daoApplyDiscount = customerMapper.applyDiscountDao(Keyspaces.APPLY_DISCOUNT_KS.keyspaceName());
+            daoComment = customerMapper.commentDao(Keyspaces.COMMENT_KS.keyspaceName());
+            daoAuditHistory = customerMapper.auditHistoryDao(Keyspaces.AUDIT_HISTORY_KS.keyspaceName());
+            daoAccountContact = customerMapper.accountContactDao(Keyspaces.ACCOUNT_CONTACT_KS.keyspaceName());
         }
         catch(Exception e){
             System.out.println(e.getMessage());
@@ -103,31 +104,34 @@ public class CustomerTest {
 
     static void dropTestKeyspace(){
         if(!skipKeyspaceDrop) {
-            if(!skipIndividualTableDrop) {
-                System.out.println("Dropping tables from keyspace - " + keyspaceName);
-                long startTables = System.currentTimeMillis();
+            for(Keyspaces ks : Keyspaces.values()) {
+                String ksName = ks.keyspaceName();
 
-                String baseTableDrop = "DROP TABLE IF EXISTS " + keyspaceName + ".";
-                String findKeyspaceTables = "SELECT table_name FROM system_schema.tables WHERE keyspace_name = '" + keyspaceName + "';";
-                ResultSet resultSet = session.execute(findKeyspaceTables);
-                List<Row> foundRows = resultSet.all();
-                for (Row curRow : foundRows) {
-                    String curTable = curRow.getString("table_name");
-                    String tableDrop = baseTableDrop + curTable + ";";
-                    session.execute(tableDrop);
+                if (!skipIndividualTableDrop) {
+                    System.out.println("Dropping tables from keyspace - " + ksName);
+                    long startTables = System.currentTimeMillis();
 
-                    System.out.println("\tdrop table - " + curTable);
+                    Select select = selectFrom("system_schema", "tables")
+                            .column("table_name")
+                            .whereColumn("keyspace_name").isEqualTo(bindMarker());
+
+                    ResultSet resultSet = session.execute(select.build(ksName));
+                    List<Row> foundRows = resultSet.all();
+                    for (Row curRow : foundRows) {
+                        String curTable = curRow.getString("table_name");
+                        session.execute(dropTable(ksName, curTable).ifExists().build());
+                        System.out.println("\tdrop table - " + curTable);
+                    }
+                    long stopTables = System.currentTimeMillis();
+                    System.out.println("Time for dropping all tables from keyspace " + ksName + "- " + ((stopTables - startTables) / 1000.0) + "s");
                 }
-                long stopTables = System.currentTimeMillis();
-                System.out.println("Time for dropping all tables - " + ((stopTables - startTables) / 1000.0) + "s");
-            }
 
-            long startKeySpace = System.currentTimeMillis();
-            System.out.println("Dropping keyspace - " + keyspaceName);
-            String keyspaceDrop = "DROP KEYSPACE IF EXISTS " + keyspaceName + ";";
-            session.execute(keyspaceDrop);
-            long stopKeyspace = System.currentTimeMillis();
-            System.out.println("Time for dropping keyspace - " + ((stopKeyspace - startKeySpace)/1000.0) + "s");
+                long startKeySpace = System.currentTimeMillis();
+                System.out.println("Dropping keyspace - " + ksName);
+                session.execute(dropKeyspace(ksName).ifExists().build());
+                long stopKeyspace = System.currentTimeMillis();
+                System.out.println("Time for dropping keyspace - " + ((stopKeyspace - startKeySpace) / 1000.0) + "s");
+            }
         }
     }
 
@@ -135,15 +139,23 @@ public class CustomerTest {
         if (!skipSchemaCreation) {
             System.out.println("Running " + productName + " loadSchema");
 
-            String keyspaceCreate = "CREATE KEYSPACE If NOT EXISTS " + keyspaceName + " WITH replication = {'class': 'NetworkTopologyStrategy', 'SearchGraphAnalytics': '1'}  AND durable_writes = true;";
-            session.execute(keyspaceCreate);
+            for(Keyspaces ks : Keyspaces.values()) {
+                String ksName = ks.keyspaceName();
+                System.out.println("Creating keyspace - " + ksName);
+                CreateKeyspace create = createKeyspace(ksName).ifNotExists()
+                        .withNetworkTopologyStrategy(ImmutableMap.of("SearchGraphAnalytics", 1))
+                        .withDurableWrites(true);
 
-            runScript(schemaScriptPath);//TODO get resource path programmatically
+                //System.out.println(create.asCql()); //optional output of complete keyspace creation CQL statement
+                session.execute(create.build());
+            }
+
+            runScript(SCHEMA_SCRIPT_PATH);
         }
     }
 
     static void runScript(String scriptPath) throws InterruptedException, IOException {
-        ProcessBuilder processBuild = new ProcessBuilder(scriptPath); //TODO get resource path programmatically
+        ProcessBuilder processBuild = new ProcessBuilder(Paths.get(scriptPath).toAbsolutePath().toString());
         Process process = processBuild.start();
 
         int exitValue = process.waitFor();
@@ -158,7 +170,7 @@ public class CustomerTest {
         if(!skipDataLoad){
             System.out.println("Running " + productName + " data load");
 
-            runScript(dataScriptPath); //TODO get resource path programmatically
+            runScript(DATA_SCRIPT_PATH);
 
             //sleep for a time to allow Solr indexes to update completely
             System.out.println("Completed " + productName + " data load.  Pausing to allow indexes to update...");
@@ -320,12 +332,13 @@ public class CustomerTest {
         String domainName  = "customer";
         String sequenceName = "CAM_TEST_1";
 
-        SequenceNumberGenerator generator = new SequenceNumberGenerator(session, keyspaceName, seqNumTableName, "localHost");
+        SequenceNumberGenerator generator = new SequenceNumberGenerator(session, Keyspaces.CUSTOMER.keyspaceName(), seqNumTableName, "localHost");
         generator.initDomainSequence(domainName, sequenceName, 100, 0, 5000);
         Boolean results =  generator.getSequenceNumbers(3, 10, 4, domainName, sequenceName);
 
         assert(results);
     }
+
     @Test
     public void archiveDateTest() {
         String acctNum = "70987125";
@@ -389,7 +402,7 @@ public class CustomerTest {
         assert(foundDate2.getMonthValue() == testMonth2);
         assert(foundDate2.getDayOfMonth() == testDay2);
 
-        //cleanup any existing records and verify
+        //cleanup test records and verify
         daoAccount.deleteAllByAccountNumber(acctNum);
         PagingIterable<Account> cleanVerifyAccountResults = daoAccount.findAllByAccountNumber(acctNum);
         assert(cleanVerifyAccountResults.all().size() == 0);
@@ -450,8 +463,7 @@ public class CustomerTest {
         assert(foundAcct.getOpco().equals(opco));
         assert(foundAcct.getProfileCustomerType().equals(customerType));
 
-        //cleanup tests records
-        //cleanup any existing records and verify
+        //cleanup tests records and verify
         daoAccountContact.deleteAllByAccountNumber(acctNum);
         PagingIterable<AccountContact> cleanVerifyResults = daoAccountContact.findAllByAccountNumber(acctNum);
         assert(cleanVerifyResults.all().size() == 0);
@@ -972,11 +984,9 @@ public class CustomerTest {
 
         System.out.println("\nFinal Map State:\n" + foundDutyTaxUpdated.toString());
 
-
         //cleanup
         daoAccount.delete(custAcct);
     }
-
 
     @Test
     public void mappedCollectionsTest() {
@@ -1012,7 +1022,7 @@ public class CustomerTest {
         //CQL map entry example
         String dutyTaxAddElement =
                 "UPDATE \n" +
-                "    " + keyspaceName + ".cust_acct_v1 \n" +
+                "    " + Keyspaces.ACCOUNT_KS.keyspaceName() + ".cust_acct_v1 \n" +
                 "SET \n" +
                 "    duty_tax_info = duty_tax_info + {'" + keyC +"' : '" + valC + "'} \n" +
                 "WHERE \n" +
@@ -1275,10 +1285,13 @@ public class CustomerTest {
         String acctID = "00112770";
         int expectedTotalSize = 5;
         int pageSize = 3;
-        String query = "select * from " + keyspaceName + ".national_account_v1 where account_number = '" + acctID + "';";
+        Select select = selectFrom(Keyspaces.ACCOUNT_KS.keyspaceName(), "national_account_v1")
+                .all()
+                .whereColumn("account_number").isEqualTo(bindMarker());
+        SimpleStatement selectStmt = select.build(acctID);
 
-        System.out.println(query);
-        SimpleStatement stmt = SimpleStatement.builder(query).setPageSize(pageSize).build();
+        System.out.println(select.asCql());
+        SimpleStatement stmt = selectStmt.setPageSize(pageSize);
 
         ResultSet rs =  session.execute(stmt);
         ByteBuffer pagingState = rs.getExecutionInfo().getPagingState();
@@ -1292,7 +1305,7 @@ public class CustomerTest {
             System.out.println("\t" + row.getInstant("national_account_detail__membership_eff_date_time"));
         }
 
-        SimpleStatement stmt2 = SimpleStatement.builder(query).setPagingState(pagingState).build();
+        SimpleStatement stmt2 = selectStmt.setPagingState(pagingState);
         ResultSet rs2 = session.execute(stmt2);
 
         assert(rs2.isFullyFetched() == true );
@@ -1309,10 +1322,14 @@ public class CustomerTest {
         String acctID = "00112770";
         int expectedTotalSize = 5;
         int pageSize = 3;
-        String query = "select * from " + keyspaceName + ".national_account_v1 where account_number = '" + acctID + "';";
+        Select select =
+                selectFrom(Keyspaces.ACCOUNT_KS.keyspaceName(), "national_account_v1")
+                .all()
+                .whereColumn("account_number").isEqualTo(literal(acctID));
+        SimpleStatement selectStmt = select.build();
 
-        System.out.println(query);
-        SimpleStatement stmt = SimpleStatement.builder(query).setPageSize(pageSize).build();
+        System.out.println(select.asCql());
+        SimpleStatement stmt = selectStmt.setPageSize(pageSize);
 
         ResultSet rs =  session.execute(stmt);
         ByteBuffer pagingState = rs.getExecutionInfo().getPagingState();
@@ -1331,7 +1348,7 @@ public class CustomerTest {
                     "Effective date/time - " + natAcct.getMembershipEffectiveDateTime());
         }
 
-        SimpleStatement stmt2 = SimpleStatement.builder(query).setPagingState(pagingState).build();
+        SimpleStatement stmt2 = selectStmt.setPagingState(pagingState);
         ResultSet rs2 = session.execute(stmt2);
 
         assert(rs2.isFullyFetched() == true );
@@ -1352,11 +1369,15 @@ public class CustomerTest {
     @Test
     public void sampleTest(){
         String acctID = "00112770";
-        String query = "select * from " + keyspaceName + ".national_account_v1 where account_number = '" + acctID + "';";
+        SimpleStatement selectStmt =
+                selectFrom(Keyspaces.ACCOUNT_KS.keyspaceName(), "national_account_v1")
+                .all()
+                .whereColumn("account_number").isEqualTo(literal(acctID))
+                .build();
 
         int expectedTotalSize = 5;
         int pageSize = 3;
-        SimpleStatement stmt = SimpleStatement.builder(query).setPageSize(pageSize).build();
+        SimpleStatement stmt = selectStmt.setPageSize(pageSize);
         ResultSet rs =  session.execute(stmt);
 
         ByteBuffer pagingState = rs.getExecutionInfo().getPagingState();
@@ -1369,7 +1390,7 @@ public class CustomerTest {
             //do something with row
         }
 
-        SimpleStatement stmt2 = SimpleStatement.builder(query).setPagingState(pagingState).build();
+        SimpleStatement stmt2 = selectStmt.setPagingState(pagingState);
         ResultSet rs2 = session.execute(stmt2);
 
         assert(rs2.isFullyFetched() == true );
@@ -1385,12 +1406,16 @@ public class CustomerTest {
     @Test
     public void sampleTestSearch(){
         String acctID = "00112770";
-        String query = "select * from " + keyspaceName + ".national_account_v1 where account_number='" + acctID + "';";
-        System.out.println(query);
+        Select select =
+                selectFrom(Keyspaces.ACCOUNT_KS.keyspaceName(), "national_account_v1")
+                .all()
+                .whereColumn("account_number").isEqualTo(literal(acctID));
+        System.out.println(select.asCql());
+        SimpleStatement selectStmt = select.build();
 
         int expectedTotalSize = 5;
         int pageSize = 3;
-        SimpleStatement stmt = SimpleStatement.builder(query).setPageSize(pageSize).setConsistencyLevel(ConsistencyLevel.LOCAL_ONE).build();
+        SimpleStatement stmt = selectStmt.setPageSize(pageSize).setConsistencyLevel(ConsistencyLevel.LOCAL_ONE);
         ResultSet rs =  session.execute(stmt);
 
         ByteBuffer pagingState = rs.getExecutionInfo().getPagingState();
@@ -1403,7 +1428,7 @@ public class CustomerTest {
             //do something with row
         }
 
-        SimpleStatement stmt2 = SimpleStatement.builder(query).setPagingState(pagingState).build();
+        SimpleStatement stmt2 = selectStmt.setPagingState(pagingState);
         ResultSet rs2 = session.execute(stmt2);
 
         assert(rs2.isFullyFetched() == true );
@@ -1420,12 +1445,17 @@ public class CustomerTest {
     @Test
     public void sampleTestSearchMultiPage(){
         String acctID = "00112770";
-        String query = "select * from " + keyspaceName + ".national_account_v1 where account_number = '" + acctID + "';";
-        System.out.println(query);
+        Select select = selectFrom(Keyspaces.ACCOUNT_KS.keyspaceName(), "national_account_v1")
+                            .all()
+                            .whereColumn("account_number").isEqualTo(bindMarker());
+
+        System.out.println(select.asCql());
 
         int expectedTotalSize = 5;
         int pageSize = 2;
-        SimpleStatement stmt = SimpleStatement.builder(query).setPageSize(pageSize).setConsistencyLevel(ConsistencyLevel.LOCAL_ONE).build();
+        SimpleStatement stmt = select.build(acctID)
+                                    .setPageSize(pageSize)
+                                    .setConsistencyLevel(ConsistencyLevel.LOCAL_ONE);
         ResultSet rs =  session.execute(stmt);
 
         ByteBuffer pagingState = rs.getExecutionInfo().getPagingState();
@@ -1441,7 +1471,9 @@ public class CustomerTest {
             //do something with row
         }
 
-        SimpleStatement stmt2 = SimpleStatement.builder(query).setPageSize(pageSize).setPagingState(pagingState).build();
+        SimpleStatement stmt2 = select.build(acctID)
+                                    .setPageSize(pageSize)
+                                    .setPagingState(pagingState);
         ResultSet rs2 = session.execute(stmt2);
 
         ByteBuffer pagingState2 = rs2.getExecutionInfo().getPagingState();
@@ -1456,7 +1488,9 @@ public class CustomerTest {
             //do something with row
         }
 
-        SimpleStatement stmt3 = SimpleStatement.builder(query).setPageSize(pageSize).setPagingState(pagingState2).build();
+        SimpleStatement stmt3 = select.build(acctID)
+                                    .setPageSize(pageSize)
+                                    .setPagingState(pagingState2);
         ResultSet rs3 = session.execute(stmt2);
 
 //        ByteBuffer pagingState3 = rs3.getExecutionInfo().getPagingState();
@@ -1512,16 +1546,12 @@ public class CustomerTest {
 
         //test delete single poperty
         String deleteProp = "profile__account_type";
-        String stmtDeletProperty =
-                "DELETE \n" +
-                "    " + deleteProp + " \n" +
-                "FROM\n" +
-                "    cust_acct_v1 \n" +
-                "WHERE \n" +
-                "    account_number = '" + acctID + "'\n" +
-                "    AND opco = '" + opco + "';";
+        Delete deleteSingleProp =  deleteFrom(Keyspaces.ACCOUNT_KS.keyspaceName(), "cust_acct_v1")
+                .column(deleteProp)
+                .whereColumn("account_number").isEqualTo(literal(acctID))
+                .whereColumn("opco").isEqualTo(literal(opco));
 
-        session.execute(stmtDeletProperty);
+        session.execute(deleteSingleProp.build());
         Account foundCustDelProp = daoAccount.findByAccountNumber(acctID);
         //check that deleted property is no longer in record
         assert(foundCustDelProp.getProfileAccountType() == null);
@@ -1533,22 +1563,12 @@ public class CustomerTest {
         assert(foundCustDelProp.getProfileEnterpriseSource().equals(entSource));
 
         //test delete multiple poperties
-        List<String> deleteProps = Stream.of(
-                "profile__customer_type",
-                "profile__account_status__status_code",
-                "profile__account_status__reason_code"
-            ).collect(Collectors.toList());
+        Delete deleteMultiProps =  deleteFrom(Keyspaces.ACCOUNT_KS.keyspaceName(), "cust_acct_v1")
+                .column("profile__customer_type").column("profile__account_status__status_code").column("profile__account_status__reason_code")
+                .whereColumn("account_number").isEqualTo(literal(acctID))
+                .whereColumn("opco").isEqualTo(literal(opco));
 
-        String stmtDeleteMultiProperties =
-                "DELETE \n" +
-                "    " + String.join(",", deleteProps) + " \n" +
-                "FROM\n" +
-                "    cust_acct_v1 \n" +
-                "WHERE \n" +
-                "    account_number = '" + acctID + "'\n" +
-                "    AND opco = '" + opco + "';";
-
-        session.execute(stmtDeleteMultiProperties);
+        session.execute(deleteMultiProps.build());
         Account foundCustDelMultiProps = daoAccount.findByAccountNumber(acctID);
         //check that deleted properties are no longer in record
         assert(foundCustDelMultiProps.getProfileCustomerType() == null);
@@ -1710,7 +1730,6 @@ public class CustomerTest {
         assert(foundAccount.getProfileAccountType().equals(expectedAccountType));
     }
 
-
     @Test
     public void contactUdtMapperReadTest(){
         Contact foundContact = daoContact.findByContactDocumentId(83);
@@ -1725,8 +1744,6 @@ public class CustomerTest {
         assert(addrSec.getAreaCode().equals("123"));
         assert(addrSec.getPhoneNumber().equals("456-7890"));
     }
-
-
 
     @Test
     public void contactUdtMapperWriteTest(){
@@ -1865,8 +1882,11 @@ public class CustomerTest {
     @Test
     public void verifyContactUDTsKeyQuery(){
 
-        String telecomQuery = "select * from contact where contact_document_id = 83";
-        ResultSet resCheck = session.execute(telecomQuery);
+        Select select = selectFrom(Keyspaces.CUSTOMER.keyspaceName(), "contact")
+                            .all()
+                            .whereColumn("contact_document_id").isEqualTo(literal(83));
+
+        ResultSet resCheck = session.execute(select.build());
 
         if(null != resCheck) {
             Row rowVal = resCheck.one();
@@ -1885,7 +1905,7 @@ public class CustomerTest {
 
     @Test
     public void verifyContactUDTsSolrQuery() {
-        String solrQuery = "select * from contact\n" +
+        String solrQuery = "select * from "+ Keyspaces.CUSTOMER.keyspaceName() + ".contact\n" +
                 "where\n" +
                 "    solr_query = '" +
                 "{\"q\": \"{!tuple}tele_com.area_code:123\"," +
@@ -2035,15 +2055,22 @@ public class CustomerTest {
     @Test
     public void verifyContactUDTInsertUpdate(){
         //cleanup any existing records and verify
-        String cleanupQuery = "DELETE from customer.contact where contact_document_id = 2001;";
-        session.execute(cleanupQuery);
+        SimpleStatement cleanupStmt =
+                deleteFrom(Keyspaces.CUSTOMER.keyspaceName(), "contact")
+                .whereColumn("contact_document_id").isEqualTo(literal(2001))
+                .build();
+        session.execute(cleanupStmt);
 
-        String checkQuery = "select * from customer.contact where contact_document_id = 2001;";
-        ResultSet rsInitialCheck = session.execute(checkQuery);
+        SimpleStatement checkStmt =
+                selectFrom(Keyspaces.CUSTOMER.keyspaceName(), "contact")
+                .all()
+                .whereColumn("contact_document_id").isEqualTo(literal(2001))
+                .build();
+        ResultSet rsInitialCheck = session.execute(checkStmt);
 
         assert(rsInitialCheck != null && rsInitialCheck.all().size() == 0);
 
-        String insertStmt = "insert into contact\n" +
+        String insertStmt = "insert into " + Keyspaces.CUSTOMER.keyspaceName()+ ".contact\n" +
                 "(\n" +
                 "    contact_document_id,\n" +
                 "    tele_com\n" +
@@ -2062,7 +2089,7 @@ public class CustomerTest {
         session.execute(insertStmt);
 
         //verify record exists
-        ResultSet rsDataCheck = session.execute(checkQuery);
+        ResultSet rsDataCheck = session.execute(checkStmt);
 
         Row dataRow = rsDataCheck.one();
         assert(dataRow.getLong("contact_document_id") == (long)2001);
@@ -2072,7 +2099,7 @@ public class CustomerTest {
         //check only one result
         assert(setCheckTelecom.size() == 2);
 
-        String updateStmt = "update contact\n" +
+        String updateStmt = "update " + Keyspaces.CUSTOMER.keyspaceName()+ ".contact\n" +
                 "set \n" +
                 "    tele_com = tele_com + {{telecom_method:'MB', area_code:'333', phone_number:'333-2001'}}\n" +
                 "where\n" +
@@ -2083,7 +2110,7 @@ public class CustomerTest {
         session.execute(updateStmt);
 
         //verify record updated
-        ResultSet rsDataCheckUpdate = session.execute(checkQuery);
+        ResultSet rsDataCheckUpdate = session.execute(checkStmt);
 
         Row dataRowUpdated = rsDataCheckUpdate.one();
         assert(dataRowUpdated.getLong("contact_document_id") == (long)2001);
@@ -2098,7 +2125,7 @@ public class CustomerTest {
 
         for(TestQuery curQuery : queries){
             if(curQuery.queryType == TestQuery.QueryType.READ_PROP){
-                String checkQuery = "select * from " +
+                String checkQuery = "select * from " + Keyspaces.CUSTOMER.keyspaceName() + "." +
                         curQuery.table + " where " +
                         curQuery.recordIDProp + " = ";
                 if(curQuery.numericKey){

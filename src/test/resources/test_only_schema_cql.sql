@@ -1,4 +1,22 @@
-USE customer;
+CREATE KEYSPACE If NOT EXISTS customer_test WITH replication = {'class': 'NetworkTopologyStrategy', 'SearchGraphAnalytics': '1'}  AND durable_writes = true;
+USE customer_test;
+
+CREATE TYPE IF NOT EXISTS customer_test.telecom_details_type (
+    telecom_method text,
+    numeric_country_code text,
+    alpha_country_code text,
+    area_code text,
+    phone_number text,
+    extension text,
+    pin text,
+    ftc_ok_to_call_flag boolean,
+    text_message_flag boolean
+);
+
+CREATE TYPE IF NOT EXISTS customer_test.social_media_type (
+    type_code text,
+    value text
+);
 
 CREATE TABLE IF NOT EXISTS index_collection_test (
     account_number text,
