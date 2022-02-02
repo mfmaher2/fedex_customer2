@@ -1,4 +1,4 @@
-USE customer;
+USE customer_test;
 
 CREATE TABLE IF NOT EXISTS sequence_num_tbl (
     domain text,
