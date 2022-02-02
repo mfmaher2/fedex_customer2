@@ -262,6 +262,7 @@ public class CustomerTest {
 
         assert(results);
     }
+
     @Test
     public void archiveDateTest() {
         String acctNum = "70987125";
