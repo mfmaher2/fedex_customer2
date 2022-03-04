@@ -15,6 +15,7 @@ public enum Keyspaces {
     PAYMENT_INFO_KS("payment_info_ks"),
     DYNAMIC_PROFILE_KS("dynamic_profile_ks"),
     SEARCH_KS("search_ks"),
+    ARCHIVE_KS("archive_ks"),
     CUSTOMER("customer_test");
 
     private String keyspaceName;

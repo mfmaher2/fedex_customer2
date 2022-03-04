@@ -48,9 +48,9 @@ public class CustomerTest {
     static AuditHistoryDao daoAuditHistory = null;
     static AccountContactDao daoAccountContact = null;
 
-    private static boolean skipSchemaCreation = false;
-    private static boolean skipDataLoad = false;
-    private static boolean skipKeyspaceDrop = false;
+    private static boolean skipSchemaCreation = true;
+    private static boolean skipDataLoad = true;
+    private static boolean skipKeyspaceDrop = true;
     private static boolean skipIndividualTableDrop = true;
     private static String productName = "Customer" ;
 
@@ -226,8 +226,24 @@ public class CustomerTest {
 
         //example using one delete and one save command
         BatchStatement batch = BatchStatement.builder(BatchType.LOGGED).build();
-        batch = batch.add(daoAccountContact.batchSave(acctCont1));
-        batch = batch.add(daoAccount.batchDelete(custAcct));
+
+        BoundStatement acctContacStmt = daoAccountContact.batchSave(acctCont1);
+        System.out.println("AccountContact keyspace - " + acctContacStmt.getKeyspace());
+//        System.out.println(acctContacStmt.getKeyspace().asCql(false));
+
+        ResultSet rs =  session.execute("SELECT * FROM account_ks.cust_acct_v1 WHERE account_number='192837-bp';");
+        System.out.println(rs.all().toString());
+
+
+        System.out.println(acctContacStmt.getPreparedStatement().getQuery());
+        System.out.println(acctContacStmt.getPreparedStatement().getVariableDefinitions());
+        System.out.println(acctContacStmt.getValues());
+        System.out.println(acctContacStmt.getString("account_number"));
+
+        BoundStatement acctStmt = daoAccount.batchDelete(custAcct);
+        System.out.println("Account keyspace - " + acctStmt.getKeyspace());
+        batch = batch.add(acctContacStmt);
+        batch = batch.add(acctStmt);
         session.execute(batch);
 
         //verify new account record is created
@@ -238,15 +254,20 @@ public class CustomerTest {
         PagingIterable<AccountContact> verifyContactCreated = daoAccountContact.findAllByAccountNumber(acctNum);
         assert(verifyContactCreated.all().size() == 1);
 
+
+        ResultSet rsDirect =  session.execute("SELECT * FROM account_contact_ks.account_contact WHERE account_number='192837-bp';");
+        Row singleRow = rsDirect.one();
+        System.out.println("Found AccountContact - " + rsDirect.one().getString("contact_type_code"));
+
         //cleanup tests records
         //cleanup any existing records and verify
-        daoAccountContact.deleteAllByAccountNumber(acctNum);
-        PagingIterable<AccountContact> cleanVerifyResults = daoAccountContact.findAllByAccountNumber(acctNum);
-        assert(cleanVerifyResults.all().size() == 0);
-
-        daoAccount.deleteAllByAccountNumber(acctNum);
-        PagingIterable<Account> cleanVerifyAccountResults = daoAccount.findAllByAccountNumber(acctNum);
-        assert(cleanVerifyAccountResults.all().size() == 0);
+//        daoAccountContact.deleteAllByAccountNumber(acctNum);
+//        PagingIterable<AccountContact> cleanVerifyResults = daoAccountContact.findAllByAccountNumber(acctNum);
+//        assert(cleanVerifyResults.all().size() == 0);
+//
+//        daoAccount.deleteAllByAccountNumber(acctNum);
+//        PagingIterable<Account> cleanVerifyAccountResults = daoAccount.findAllByAccountNumber(acctNum);
+//        assert(cleanVerifyAccountResults.all().size() == 0);
     }
 
     @Test
