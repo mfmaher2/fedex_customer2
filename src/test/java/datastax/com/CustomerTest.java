@@ -204,6 +204,8 @@ public class CustomerTest {
             currentID = idPrefix + i;
             assignHandler.addAvailableId(testDomain, currentID);
         }
+
+        assignHandler.assignAvailableIds(testDomain, 5);
     }
 
 

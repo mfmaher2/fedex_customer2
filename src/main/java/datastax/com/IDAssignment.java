@@ -3,11 +3,11 @@ package datastax.com;
 import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.*;
-import com.datastax.oss.driver.api.querybuilder.select.Select;
-import com.datastax.oss.driver.api.querybuilder.delete.Delete;
-
-
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.*;
 
@@ -26,6 +26,7 @@ public class IDAssignment {
     private PreparedStatement getAvailbleIdsStmt;
     private PreparedStatement assignIdStmt;
     private PreparedStatement removeAvailableIdStmt;
+    private PreparedStatement checkAssignmentStmt;
 
     private final String UNASSIGNED = "unassigned";
     private final String DOMAIN_PARAM = "domParam";
@@ -82,6 +83,12 @@ public class IDAssignment {
                 .build();
         removeAvailableIdStmt = session.prepare(deleteAvailable);
 
+        SimpleStatement getAssigned = selectFrom(keyspace, assignmentTableName)
+                .column("assigned_by")
+                .whereColumn("domain").isEqualTo(bindMarker(DOMAIN_PARAM))
+                .whereColumn("identifier").isEqualTo(bindMarker(ID_PARAM))
+                .build();
+        checkAssignmentStmt = session.prepare(getAssigned);
 
 //        String lwtUpdateCurNumberCQL = "UPDATE " + keyspace + "." + tableName + " SET current_num = ? WHERE domain = ? AND sequence_name = ? if current_num = ?";
 //
@@ -103,18 +110,76 @@ public class IDAssignment {
         BoundStatement assignBndStmt =  addAssignmentIdStmt.bind()
                 .setString(DOMAIN_PARAM, domain)
                 .setString(ID_PARAM, id);
-//        session.execute(assignBndStmt);
         batch = batch.add(assignBndStmt);
 
         BoundStatement availableBndStmt = addAvailableIdStmt.bind()
                 .setString(DOMAIN_PARAM, domain)
                 .setString(ID_PARAM, id);
         batch = batch.add(availableBndStmt);
-//        session.execute(availableBndStmt);
 
         session.executeAsync(batch);
 
         return true; //todo use batch, verify applied
     }
 
+    public List<String> assignAvailableIds(String domain, int numIdsRequired){
+        List<String> assignedIds = new ArrayList<>();
+
+        List<String> availableIds = getAvailableIds(domain, numIdsRequired);
+        Iterator<String> availableIter = availableIds.iterator();
+
+        String candidateId = "";
+        int retryCount;
+        for(int curRequiredID=0; curRequiredID<numIdsRequired; curRequiredID++){
+
+            retryCount=0;
+
+            if(availableIter.hasNext()){
+                candidateId = availableIter.next();
+            }
+
+            BoundStatement assignBndStmt = assignIdStmt.bind()
+                    .setString(ASSIGN_PARAM, applicationID)
+                    .setString(DOMAIN_PARAM, domain)
+                    .setString(ID_PARAM, candidateId);
+
+            if (executeLwtStatement(assignBndStmt).wasApplied()){
+                //verify appID row value is set to local value
+                BoundStatement verifyBndStmt = checkAssignmentStmt.bind()
+                        .setString(DOMAIN_PARAM,domain)
+                        .setString(ID_PARAM, candidateId);
+                Row rowVerify = session.execute(verifyBndStmt).one();
+
+                if(rowVerify.getString("assigned_by").equals(applicationID)){
+                    //assignment successful
+                    BoundStatement delAvailable = removeAvailableIdStmt.bind()
+                            .setString(DOMAIN_PARAM, domain)
+                            .setString(ID_PARAM, candidateId);
+                    session.execute(delAvailable);
+                }
+                else{
+                    //assignment not successful
+                    //another process assigned ID, need to retry with next available
+                }
+
+            }
+        }
+
+
+
+        System.out.println();
+
+
+        return assignedIds;
+    }
+
+    private List<String> getAvailableIds(String domain, int numIDs){
+        BoundStatement availIDsBndStmt = getAvailbleIdsStmt.bind()
+                .setString(DOMAIN_PARAM, domain)
+                .setInt(SIZE_LIMIT_PARAM, numIDs);
+
+        return session.execute(availIDsBndStmt).all().stream()
+                .map(row->row.getString("identifier"))
+                .collect(Collectors.toList());
+    }
 }
