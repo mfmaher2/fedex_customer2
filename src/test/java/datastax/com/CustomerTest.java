@@ -48,9 +48,9 @@ public class CustomerTest {
     static AuditHistoryDao daoAuditHistory = null;
     static AccountContactDao daoAccountContact = null;
 
-    private static boolean skipSchemaCreation = false;
-    private static boolean skipDataLoad = false;
-    private static boolean skipKeyspaceDrop = false;
+    private static boolean skipSchemaCreation = true;
+    private static boolean skipDataLoad = true;
+    private static boolean skipKeyspaceDrop = true;
     private static boolean skipIndividualTableDrop = true;
     private static String productName = "Customer" ;
 
@@ -186,6 +186,26 @@ public class CustomerTest {
         dropTestKeyspace();
         if (session != null) session.close();
     }
+
+    @Test
+    public void idAssignTest(){
+        IDAssignment assignHandler = new IDAssignment(
+                session,
+                Keyspaces.CUSTOMER.keyspaceName(),
+                "id_available",
+                "id_assignment",
+                "soloTest");
+
+        String testDomain = "dom1";
+        String idPrefix = "id-";
+
+        String currentID;
+        for(int i=0; i<10; i++){
+            currentID = idPrefix + i;
+            assignHandler.addAvailableId(testDomain, currentID);
+        }
+    }
+
 
     @Test
     public void batchPurgeTest(){

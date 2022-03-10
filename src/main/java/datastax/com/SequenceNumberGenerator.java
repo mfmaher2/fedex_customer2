@@ -19,7 +19,7 @@ public class SequenceNumberGenerator {
 
     private CqlSession session;
     private String hostName;
-    private final int RETRY_LIMIT = 3;
+    private final int RETRY_LIMIT = 3; //todo make input parameter
 
     private String keyspace;
     private String tableName;
