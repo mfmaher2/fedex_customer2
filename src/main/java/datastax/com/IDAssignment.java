@@ -130,53 +130,71 @@ public class IDAssignment {
 
         String candidateId = "";
         int retryCount;
+        boolean curIdAssigned;
         for(int curRequiredID=0; curRequiredID<numIdsRequired; curRequiredID++){
 
             retryCount=0;
+            curIdAssigned = false;
 
-            if(availableIter.hasNext()){
-                candidateId = availableIter.next();
-            }
+            while(!curIdAssigned && (retryCount<RETRY_LIMIT)) {
+                if (availableIter.hasNext()) {
+                    candidateId = availableIter.next();
+                }
+                else{
+                    //todo - more complicate/robust logic may be needed (retry limit, checking newly retrieved ID set etc.)
+                    List<String> additionaAvailableIds = getAvailableIds(domain, numIdsRequired);
+                    availableIter = additionaAvailableIds.iterator();
+                    candidateId = availableIter.next();
+                }
 
-            BoundStatement assignBndStmt = assignIdStmt.bind()
-                    .setString(ASSIGN_PARAM, applicationID)
-                    .setString(DOMAIN_PARAM, domain)
-                    .setString(ID_PARAM, candidateId);
-
-            if (executeLwtStatement(assignBndStmt).wasApplied()){
-                //verify appID row value is set to local value
-                BoundStatement verifyBndStmt = checkAssignmentStmt.bind()
-                        .setString(DOMAIN_PARAM,domain)
+                //attempt assignment using conditional statement
+                BoundStatement assignBndStmt = assignIdStmt.bind()
+                        .setString(ASSIGN_PARAM, applicationID)
+                        .setString(DOMAIN_PARAM, domain)
                         .setString(ID_PARAM, candidateId);
-                Row rowVerify = session.execute(verifyBndStmt).one();
 
-                if(rowVerify.getString("assigned_by").equals(applicationID)){
-                    //assignment successful
-                    BoundStatement delAvailable = removeAvailableIdStmt.bind()
+                if (executeLwtStatement(assignBndStmt).wasApplied()) {
+                    //verify appID row value is set to local value
+                    BoundStatement verifyBndStmt = checkAssignmentStmt.bind()
                             .setString(DOMAIN_PARAM, domain)
                             .setString(ID_PARAM, candidateId);
-                    session.execute(delAvailable);
+                    Row rowVerify = session.execute(verifyBndStmt).one();
+
+                    if (rowVerify.getString("assigned_by").equals(applicationID)) {
+                        //assignment successful
+                        BoundStatement delAvailable = removeAvailableIdStmt.bind()
+                                .setString(DOMAIN_PARAM, domain)
+                                .setString(ID_PARAM, candidateId);
+                        session.execute(delAvailable);
+
+                        curIdAssigned = true;
+                    } else {
+                        //assignment not successful
+                        //another process assigned ID, need to retry with next available
+                        retryCount++;
+                    }
                 }
                 else{
                     //assignment not successful
                     //another process assigned ID, need to retry with next available
+                    retryCount++;
                 }
+            }
 
+            //todo check retry count, output error if retries exceeded
+            if(retryCount >= RETRY_LIMIT){
+                System.out.println("ERROR - not all requested IDs assigned");
             }
         }
-
-
-
-        System.out.println();
-
 
         return assignedIds;
     }
 
     private List<String> getAvailableIds(String domain, int numIDs){
+        //todo - use a set to avoid duplicates?
         BoundStatement availIDsBndStmt = getAvailbleIdsStmt.bind()
                 .setString(DOMAIN_PARAM, domain)
-                .setInt(SIZE_LIMIT_PARAM, numIDs);
+                .setInt(SIZE_LIMIT_PARAM, numIDs);  //todo ?? - retrieve numIDs x (factor) to get more than needed, possibly avoid additional retrievals if some already assigned ??
 
         return session.execute(availIDsBndStmt).all().stream()
                 .map(row->row.getString("identifier"))

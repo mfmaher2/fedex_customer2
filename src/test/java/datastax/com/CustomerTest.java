@@ -205,6 +205,13 @@ public class CustomerTest {
             assignHandler.addAvailableId(testDomain, currentID);
         }
 
+        SimpleStatement updateAssignment = update(Keyspaces.CUSTOMER.keyspaceName(), "id_assignment")
+                .setColumn("assigned_by", literal("used"))
+                .whereColumn("domain").isEqualTo(literal("dom1"))
+                .whereColumn("identifier").isEqualTo(literal(idPrefix + 4))
+                .build();
+        session.execute(updateAssignment);
+
         assignHandler.assignAvailableIds(testDomain, 5);
     }
 
