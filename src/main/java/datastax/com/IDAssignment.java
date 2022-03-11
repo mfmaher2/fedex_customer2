@@ -193,7 +193,7 @@ public class IDAssignment {
         //todo - add bucket as clustering key (~random int) to prevent wide partitions
         BoundStatement availIDsBndStmt = getAvailbleIdsStmt.bind()
                 .setString(DOMAIN_PARAM, domain)
-                .setInt(SIZE_LIMIT_PARAM, numIDs);  //todo ?? - retrieve numIDs x (factor) to get more than needed, possibly avoid additional retrievals if some already assigned ??
+                .setInt(SIZE_LIMIT_PARAM, ((numIDs > 0) ? numIDs: 1) * 3);  //todo ?? - retrieve numIDs x (factor) to get more than needed, possibly avoid additional retrievals if some already assigned ??
 
         return session.execute(availIDsBndStmt).all().stream()
                 .map(row->row.getString("identifier"))

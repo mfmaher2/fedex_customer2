@@ -18,7 +18,7 @@ public class IDAssignTask implements Runnable {
         this.assignmentHandler = assigner;
         this.domain = domain;
         this.blockCount = numBlocks;
-        this.maxBlockSize = maxBlockCount;
+        this.maxBlockSize = (maxBlockCount>0) ? maxBlockCount : 1;
         this.mapAssignedIDs = mapIDs;
     }
 
@@ -33,7 +33,7 @@ public class IDAssignTask implements Runnable {
 //            ids.add(String.valueOf(i));
             System.out.println("AssignThread: name-" + threadName + ",   iteration #" + i);
 
-            List<String> assignedIDs =  assignmentHandler.assignAvailableIds(threadName, domain, 1);
+            List<String> assignedIDs =  assignmentHandler.assignAvailableIds(threadName, domain, random.nextInt(maxBlockSize));
             assignedIDs.forEach(assigned -> ids.add(assigned));
 
             Thread.sleep(random.nextInt(100));

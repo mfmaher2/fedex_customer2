@@ -189,7 +189,7 @@ public class CustomerTest {
 
     @Test
     public void idAssingMultiTest() throws InterruptedException {
-        IDAssignment assignHandler = new IDAssignment(
+        IDAssignment assignInitialHandler = new IDAssignment(
                 session,
                 Keyspaces.CUSTOMER.keyspaceName(),
                 "id_available",
@@ -201,24 +201,46 @@ public class CustomerTest {
         String idPrefix = "id-";
 
         String currentID;
-        for(int i=0; i<1000; i++){
+        for(int i=0; i<10000; i++){
             currentID = idPrefix + i;
-            assignHandler.addAvailableId(testDomain, currentID);
+            assignInitialHandler.addAvailableId(testDomain, currentID);
         }
+
+        System.out.println("Pause to allow initialization writes to complete.");
+        Thread.sleep(11000);
 
         //simulate multile clients attempting to assign IDs simultaneously
         Map<String, Set<String>> assignments = new HashMap<>();
 
-        Runnable assignerTask1 = new IDAssignTask(assignHandler, testDomain, 10, 10, assignments);
-        Runnable assignerTask2 = new IDAssignTask(assignHandler, testDomain, 20, 10, assignments);
-        Thread assigner1 = new Thread(assignerTask1, "Assigner1");
-        Thread assigner2 = new Thread(assignerTask2, "Assigner2");
+        Random random = new Random();
+        final int NUM_CONCURRENT_ASSIGNERS = 5;
+        List<Thread> assignerThreads = new ArrayList<>();
+        for(int newAssigner=0; newAssigner<NUM_CONCURRENT_ASSIGNERS; newAssigner++){
+            IDAssignment assignHandler = new IDAssignment(
+                    session,
+                    Keyspaces.CUSTOMER.keyspaceName(),
+                    "id_available",
+                    "id_assignment");
 
-        assigner1.start();
-        assigner2.start();
+            Runnable assignerTask = new IDAssignTask(assignHandler, testDomain, random.nextInt(10), random.nextInt(10),assignments );
+            assignerThreads.add(new Thread(assignerTask, "Assigner"+ newAssigner));
+        }
 
-        assigner1.join();
-        assigner2.join();
+        assignerThreads.forEach(Thread::start);
+        for(Thread t : assignerThreads){
+            t.join();
+        }
+
+//        Runnable assignerTask1 = new IDAssignTask(assignHandler, testDomain, 10, 10, assignments);
+//        Runnable assignerTask2 = new IDAssignTask(assignHandler, testDomain, 20, 10, assignments);
+//        Thread assigner1 = new Thread(assignerTask1, "Assigner1");
+//        Thread assigner2 = new Thread(assignerTask2, "Assigner2");
+//
+//        assigner1.start();
+//        assigner2.start();
+//
+//        assigner1.join();
+//        assigner2.join();
 
         System.out.println(assignments);
 
@@ -269,7 +291,6 @@ public class CustomerTest {
             });
         });
         System.out.println("\tFinished check for expected assignments, duration - " + (System.currentTimeMillis() - startExpectedCheck) + " (ms)");
-
     }
 
     @Test
