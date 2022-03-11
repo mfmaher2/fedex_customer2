@@ -20,11 +20,9 @@ public class IDAssignmentSingleTbl {
     private String keyspace;
     private String assignmentTableName;
 
-//    private PreparedStatement addAvailableIdStmt;
     private PreparedStatement addAssignmentIdStmt;
     private PreparedStatement getAvailbleIdsStmt;
     private PreparedStatement assignIdStmt;
-//    private PreparedStatement removeAvailableIdStmt;
     private PreparedStatement checkAssignmentStmt;
 
     private final String UNASSIGNED = "unassigned";
@@ -43,13 +41,6 @@ public class IDAssignmentSingleTbl {
     }
 
     private void initializeStatements(){
-
-//        SimpleStatement addAvailableStmt =  insertInto(keyspace, availableTableName)
-//                .value("domain", bindMarker(DOMAIN_PARAM))
-//                .value("identifier", bindMarker(ID_PARAM))
-//                .build();
-//        addAvailableIdStmt = session.prepare(addAvailableStmt);
-
         SimpleStatement addAssignStmt =  insertInto(keyspace, assignmentTableName)
                 .value("domain", bindMarker(DOMAIN_PARAM))
                 .value("identifier", bindMarker(ID_PARAM))
@@ -74,12 +65,6 @@ public class IDAssignmentSingleTbl {
                 .build();
         assignIdStmt = session.prepare(lwtUpdateAssign);
 
-//        SimpleStatement deleteAvailable =  deleteFrom(keyspace, availableTableName)
-//                .whereColumn("domain").isEqualTo(bindMarker(DOMAIN_PARAM))
-//                .whereColumn("identifier").isEqualTo(bindMarker(ID_PARAM))
-//                .build();
-//        removeAvailableIdStmt = session.prepare(deleteAvailable);
-
         SimpleStatement getAssigned = selectFrom(keyspace, assignmentTableName)
                 .column("assigned_by")
                 .whereColumn("domain").isEqualTo(bindMarker(DOMAIN_PARAM))
@@ -97,20 +82,9 @@ public class IDAssignmentSingleTbl {
     }
 
     public boolean addAvailableId(String domain, String id){
-//        BatchStatement batch = BatchStatement.builder(BatchType.LOGGED).build();
-
         BoundStatement assignBndStmt =  addAssignmentIdStmt.bind()
                 .setString(DOMAIN_PARAM, domain)
                 .setString(ID_PARAM, id);
-//        batch = batch.add(assignBndStmt);
-
-//        BoundStatement availableBndStmt = addAvailableIdStmt.bind()
-//                .setString(DOMAIN_PARAM, domain)
-//                .setString(ID_PARAM, id);
-//        batch = batch.add(availableBndStmt);
-
-//        session.executeAsync(batch);
-
         session.executeAsync(assignBndStmt);
         return true; //todo use batch, verify applied
     }
@@ -154,12 +128,6 @@ public class IDAssignmentSingleTbl {
                     Row rowVerify = session.execute(verifyBndStmt).one();
 
                     if (rowVerify.getString("assigned_by").equals(applicationID)) {
-                        //assignment successful
-//                        BoundStatement delAvailable = removeAvailableIdStmt.bind()
-//                                .setString(DOMAIN_PARAM, domain)
-//                                .setString(ID_PARAM, candidateId);
-//                        session.execute(delAvailable);
-
                         assignedIds.add(candidateId);
                         curIdAssigned = true;
                     } else {
