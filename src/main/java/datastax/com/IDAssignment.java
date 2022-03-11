@@ -13,8 +13,6 @@ import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.*;
 
 public class IDAssignment {
     private CqlSession session;
-    private String applicationID;
-
     private final int RETRY_LIMIT = 3; //todo make input parameter
 
     private String keyspace;
@@ -34,12 +32,11 @@ public class IDAssignment {
     private final String ASSIGN_PARAM = "assignParam";
     private final String SIZE_LIMIT_PARAM = "sizeParam";
 
-    IDAssignment(CqlSession session, String keyspace, String availbleTable, String assignTable, String appID){
+    IDAssignment(CqlSession session, String keyspace, String availbleTable, String assignTable){
         this.session = session;
         this.keyspace = keyspace;
         this.availableTableName = availbleTable;
         this.assignmentTableName = assignTable;
-        this.applicationID = appID;
 
         //create prepared statemens using supplied parameters
         initializeStatements();
@@ -122,7 +119,7 @@ public class IDAssignment {
         return true; //todo use batch, verify applied
     }
 
-    public List<String> assignAvailableIds(String domain, int numIdsRequired){
+    public List<String> assignAvailableIds(String applicationID, String domain, int numIdsRequired){
         List<String> assignedIds = new ArrayList<>();
 
         List<String> availableIds = getAvailableIds(domain, numIdsRequired);

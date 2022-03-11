@@ -193,8 +193,7 @@ public class CustomerTest {
                 session,
                 Keyspaces.CUSTOMER.keyspaceName(),
                 "id_available",
-                "id_assignment",
-                "multiTest");
+                "id_assignment");
 
 
         //initialize available IDs
@@ -212,8 +211,8 @@ public class CustomerTest {
 
         Runnable assignerTask1 = new IDAssignTask(assignHandler, testDomain, 10, 10, assignments);
         Runnable assignerTask2 = new IDAssignTask(assignHandler, testDomain, 20, 10, assignments);
-        Thread assigner1 = new Thread(assignerTask1, "Assign1");
-        Thread assigner2 = new Thread(assignerTask2, "Assign2");
+        Thread assigner1 = new Thread(assignerTask1, "Assigner1");
+        Thread assigner2 = new Thread(assignerTask2, "Assigner2");
 
         assigner1.start();
         assigner2.start();
@@ -222,6 +221,55 @@ public class CustomerTest {
         assigner2.join();
 
         System.out.println(assignments);
+
+        //verify assigned IDs only assigned by one process
+        Set<String> setProcessKeys = assignments.keySet();
+        List<String> processKeys = new ArrayList<>(setProcessKeys);
+
+        System.out.println("Starting check for unique assignment");
+        long startUniqueCheck = System.currentTimeMillis();
+        //Iterate through each set of assinged IDs by process and verify each value
+        //in set is not present in any of the sets assigned by other processes.  Will not
+        //ned to check the last process list because all other sets alrady checked against
+        //entries in the last set.
+        for(int curKeyIndex=0; curKeyIndex < (processKeys.size()-1); curKeyIndex++){
+            String curKeyValue = processKeys.get(curKeyIndex);
+
+            //retrieve values for one set
+            Set<String> curCheckIDs = assignments.get(curKeyValue);
+
+            //for each value in current set see if value in any other sets
+            curCheckIDs.forEach(assignID ->{
+                processKeys.forEach(processID ->{
+                    //check all but 'current' set
+                    if(!processID.equals(curKeyValue)){
+                        assert(!assignments.get(processID).contains(assignID));
+                    }
+                });
+            });
+        }
+        System.out.println("\tFinished check for unique assignment, duration - " + (System.currentTimeMillis() - startUniqueCheck) + " (ms)");
+
+
+        //verify that assingments recorded by threads/process are reflected in table records
+        //use prepared statement to received assignment properties for each ID recorded by threads
+        SimpleStatement getAssignedBy = selectFrom(Keyspaces.CUSTOMER.keyspaceName(), "id_assignment")
+                .column("assigned_by")
+                .whereColumn("domain").isEqualTo(literal(testDomain))
+                .whereColumn("identifier").isEqualTo(bindMarker())
+                .build();
+        PreparedStatement getAssignedByStmt = session.prepare(getAssignedBy);
+
+        System.out.println("Starting check for expected assignments");
+        long startExpectedCheck = System.currentTimeMillis();
+        assignments.keySet().forEach(processKey ->{
+            assignments.get(processKey).forEach(assignedID -> {
+                BoundStatement getAssignedByBndStmt = getAssignedByStmt.bind(assignedID);
+                assert(session.execute(getAssignedByBndStmt).one().getString("assigned_by").equals(processKey));
+            });
+        });
+        System.out.println("\tFinished check for expected assignments, duration - " + (System.currentTimeMillis() - startExpectedCheck) + " (ms)");
+
     }
 
     @Test
@@ -230,11 +278,11 @@ public class CustomerTest {
                 session,
                 Keyspaces.CUSTOMER.keyspaceName(),
                 "id_available",
-                "id_assignment",
-                "soloTest");
+                "id_assignment");
 
         String testDomain = "dom1";
         String idPrefix = "id-";
+        String appName = "soloTest";
 
         String currentID;
         for(int i=0; i<10; i++){
@@ -249,7 +297,7 @@ public class CustomerTest {
                 .build();
         session.execute(updateAssignment);
 
-        List<String> assignedIDs =  assignHandler.assignAvailableIds(testDomain, 5);
+        List<String> assignedIDs =  assignHandler.assignAvailableIds(appName, testDomain, 5);
         System.out.println(assignedIDs);
         //todo check results as expected
     }
