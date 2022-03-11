@@ -31,3 +31,13 @@ CREATE TABLE IF NOT EXISTS customer_test.id_assignment_single (
     PRIMARY KEY (domain, identifier)
 ) WITH CLUSTERING ORDER BY(identifier ASC)
 ;
+
+-- example using composite partition key with bucket
+--CREATE TABLE IF NOT EXISTS customer_test.id_assignment_single (
+--    domain text,
+--    bucket int,
+--    identifier text,
+--    assigned_by text,
+--    PRIMARY KEY ((domain, bucket), identifier)
+--) WITH CLUSTERING ORDER BY(identifier ASC)
+--;

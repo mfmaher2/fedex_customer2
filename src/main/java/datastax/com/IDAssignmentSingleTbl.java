@@ -8,6 +8,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Random;
 import java.util.stream.Collectors;
 
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.*;
@@ -56,6 +57,17 @@ public class IDAssignmentSingleTbl {
                 .allowFiltering()
                 .build();
         getAvailbleIdsStmt = session.prepare(getAvailableStmt);
+
+        ///example if use bucket
+//        Random random = new Random();
+//        SimpleStatement getAvailableBucketedStmt = selectFrom(keyspace, assignmentTableName)
+//                .column("identifier")
+//                .whereColumn("domain").isEqualTo(bindMarker(DOMAIN_PARAM))
+//                .whereColumn("bucket").isEqualTo(literal(random.nextInt(1000)))
+//                .whereColumn("assigned_by").isEqualTo(literal(UNASSIGNED))
+//                .limit(bindMarker(SIZE_LIMIT_PARAM))
+//                .allowFiltering()
+//                .build();
 
         SimpleStatement lwtUpdateAssign =  update(keyspace, assignmentTableName)
                 .setColumn("assigned_by", bindMarker(ASSIGN_PARAM)) //todo use appID member varialbe for assignment?
