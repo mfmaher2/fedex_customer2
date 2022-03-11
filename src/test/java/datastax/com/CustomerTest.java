@@ -188,6 +188,43 @@ public class CustomerTest {
     }
 
     @Test
+    public void idAssingMultiTest() throws InterruptedException {
+        IDAssignment assignHandler = new IDAssignment(
+                session,
+                Keyspaces.CUSTOMER.keyspaceName(),
+                "id_available",
+                "id_assignment",
+                "multiTest");
+
+
+        //initialize available IDs
+        String testDomain = "dom1";
+        String idPrefix = "id-";
+
+        String currentID;
+        for(int i=0; i<1000; i++){
+            currentID = idPrefix + i;
+            assignHandler.addAvailableId(testDomain, currentID);
+        }
+
+        //simulate multile clients attempting to assign IDs simultaneously
+        Map<String, Set<String>> assignments = new HashMap<>();
+
+        Runnable assignerTask1 = new IDAssignTask(assignHandler, testDomain, 10, 10, assignments);
+        Runnable assignerTask2 = new IDAssignTask(assignHandler, testDomain, 20, 10, assignments);
+        Thread assigner1 = new Thread(assignerTask1, "Assign1");
+        Thread assigner2 = new Thread(assignerTask2, "Assign2");
+
+        assigner1.start();
+        assigner2.start();
+
+        assigner1.join();
+        assigner2.join();
+
+        System.out.println(assignments);
+    }
+
+    @Test
     public void idAssignTest(){
         IDAssignment assignHandler = new IDAssignment(
                 session,
@@ -212,7 +249,9 @@ public class CustomerTest {
                 .build();
         session.execute(updateAssignment);
 
-        assignHandler.assignAvailableIds(testDomain, 5);
+        List<String> assignedIDs =  assignHandler.assignAvailableIds(testDomain, 5);
+        System.out.println(assignedIDs);
+        //todo check results as expected
     }
 
 

@@ -167,6 +167,7 @@ public class IDAssignment {
                                 .setString(ID_PARAM, candidateId);
                         session.execute(delAvailable);
 
+                        assignedIds.add(candidateId);
                         curIdAssigned = true;
                     } else {
                         //assignment not successful
@@ -192,6 +193,7 @@ public class IDAssignment {
 
     private List<String> getAvailableIds(String domain, int numIDs){
         //todo - use a set to avoid duplicates?
+        //todo - add bucket as clustering key (~random int) to prevent wide partitions
         BoundStatement availIDsBndStmt = getAvailbleIdsStmt.bind()
                 .setString(DOMAIN_PARAM, domain)
                 .setInt(SIZE_LIMIT_PARAM, numIDs);  //todo ?? - retrieve numIDs x (factor) to get more than needed, possibly avoid additional retrievals if some already assigned ??
