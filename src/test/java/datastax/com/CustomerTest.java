@@ -231,17 +231,6 @@ public class CustomerTest {
             t.join();
         }
 
-//        Runnable assignerTask1 = new IDAssignTask(assignHandler, testDomain, 10, 10, assignments);
-//        Runnable assignerTask2 = new IDAssignTask(assignHandler, testDomain, 20, 10, assignments);
-//        Thread assigner1 = new Thread(assignerTask1, "Assigner1");
-//        Thread assigner2 = new Thread(assignerTask2, "Assigner2");
-//
-//        assigner1.start();
-//        assigner2.start();
-//
-//        assigner1.join();
-//        assigner2.join();
-
         System.out.println(assignments);
 
         //verify assigned IDs only assigned by one process
@@ -271,7 +260,6 @@ public class CustomerTest {
             });
         }
         System.out.println("\tFinished check for unique assignment, duration - " + (System.currentTimeMillis() - startUniqueCheck) + " (ms)");
-
 
         //verify that assingments recorded by threads/process are reflected in table records
         //use prepared statement to received assignment properties for each ID recorded by threads

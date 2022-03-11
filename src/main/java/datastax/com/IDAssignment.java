@@ -70,8 +70,6 @@ public class IDAssignment {
                 .whereColumn("identifier").isEqualTo(bindMarker(ID_PARAM))
                 .ifColumn("assigned_by").isEqualTo(literal(UNASSIGNED))
                 .build();
-//        String lwtUpdateAssignmentCQL =
-//                "UPDATE " + keyspace + "." + assignmentTableName + " SET assigned_by = ? WHERE domain = ? AND identifier = ? if assigned_by = " + UNASSIGNED;
         assignIdStmt = session.prepare(lwtUpdateAssign);
 
         SimpleStatement deleteAvailable =  deleteFrom(keyspace, availableTableName)
@@ -86,11 +84,6 @@ public class IDAssignment {
                 .whereColumn("identifier").isEqualTo(bindMarker(ID_PARAM))
                 .build();
         checkAssignmentStmt = session.prepare(getAssigned);
-
-//        String lwtUpdateCurNumberCQL = "UPDATE " + keyspace + "." + tableName + " SET current_num = ? WHERE domain = ? AND sequence_name = ? if current_num = ?";
-//
-//        getCurNumberStmt = session.prepare(getCurNumberCQL);
-//        lwdUpdateCurNumberStmt = session.prepare(lwtUpdateCurNumberCQL);
     }
 
     //method to set customized configuration parameters when executing LWT
