@@ -188,6 +188,99 @@ public class CustomerTest {
     }
 
     @Test
+    public void idAssignMultiProcessorSingleTableTest() throws InterruptedException {
+        IDAssignmentSingleTbl assignInitialHandler = new IDAssignmentSingleTbl(
+                session,
+                Keyspaces.CUSTOMER.keyspaceName(),
+                "id_assignment_single");
+
+
+        //initialize available IDs
+        String testDomain = "dom1";
+        String idPrefix = "id-";
+
+        String currentID;
+        for(int i=0; i<10000; i++){
+            currentID = idPrefix + i;
+            assignInitialHandler.addAvailableId(testDomain, currentID);
+        }
+
+        System.out.println("Pause to allow initialization writes to complete.");
+        Thread.sleep(11000);
+
+        //simulate multile clients attempting to assign IDs simultaneously
+        Map<String, Set<String>> assignments = new HashMap<>();
+
+        Random random = new Random();
+        final int NUM_CONCURRENT_ASSIGNERS = 4;
+        List<Thread> assignerThreads = new ArrayList<>();
+        for(int newAssigner=0; newAssigner<NUM_CONCURRENT_ASSIGNERS; newAssigner++){
+            IDAssignmentSingleTbl assignHandler = new IDAssignmentSingleTbl(
+                    session,
+                    Keyspaces.CUSTOMER.keyspaceName(),
+                    "id_assignment_single");
+
+            Runnable assignerTask = new IDAssignTaskSingleTbl(assignHandler, testDomain, random.nextInt(10), random.nextInt(10),assignments );
+            assignerThreads.add(new Thread(assignerTask, "Assigner"+ newAssigner));
+        }
+
+        assignerThreads.forEach(Thread::start);
+        for(Thread t : assignerThreads){
+            t.join();
+        }
+
+        System.out.println(assignments);
+
+        //verify assigned IDs only assigned by one process
+        Set<String> setProcessKeys = assignments.keySet();
+        List<String> processKeys = new ArrayList<>(setProcessKeys);
+
+        System.out.println("Starting check for unique assignment");
+        long startUniqueCheck = System.currentTimeMillis();
+        //Iterate through each set of assinged IDs by process and verify each value
+        //in set is not present in any of the sets assigned by other processes.  Will not
+        //ned to check the last process list because all other sets alrady checked against
+        //entries in the last set.
+        for(int curKeyIndex=0; curKeyIndex < (processKeys.size()-1); curKeyIndex++){
+            String curKeyValue = processKeys.get(curKeyIndex);
+
+            //retrieve values for one set
+            Set<String> curCheckIDs = assignments.get(curKeyValue);
+
+            //for each value in current set see if value in any other sets
+            curCheckIDs.forEach(assignID ->{
+                processKeys.forEach(processID ->{
+                    //check all but 'current' set
+                    if(!processID.equals(curKeyValue)){
+                        assert(!assignments.get(processID).contains(assignID));
+                    }
+                });
+            });
+        }
+        System.out.println("\tFinished check for unique assignment, duration - " + (System.currentTimeMillis() - startUniqueCheck) + " (ms)");
+
+        //verify that assingments recorded by threads/process are reflected in table records
+        //use prepared statement to received assignment properties for each ID recorded by threads
+        SimpleStatement getAssignedBy = selectFrom(Keyspaces.CUSTOMER.keyspaceName(), "id_assignment_single")
+                .column("assigned_by")
+                .whereColumn("domain").isEqualTo(literal(testDomain))
+                .whereColumn("identifier").isEqualTo(bindMarker())
+                .build();
+        PreparedStatement getAssignedByStmt = session.prepare(getAssignedBy);
+
+        System.out.println("Starting check for expected assignments");
+        long startExpectedCheck = System.currentTimeMillis();
+        assignments.keySet().forEach(processKey ->{
+            assignments.get(processKey).forEach(assignedID -> {
+                BoundStatement getAssignedByBndStmt = getAssignedByStmt.bind(assignedID);
+                assert(session.execute(getAssignedByBndStmt).one().getString("assigned_by").equals(processKey));
+            });
+        });
+        System.out.println("\tFinished check for expected assignments, duration - " + (System.currentTimeMillis() - startExpectedCheck) + " (ms)");
+    }
+
+
+    @Test
     public void idAssingMultiTest() throws InterruptedException {
         IDAssignment assignInitialHandler = new IDAssignment(
                 session,

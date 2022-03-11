@@ -23,3 +23,11 @@ CREATE TABLE IF NOT EXISTS customer_test.id_assignment (
     PRIMARY KEY (domain, identifier)
 ) WITH CLUSTERING ORDER BY(identifier ASC)
 ;
+
+CREATE TABLE IF NOT EXISTS customer_test.id_assignment_single (
+    domain text,
+    identifier text,
+    assigned_by text,
+    PRIMARY KEY (domain, identifier)
+) WITH CLUSTERING ORDER BY(identifier ASC)
+;

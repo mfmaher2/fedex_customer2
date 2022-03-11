@@ -1,0 +1,40 @@
+package datastax.com;
+
+import lombok.SneakyThrows;
+
+import java.util.*;
+
+public class IDAssignTaskSingleTbl  implements Runnable {
+    protected IDAssignmentSingleTbl assignmentHandler;
+    protected String domain;
+    protected int blockCount=10;
+    protected int maxBlockSize=10;
+    protected Map<String, Set<String>> mapAssignedIDs;
+
+    public IDAssignTaskSingleTbl(IDAssignmentSingleTbl assigner, String domain, int numBlocks, int maxBlockCount, Map<String, Set<String>> mapIDs){
+        this.assignmentHandler = assigner;
+        this.domain = domain;
+        this.blockCount = numBlocks;
+        this.maxBlockSize = (maxBlockCount>0) ? maxBlockCount : 1;
+        this.mapAssignedIDs = mapIDs;
+    }
+
+    @SneakyThrows
+    @Override
+    public void run(){
+        Random random= new Random();
+        Set<String> ids = new HashSet<>();
+        String threadName = Thread.currentThread().getName() ;
+
+        for(int i = 0; i< blockCount; i++){
+            System.out.println("AssignThread: name-" + threadName + ",   iteration #" + i);
+
+            List<String> assignedIDs =  assignmentHandler.assignAvailableIds(threadName, domain, random.nextInt(maxBlockSize));
+            assignedIDs.forEach(assigned -> ids.add(assigned));
+
+            Thread.sleep(random.nextInt(100));
+        }
+
+        mapAssignedIDs.put(threadName, ids);
+    }
+}
