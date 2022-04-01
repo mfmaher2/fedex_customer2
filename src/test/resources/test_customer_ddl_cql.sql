@@ -69,6 +69,7 @@ CREATE TYPE IF NOT EXISTS audit_history_ks.history_entity_type (
 CREATE TYPE IF NOT EXISTS audit_history_ks.history_field_type (
     action text,
     stanza_name text,
+    field_name text,
     previous_value text,
     new_value text
 );
@@ -541,7 +542,7 @@ CREATE TABLE IF NOT EXISTS payment_info_ks.payment_info_v1 (
     --recipientServicesCreditCard
     --ukDomesticCreditCard
     type text,
-    credit_card_id text,
+    payment_id text,
     exp_date_month int,
     exp_date_year int,
     order_of_usage int,
@@ -783,6 +784,8 @@ CREATE TABLE IF NOT EXISTS assoc_account_ks.assoc_accounts_v1 (
     account_number text,
     associated_account__opco text,
     associated_account__number text,
+    //last last_update_tmstp field needed
+    //make sure consistent naming for last_update_tmstp
     PRIMARY KEY(account_number, associated_account__opco, associated_account__number))
 WITH CLUSTERING ORDER BY(associated_account__opco ASC, associated_account__number ASC)
     AND bloom_filter_fp_chance = 0.01
@@ -921,7 +924,12 @@ CREATE TABLE IF NOT EXISTS centralized_view_ks.centralized_view_v1 (
      account_number text,
      account_status__status_code text,
      account_status__status_date date,
-     opco_description map<text, text>,
+     opco_description map<text, text>,  //key=opco code, value = opco account number
+
+     //queries
+     //find account_number from opco account number -> filtered by opco code optionally (could use entire set of opco codes if necessary)
+     //add SAI for keys
+     //
 
     PRIMARY KEY(account_number))
      WITH bloom_filter_fp_chance = 0.01
@@ -1035,8 +1043,8 @@ CREATE TABLE IF NOT EXISTS line_of_business_ks.line_of_business_v1 (
 
 CREATE TABLE IF NOT EXISTS time_event_ks.time_event_v1 (
     account_number text,
-    type text,
-    status text,
+    type text,          //MONTHLY_BILLING_INDICATOR,ACCOUNT_RESTORE
+    status text,        //FAILED,IN_PROGRESS,NOT_STARTED,SUCCESS
     create_time timestamp,
     process_time timestamp,
     event_processed_time timestamp,
@@ -1180,6 +1188,7 @@ CREATE TABLE IF NOT EXISTS search_ks.cam_search_v1 (
        address__geo_political_subdivision3 text,
        address__postal_code text,
        address__country_code text,
+       share_id text,
        email text,
        tele_com set<frozen<telecom_details_type>>,
     PRIMARY KEY(account_number, opco, contact_type_code, contact_business_id))
