@@ -102,7 +102,7 @@ CREATE TYPE IF NOT EXISTS account_ks.other_potential_info_type (
 CREATE TABLE IF NOT EXISTS account_ks.cust_acct_v1 (
     account_number text,
     opco text,
-    last_update_timestamp timestamp,
+    last_update_tmstp timestamp,
 
     --enterpriseProfile
     profile__customer_type text,
@@ -133,7 +133,7 @@ CREATE TABLE IF NOT EXISTS account_ks.cust_acct_v1 (
     profile__customer_account_status text,
     profile__duplicate_account_flag boolean,
     profile__archive_date date,
-    profile__archive_reason_code text,
+    profile__archive_reason_code text,  --?? is this property needed with 'general' archive reason code present in archive tables?
     profile__archive_options text,
     profile__cargo_ind text,
     profile__pref_cust_flag boolean,
@@ -532,6 +532,7 @@ WITH CLUSTERING ORDER BY(opco ASC, apply_discount__effective_date_time DESC)
 CREATE TABLE IF NOT EXISTS payment_info_ks.payment_info_v1 (
     account_number text,
     opco text,
+    last_update_tmstp timestamp,
     record_type_cd text,  -- expressCreditCard, expressDirectDebit, expressElectronic pay etc. i.e. stanza names
     record_key text,   -- creditCard,eftBankInfo,addlBankInfo,amexCheckout,altPayment i.e. sub fields
     record_seq int,
@@ -681,7 +682,6 @@ CREATE TABLE IF NOT EXISTS payment_info_ks.payment_info_v1 (
     fpan__exp_date_month int,
     fpan__exp_date_year int,
 
-
     PRIMARY KEY(account_number, opco, record_type_cd, record_key, record_seq))
 WITH CLUSTERING ORDER BY(opco ASC, record_type_cd ASC, record_key ASC, record_seq ASC)
     AND bloom_filter_fp_chance = 0.01
@@ -784,8 +784,7 @@ CREATE TABLE IF NOT EXISTS assoc_account_ks.assoc_accounts_v1 (
     account_number text,
     associated_account__opco text,
     associated_account__number text,
-    //last last_update_tmstp field needed
-    //make sure consistent naming for last_update_tmstp
+    last_update_tmstp timestamp,
     PRIMARY KEY(account_number, associated_account__opco, associated_account__number))
 WITH CLUSTERING ORDER BY(associated_account__opco ASC, associated_account__number ASC)
     AND bloom_filter_fp_chance = 0.01
@@ -921,10 +920,11 @@ CREATE TABLE IF NOT EXISTS audit_history_ks.audit_history_v1 (
      AND speculative_retry = '99PERCENTILE';
 
 CREATE TABLE IF NOT EXISTS centralized_view_ks.centralized_view_v1 (
-     account_number text,
-     account_status__status_code text,
-     account_status__status_date date,
-     opco_description map<text, text>,  //key=opco code, value = opco account number
+    account_number text,
+    last_update_tmstp timestamp,
+    account_status__status_code text,
+    account_status__status_date date,
+    opco_description map<text, text>,  --key=opco_code, value=opco_account_number
 
      //queries
      //find account_number from opco account number -> filtered by opco code optionally (could use entire set of opco codes if necessary)
@@ -950,6 +950,7 @@ CREATE TABLE IF NOT EXISTS centralized_view_ks.centralized_view_v1 (
 CREATE TABLE IF NOT EXISTS line_of_business_ks.line_of_business_v1 (
     account_number text,
     opco text,
+    last_update_tmstp timestamp,
     line_of_business__preference__direct_debit_day_of_month int,
     line_of_business__preference__direct_debit_day_of_month2 int,
     line_of_business__preference__direct_debit_days_to_debit text,
@@ -1023,7 +1024,6 @@ CREATE TABLE IF NOT EXISTS line_of_business_ks.line_of_business_v1 (
     additional_email_info2__email_marketing_flag text,
     social_media set<frozen<social_media_type>>,
 
-
     PRIMARY KEY(account_number, line_of_business__preference__invoice_type, opco, contact_document_id))
  WITH CLUSTERING ORDER BY(line_of_business__preference__invoice_type ASC, opco ASC, contact_document_id ASC)
      AND bloom_filter_fp_chance = 0.01
@@ -1043,13 +1043,13 @@ CREATE TABLE IF NOT EXISTS line_of_business_ks.line_of_business_v1 (
 
 CREATE TABLE IF NOT EXISTS time_event_ks.time_event_v1 (
     account_number text,
-    type text,          //MONTHLY_BILLING_INDICATOR,ACCOUNT_RESTORE
-    status text,        //FAILED,IN_PROGRESS,NOT_STARTED,SUCCESS
+    type text,             -- possible values: MONTHLY_BILLING_INDICATOR,ACCOUNT_RESTORE
+    status text,           -- possible values: FAILED,IN_PROGRESS,NOT_STARTED,SUCCESS
     create_time timestamp,
     process_time timestamp,
     event_processed_time timestamp,
     additional_details_items set<frozen<time_event_additional_details_items>>,
-    last_update_timestamp timestamp,
+    last_update_tmstp timestamp,
     PRIMARY KEY(account_number, process_time, type, status))
 WITH CLUSTERING ORDER BY (process_time DESC, type ASC, status ASC)
     AND bloom_filter_fp_chance = 0.01
@@ -1073,7 +1073,7 @@ WITH CLUSTERING ORDER BY (process_time DESC, type ASC, status ASC)
 CREATE TABLE IF NOT EXISTS dynamic_profile_ks.account_dynamic_profile_v1 (  //need _v1 in table name?
     account_number text,
     opco text,
-    last_update_timestamp timestamp,
+    last_update_tmstp timestamp,
     payor_type text,                        //slightly altered naming convention, no path prefix - keep simplified?
     shipment_type text,                     //slightly altered naming convention, no path prefix - keep simplified?
     package_quantity_for_last_year float,
@@ -1109,7 +1109,7 @@ WITH CLUSTERING ORDER BY (opco ASC, payor_type ASC, shipment_type ASC)
 CREATE TABLE IF NOT EXISTS dynamic_profile_ks.entity_dynamic_profile_v1 ( //need _v1 in table name?
     entity_number text,
     opco text,
-    last_update_timestamp timestamp,
+    last_update_tmstp timestamp,
     payor_type text,
     shipment_type text,
     package_quantity_for_last_year float,
@@ -1136,7 +1136,7 @@ CREATE TABLE IF NOT EXISTS dynamic_profile_ks.entity_dynamic_profile_v1 ( //need
 CREATE TABLE IF NOT EXISTS payment_info_ks.invoice_payment_profile_v1 (
     account_number text,
     opco text,
-    last_update_timestamp timestamp,
+    last_update_tmstp timestamp,
     payor_type text,
     shipment_type text,
     last_payment_amount float,
@@ -1162,35 +1162,36 @@ WITH CLUSTERING ORDER BY (opco ASC, payor_type ASC, shipment_type ASC)
 
 --Possible search use case specific table
 CREATE TABLE IF NOT EXISTS search_ks.cam_search_v1 (
-       account_number text,
-       opco text,
-       profile__archive_reason_code text,
-       profile__customer_account_status text,
-       profile__account_type text,
-       profile__airport_code text,
-       profile__synonym_name_1 text,
-       profile__synonym_name_2 text,
-       profile__interline_cd text,
-       invoice_preference__billing_restriction_indicator text,
-       credit_detail__cash_only_reason text,
-       credit_detail__credit_rating text,
-       contact_document_id bigint,
-       contact_type_code text,
-       contact_business_id text,
-       company_name text,
-       person__first_name text,
-       person__last_name text,
-       person__middle_name text,
-       address__street_line text,
-       address__additional_line1 text,
-       address__geo_political_subdivision1 text,
-       address__geo_political_subdivision2 text,
-       address__geo_political_subdivision3 text,
-       address__postal_code text,
-       address__country_code text,
-       share_id text,
-       email text,
-       tele_com set<frozen<telecom_details_type>>,
+    account_number text,
+    opco text,
+    last_update_tmstp timestamp,
+    profile__archive_reason_code text,
+    profile__customer_account_status text,
+    profile__account_type text,
+    profile__airport_code text,
+    profile__synonym_name_1 text,
+    profile__synonym_name_2 text,
+    profile__interline_cd text,
+    invoice_preference__billing_restriction_indicator text,
+    credit_detail__cash_only_reason text,
+    credit_detail__credit_rating text,
+    contact_document_id bigint,
+    contact_type_code text,
+    contact_business_id text,
+    company_name text,
+    person__first_name text,
+    person__last_name text,
+    person__middle_name text,
+    address__street_line text,
+    address__additional_line1 text,
+    address__geo_political_subdivision1 text,
+    address__geo_political_subdivision2 text,
+    address__geo_political_subdivision3 text,
+    address__postal_code text,
+    address__country_code text,
+    share_id text,
+    email text,
+    tele_com set<frozen<telecom_details_type>>,
     PRIMARY KEY(account_number, opco, contact_type_code, contact_business_id))
 WITH CLUSTERING ORDER BY(opco ASC, contact_type_code ASC, contact_business_id ASC)
     AND bloom_filter_fp_chance = 0.01
@@ -1212,10 +1213,10 @@ WITH CLUSTERING ORDER BY(opco ASC, contact_type_code ASC, contact_business_id AS
 CREATE TABLE IF NOT EXISTS archive_ks.payment_info_v1 (
     account_number text,
     opco text,
+    last_update_tmstp timestamp,
     record_type_cd text,  -- expressCreditCard, expressDirectDebit, expressElectronic pay etc. i.e. stanza names
     record_key text,   -- creditCard,eftBankInfo,addlBankInfo,amexCheckout,altPayment i.e. sub fields
     record_seq int,
-    archive_date_time timestamp,
 
     --express_credit_card
     --freightCreditCard
@@ -1362,9 +1363,11 @@ CREATE TABLE IF NOT EXISTS archive_ks.payment_info_v1 (
     fpan__exp_date_month int,
     fpan__exp_date_year int,
 
+    archive_tmstp timestamp,
+    archive_reason_code text,
 
-    PRIMARY KEY(account_number, opco, record_type_cd, record_key, record_seq, archive_date_time))
-WITH CLUSTERING ORDER BY(opco ASC, record_type_cd ASC, record_key ASC, record_seq ASC, archive_date_time DESC)
+    PRIMARY KEY(account_number, opco, record_type_cd, record_key, record_seq, archive_tmstp))
+WITH CLUSTERING ORDER BY(opco ASC, record_type_cd ASC, record_key ASC, record_seq ASC, archive_tmstp DESC)
     AND bloom_filter_fp_chance = 0.01
     AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
     AND comment = ''
@@ -1380,17 +1383,17 @@ WITH CLUSTERING ORDER BY(opco ASC, record_type_cd ASC, record_key ASC, record_se
     AND read_repair_chance = 0.0
     AND speculative_retry = '99PERCENTILE';
 
-
 CREATE TABLE IF NOT EXISTS archive_ks.apply_discount_detail_v1 (
     account_number text,
     opco text,
-    archive_date_time timestamp,
     last_update_tmstp timestamp,
     apply_discount__discount_flag boolean,
     apply_discount__effective_date_time timestamp,
     apply_discount__expiration_date_time timestamp,
-    PRIMARY KEY(account_number, opco, apply_discount__effective_date_time, archive_date_time))
-WITH CLUSTERING ORDER BY(opco ASC, apply_discount__effective_date_time DESC, archive_date_time DESC)
+    archive_tmstp timestamp,
+    archive_reason_code text,
+    PRIMARY KEY(account_number, opco, apply_discount__effective_date_time, archive_tmstp))
+WITH CLUSTERING ORDER BY(opco ASC, apply_discount__effective_date_time DESC, archive_tmstp DESC)
     AND bloom_filter_fp_chance = 0.01
     AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
     AND comment = ''
