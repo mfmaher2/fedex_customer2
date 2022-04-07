@@ -2,20 +2,21 @@ package datastax.com.schemaElements;
 
 public enum Keyspaces {
 
-    ACCOUNT_KS("account_ks"),
-    ACCOUNT_CONTACT_KS("account_contact_ks"),
-    ASSOC_ACCOUNT_KS("assoc_account_ks"),
-    APPLY_DISCOUNT_KS("apply_discount_ks"),
-    LINE_OF_BUSINESS_KS("line_of_business_ks"),
-    COMMENT_KS("comment_ks"),
-    GROUP_KS("group_ks"),
-    AUDIT_HISTORY_KS("audit_history_ks"),
-    TIME_EVENT_KS("time_event_ks"),
-    CENTRALIZED_VIEW_KS("centralized_view_ks"),
-    PAYMENT_INFO_KS("payment_info_ks"),
-    DYNAMIC_PROFILE_KS("dynamic_profile_ks"),
-    SEARCH_KS("search_ks"),
-    ARCHIVE_KS("archive_ks"),
+    ACCOUNT_KS("cam_account_l1_ks"),
+    ACCOUNT_CONTACT_KS("cam_account_contact_l1_ks"),
+    ASSOC_ACCOUNT_KS("cam_assoc_account_l1_ks"),
+    APPLY_DISCOUNT_KS("cam_apply_discount_l1_ks"),
+    LINE_OF_BUSINESS_KS("cam_line_of_business_l1_ks"),
+    COMMENT_KS("cam_comment_l1_ks"),
+    GROUP_KS("cam_group_l1_ks"),
+    AUDIT_HISTORY_KS("cam_audit_history_l1_ks"),
+    TIME_EVENT_KS("cam_time_event_l1_ks"),
+    CENTRALIZED_VIEW_KS("cam_centralized_view_l1_ks"),
+    PAYMENT_INFO_KS("cam_payment_info_l1_ks"),
+    DYNAMIC_PROFILE_KS("cam_dynamic_profile_l1_ks"),
+    SEARCH_KS("cam_search_l1_ks"),
+    ARCHIVE_KS("cam_archive_l1_ks"),
+    SEQUENCE_KS("cam_sequence_l1_ks"),
     CUSTOMER("customer_test");
 
     private String keyspaceName;
