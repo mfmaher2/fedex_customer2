@@ -1,3 +1,7 @@
+--***
+--SAI index definitions
+--***
+
 CREATE CUSTOM INDEX IF NOT EXISTS ON payment_info_ks.payment_info_v1 (last_update_tmstp) USING 'StorageAttachedIndex';
 CREATE CUSTOM INDEX IF NOT EXISTS ON payment_info_ks.payment_info_v1 (type) USING 'StorageAttachedIndex';
 CREATE CUSTOM INDEX IF NOT EXISTS ON payment_info_ks.payment_info_v1 (exp_date_month) USING 'StorageAttachedIndex';
@@ -44,27 +48,9 @@ CREATE CUSTOM INDEX IF NOT EXISTS ON account_ks.cust_acct_v1 (profile__interline
 CREATE CUSTOM INDEX IF NOT EXISTS ON account_ks.cust_acct_v1 (aggregations__bill_to_number) USING 'StorageAttachedIndex';
 CREATE CUSTOM INDEX IF NOT EXISTS ON account_ks.cust_acct_v1 (aggregations__edi_number) USING 'StorageAttachedIndex';
 CREATE CUSTOM INDEX IF NOT EXISTS ON account_ks.cust_acct_v1 (account_regulatory__bus_registration_id) USING 'StorageAttachedIndex';
-
-
---UDT, must match entire entry, not possible to search for individual element content with SAI
---CREATE CUSTOM INDEX IF NOT EXISTS ON account_ks.cust_acct_v1 (tax_info__tax_data) USING 'StorageAttachedIndex';
---searches are on opco and tax_id
---convert to map?  tax_id_desc -> tax_id
---create SAI indexes only for values, tax_id
---possibly create separate map for tax_id_desc -> tax_exempt_flag (future value)
-
 CREATE CUSTOM INDEX IF NOT EXISTS ON account_ks.cust_acct_v1 (customer_id__customer_id_doc_nbr) USING 'StorageAttachedIndex';
-
--- map: duty_tax_info_country_code -> duty_tax_info_duty_tax_number  --todo - create values index and example query test
-CREATE CUSTOM INDEX ON cust_acct_v1 (keys(duty_tax_info)) USING 'StorageAttachedIndex';  //duty_tax_info_country_code
-CREATE CUSTOM INDEX ON cust_acct_v1 (values(duty_tax_info)) USING 'StorageAttachedIndex'; //duty_tax_info_duty_tax_number
-
---sample query
---SELECT * FROM cust_acct_v1 WHERE duty_tax_info CONTAINS KEY '<country_code>';
-
-
-
-
+CREATE CUSTOM INDEX ON cust_acct_v1 (keys(duty_tax_info)) USING 'StorageAttachedIndex';  --duty_tax_info_country_code
+CREATE CUSTOM INDEX ON cust_acct_v1 (values(duty_tax_info)) USING 'StorageAttachedIndex'; --duty_tax_info_duty_tax_number
 CREATE CUSTOM INDEX IF NOT EXISTS ON account_ks.cust_acct_v1 (tax_info__codice_fiscale) USING 'StorageAttachedIndex';
 CREATE CUSTOM INDEX IF NOT EXISTS ON account_ks.cust_acct_v1 (aggregations__ed_aggr_code) USING 'StorageAttachedIndex';
 CREATE CUSTOM INDEX IF NOT EXISTS ON account_ks.cust_acct_v1 (invoice_preference__billing_cycle) USING 'StorageAttachedIndex';
@@ -75,12 +61,6 @@ CREATE CUSTOM INDEX IF NOT EXISTS ON account_ks.cust_acct_v1 (invoice_preference
 CREATE CUSTOM INDEX IF NOT EXISTS ON account_ks.cust_acct_v1 (invoice_preference__international_billing_medium) USING 'StorageAttachedIndex';
 CREATE CUSTOM INDEX IF NOT EXISTS ON account_ks.cust_acct_v1 (invoice_preference__settlement_level_indicator) USING 'StorageAttachedIndex';
 CREATE CUSTOM INDEX IF NOT EXISTS ON account_ks.cust_acct_v1 (invoice_preference__direct_debit_indicator) USING 'StorageAttachedIndex';
---Boolean types not supported by SAI
---may not be needed
---CREATE CUSTOM INDEX IF NOT EXISTS ON account_ks.cust_acct_v1 (eligibility__ground) USING 'StorageAttachedIndex';
---CREATE CUSTOM INDEX IF NOT EXISTS ON account_ks.cust_acct_v1 (eligibility__express) USING 'StorageAttachedIndex';
---CREATE CUSTOM INDEX IF NOT EXISTS ON account_ks.cust_acct_v1 (eligibility__freight) USING 'StorageAttachedIndex';
---CREATE CUSTOM INDEX IF NOT EXISTS ON account_ks.cust_acct_v1 (eligibility__office) USING 'StorageAttachedIndex';
 CREATE CUSTOM INDEX IF NOT EXISTS ON account_ks.cust_acct_v1 (credit_detail__credit_status) USING 'StorageAttachedIndex';
 CREATE CUSTOM INDEX IF NOT EXISTS ON account_ks.cust_acct_v1 (credit_detail__credit_status_reason_code) USING 'StorageAttachedIndex';
 CREATE CUSTOM INDEX IF NOT EXISTS ON account_ks.cust_acct_v1 (credit_detail__cash_only_reason) USING 'StorageAttachedIndex';
@@ -90,12 +70,12 @@ CREATE CUSTOM INDEX IF NOT EXISTS ON account_ks.cust_acct_v1 (geographic_info__a
 CREATE CUSTOM INDEX IF NOT EXISTS ON account_ks.cust_acct_v1 (geographic_info__station_number) USING 'StorageAttachedIndex';
 CREATE CUSTOM INDEX IF NOT EXISTS ON account_ks.cust_acct_v1 (aggregations__ed_aggr_code) USING 'StorageAttachedIndex';
 
---need index for contact_document_id - used for mapping records to ECDC system
---need index for share_id
---need index for additional_email_info__email
 CREATE CUSTOM INDEX IF NOT EXISTS ON account_contact_ks.account_contact (last_update_tmstp) USING 'StorageAttachedIndex';
 CREATE CUSTOM INDEX IF NOT EXISTS ON account_contact_ks.account_contact (contact_type_code) USING 'StorageAttachedIndex';
 CREATE CUSTOM INDEX IF NOT EXISTS ON account_contact_ks.account_contact (contact_business_id) USING 'StorageAttachedIndex';
+CREATE CUSTOM INDEX IF NOT EXISTS ON account_contact_ks.account_contact (contact_document_id) USING 'StorageAttachedIndex';
+CREATE CUSTOM INDEX IF NOT EXISTS ON account_contact_ks.account_contact (share_id) USING 'StorageAttachedIndex';
+CREATE CUSTOM INDEX IF NOT EXISTS ON account_contact_ks.account_contact (additional_email_info__email) USING 'StorageAttachedIndex';
 CREATE CUSTOM INDEX IF NOT EXISTS ON account_contact_ks.account_contact (company_name) USING 'StorageAttachedIndex';
 CREATE CUSTOM INDEX IF NOT EXISTS ON account_contact_ks.account_contact (person__first_name) USING 'StorageAttachedIndex' WITH OPTIONS = {'case_sensitive': 'false'};
 CREATE CUSTOM INDEX IF NOT EXISTS ON account_contact_ks.account_contact (person__last_name) USING 'StorageAttachedIndex' WITH OPTIONS = {'case_sensitive': 'false'};
@@ -109,7 +89,6 @@ CREATE CUSTOM INDEX IF NOT EXISTS ON account_contact_ks.account_contact (email) 
 CREATE CUSTOM INDEX IF NOT EXISTS ON account_contact_ks.account_contact (address__country_code) USING 'StorageAttachedIndex';
 CREATE CUSTOM INDEX IF NOT EXISTS ON account_contact_ks.account_contact (VALUES(name_line)) USING 'StorageAttachedIndex' WITH OPTIONS = {'case_sensitive': 'false'};
 
---query - account_number, opco (optional, can use all), comment_date_time range (reference data + days, example last 10 days), comment type
 CREATE CUSTOM INDEX IF NOT EXISTS ON cam_comment_l1_ks.comment_v1 (last_update_tmstp) USING 'StorageAttachedIndex';
 CREATE CUSTOM INDEX IF NOT EXISTS ON cam_comment_l1_ks.comment_v1 (comment__comment_id) USING 'StorageAttachedIndex';
 
@@ -122,8 +101,6 @@ CREATE CUSTOM INDEX IF NOT EXISTS ON group_ks.group_info_v1 (group_id_detail__na
 CREATE CUSTOM INDEX IF NOT EXISTS ON group_ks.group_info_v1 (group_id_detail__master_account) USING 'StorageAttachedIndex';
 CREATE CUSTOM INDEX IF NOT EXISTS ON group_ks.group_info_v1 (effective_date_time) USING 'StorageAttachedIndex';
 CREATE CUSTOM INDEX IF NOT EXISTS ON group_ks.group_info_v1 (expiration_date_time) USING 'StorageAttachedIndex';
-
---SAI index on last_update_tmstp for each table in core DC
 
 CREATE CUSTOM INDEX IF NOT EXISTS ON line_of_business_ks.line_of_business_v1 (last_update_tmstp) USING 'StorageAttachedIndex';
 
