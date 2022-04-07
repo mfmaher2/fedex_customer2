@@ -29,7 +29,7 @@ CREATE CUSTOM INDEX IF NOT EXISTS ON cam_centralized_view_l1_ks.centralized_view
 CREATE CUSTOM INDEX IF NOT EXISTS ON cam_centralized_view_l1_ks.centralized_view_v1 (account_status__status_code) USING 'StorageAttachedIndex';
 CREATE CUSTOM INDEX IF NOT EXISTS ON cam_centralized_view_l1_ks.centralized_view_v1 (account_status__status_date) USING 'StorageAttachedIndex';
 CREATE CUSTOM INDEX IF NOT EXISTS ON cam_centralized_view_l1_ks.centralized_view_v1 (keys(opco_description)) USING 'StorageAttachedIndex'; -- opco_code
-CREATE CUSTOM INDEX IF NOT EXISTS ON cam_centralized_view_l1_ks.centralized_view_v1 (values(duty_tax_info)) USING 'StorageAttachedIndex'; -- opco_account_number
+CREATE CUSTOM INDEX IF NOT EXISTS ON cam_centralized_view_l1_ks.centralized_view_v1 (values(opco_description)) USING 'StorageAttachedIndex'; -- opco_account_number
 
 CREATE CUSTOM INDEX IF NOT EXISTS ON cam_apply_discount_l1_ks.apply_discount_detail_v1 (last_update_tmstp) USING 'StorageAttachedIndex';
 CREATE custom index if NOT EXISTS ON cam_apply_discount_l1_ks.apply_discount_detail_v1 (apply_discount__expiration_date_time) USING 'StorageAttachedIndex';
@@ -49,8 +49,9 @@ CREATE CUSTOM INDEX IF NOT EXISTS ON cam_account_l1_ks.cust_acct_v1 (aggregation
 CREATE CUSTOM INDEX IF NOT EXISTS ON cam_account_l1_ks.cust_acct_v1 (aggregations__edi_number) USING 'StorageAttachedIndex';
 CREATE CUSTOM INDEX IF NOT EXISTS ON cam_account_l1_ks.cust_acct_v1 (account_regulatory__bus_registration_id) USING 'StorageAttachedIndex';
 CREATE CUSTOM INDEX IF NOT EXISTS ON cam_account_l1_ks.cust_acct_v1 (customer_id__customer_id_doc_nbr) USING 'StorageAttachedIndex';
-CREATE CUSTOM INDEX ON cust_acct_v1 (keys(duty_tax_info)) USING 'StorageAttachedIndex';  --duty_tax_info_country_code
-CREATE CUSTOM INDEX ON cust_acct_v1 (values(duty_tax_info)) USING 'StorageAttachedIndex'; --duty_tax_info_duty_tax_number
+CREATE CUSTOM INDEX IF NOT EXISTS ON cam_account_l1_ks.cust_acct_v1 (values(tax_info__tax_data)) USING 'StorageAttachedIndex'; --tax_id
+CREATE CUSTOM INDEX IF NOT EXISTS ON cam_account_l1_ks.cust_acct_v1 (keys(duty_tax_info)) USING 'StorageAttachedIndex';  --duty_tax_info_country_code
+CREATE CUSTOM INDEX IF NOT EXISTS ON cam_account_l1_ks.cust_acct_v1 (values(duty_tax_info)) USING 'StorageAttachedIndex'; --duty_tax_info_duty_tax_number
 CREATE CUSTOM INDEX IF NOT EXISTS ON cam_account_l1_ks.cust_acct_v1 (tax_info__codice_fiscale) USING 'StorageAttachedIndex';
 CREATE CUSTOM INDEX IF NOT EXISTS ON cam_account_l1_ks.cust_acct_v1 (aggregations__ed_aggr_code) USING 'StorageAttachedIndex';
 CREATE CUSTOM INDEX IF NOT EXISTS ON cam_account_l1_ks.cust_acct_v1 (invoice_preference__billing_cycle) USING 'StorageAttachedIndex';
@@ -68,7 +69,6 @@ CREATE CUSTOM INDEX IF NOT EXISTS ON cam_account_l1_ks.cust_acct_v1 (credit_deta
 CREATE CUSTOM INDEX IF NOT EXISTS ON cam_account_l1_ks.cust_acct_v1 (account_receivables__payment_type) USING 'StorageAttachedIndex';
 CREATE CUSTOM INDEX IF NOT EXISTS ON cam_account_l1_ks.cust_acct_v1 (geographic_info__alpha_id) USING 'StorageAttachedIndex';
 CREATE CUSTOM INDEX IF NOT EXISTS ON cam_account_l1_ks.cust_acct_v1 (geographic_info__station_number) USING 'StorageAttachedIndex';
-CREATE CUSTOM INDEX IF NOT EXISTS ON cam_account_l1_ks.cust_acct_v1 (aggregations__ed_aggr_code) USING 'StorageAttachedIndex';
 
 CREATE CUSTOM INDEX IF NOT EXISTS ON cam_account_contact_l1_ks.account_contact (last_update_tmstp) USING 'StorageAttachedIndex';
 CREATE CUSTOM INDEX IF NOT EXISTS ON cam_account_contact_l1_ks.account_contact (contact_type_code) USING 'StorageAttachedIndex';
