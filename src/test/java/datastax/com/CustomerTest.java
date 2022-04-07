@@ -654,6 +654,71 @@ public class CustomerTest {
     }
 
     @Test
+    public void commentDeleteTest() throws InterruptedException {
+        String acctNum = "commentDel-Acct1";
+        String opco = "op1";
+
+        Instant commentDT1 = Instant.parse("2022-04-01T00:00:00.001Z");
+        Instant commentDT2 = Instant.parse("2022-04-02T00:00:00.001Z");
+        Instant maxDT = Instant.parse("9999-12-31T00:00:00.000Z");
+
+        String commentID1 = "cID_1";
+        String commentID2 = "cID_2";
+
+        String type1 = "typ1";
+        String type2 = "typ2";
+
+        //cleanup any existing records and verify
+//        daoComment.deleteAllByAccountNumber(acctNum);
+//        PagingIterable<Comment> cleanVerifyComments = daoComment.findAllByAccountNumber(acctNum);
+//        assert(cleanVerifyComments.all().size() == 0);
+
+        //create test records
+        Comment comment1 = new Comment();
+        comment1.setAccountNumber(acctNum);
+        comment1.setOpco(opco);
+        comment1.setCommentDateTime(commentDT1);
+        comment1.setCommentType(type1);
+        comment1.setCommentID(commentID1);
+        daoComment.save(comment1);
+
+        Comment comment2 = new Comment();
+        comment2.setAccountNumber(acctNum);
+        comment2.setOpco(opco);
+        comment2.setCommentDateTime(commentDT2);
+        comment2.setCommentType(type2);
+        comment2.setCommentID(commentID2);
+        daoComment.save(comment2);
+
+        //pause to allow SAI to update
+        Thread.sleep(100);
+
+        PagingIterable<Comment> addedVerifyComments = daoComment.findAllByAccountNumber(acctNum);
+        assert(addedVerifyComments.all().size() == 2);
+
+        //can only delete by providing record key(s)
+        //two step process to delete comment by non-key column
+        //  1) find record using index on non-key column
+        //  2) Use keys of found record to execute delete
+
+        //find comment record for delete
+        PagingIterable<Comment> foundComments = daoComment.findByCommentID(commentID2);
+        Comment deletComment = foundComments.one();
+        assert (foundComments.isFullyFetched());
+
+        //delete record using full primary key
+        daoComment.deleteByKeys(deletComment.getAccountNumber(),
+                                deletComment.getOpco(),
+                                deletComment.getCommentType(),
+                                deletComment.getCommentDateTime()
+                                );
+
+        PagingIterable<Comment> deletedVerifyComments = daoComment.findAllByAccountNumber(acctNum);
+        assert(deletedVerifyComments.all().size() == 1);
+
+    }
+
+    @Test
     public void commentSAITest(){
         String acctNum = "890123";
         String opco = "op1";

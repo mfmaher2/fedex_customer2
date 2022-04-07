@@ -11,7 +11,7 @@ CREATE CUSTOM INDEX IF NOT EXISTS ON payment_info_ks.payment_info_v1 (eft_alias_
 CREATE CUSTOM INDEX IF NOT EXISTS ON payment_info_ks.payment_info_v1 (eft_seq) USING 'StorageAttachedIndex';
 CREATE CUSTOM INDEX IF NOT EXISTS ON payment_info_ks.payment_info_v1 (eft_type) USING 'StorageAttachedIndex';
 CREATE CUSTOM INDEX IF NOT EXISTS ON payment_info_ks.payment_info_v1 (threshhold_amount) USING 'StorageAttachedIndex';
-CREATE CUSTOM INDEX IF NOT EXISTS ON payment_info_ks.payment_info_v1 (payment_id) USING 'StorageAttachedIndex';  //previously credit_card_id
+CREATE CUSTOM INDEX IF NOT EXISTS ON payment_info_ks.payment_info_v1 (payment_id) USING 'StorageAttachedIndex';  --previously credit_card_id
 
 CREATE CUSTOM INDEX IF NOT EXISTS ON account_ks.national_account_v1 (national_account_detail__national_account_company_cd) USING 'StorageAttachedIndex';
 CREATE CUSTOM INDEX IF NOT EXISTS ON account_ks.national_account_v1 (national_account_detail__national_account_nbr) USING 'StorageAttachedIndex';
@@ -27,6 +27,8 @@ CREATE CUSTOM INDEX IF NOT EXISTS ON account_ks.national_account_v1 (national_ac
 
 CREATE CUSTOM INDEX IF NOT EXISTS ON centralized_view_ks.centralized_view_v1 (account_status__status_code) USING 'StorageAttachedIndex';
 CREATE CUSTOM INDEX IF NOT EXISTS ON centralized_view_ks.centralized_view_v1 (account_status__status_date) USING 'StorageAttachedIndex';
+CREATE CUSTOM INDEX IF NOT EXISTS ON centralized_view_ks.centralized_view_v1 (keys(opco_description)) USING 'StorageAttachedIndex'; -- opco_code
+CREATE CUSTOM INDEX IF NOT EXISTS ON centralized_view_ks.centralized_view_v1 (values(duty_tax_info)) USING 'StorageAttachedIndex'; -- opco_account_number
 
 CREATE custom index if NOT EXISTS ON apply_discount_ks.apply_discount_detail_v1 (apply_discount__expiration_date_time) USING 'StorageAttachedIndex';
 
@@ -112,6 +114,9 @@ CREATE CUSTOM INDEX IF NOT EXISTS ON account_contact_ks.account_contact (VALUES(
 --patterns most likely covered by primary keys
 --query - account_number, opco (optional, can use all), comment_date_time range (reference data + days, example last 10 days), comment type
 --CREATE CUSTOM INDEX IF NOT EXISTS ON comment_ks.comment_v1 (comment__type) USING 'StorageAttachedIndex';
+
+CREATE CUSTOM INDEX IF NOT EXISTS ON cam_comment_l1_ks.comment_v1 (comment__comment_id) USING 'StorageAttachedIndex';
+
 
 //move table to the search DC - use search to index entire table to allow flexible querying, keep as separate keyspace
 CREATE CUSTOM INDEX IF NOT EXISTS ON audit_history_ks.audit_history_v1 (last_update_tmstp) USING 'StorageAttachedIndex';

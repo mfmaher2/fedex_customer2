@@ -14,6 +14,9 @@ public interface CommentDao {
     @Select
     PagingIterable<Comment> findAllByAccountNumber(String accountNum);
 
+    @Query("SELECT * FROM ${keyspaceId}.comment_v1 WHERE comment__comment_id = :commentID")
+    PagingIterable<Comment> findByCommentID(String commentID);
+
     @Query("SELECT * FROM ${keyspaceId}.comment_v1 WHERE account_number = :accountNum AND opco = :opco AND comment__comment_date_time >= :startDateTime AND comment__comment_date_time <= :endDateTime")
     PagingIterable<Comment> findByAccountNumOpcoDateTimeRange(String accountNum, String opco, Instant startDateTime, Instant endDateTime);
 
@@ -34,4 +37,8 @@ public interface CommentDao {
 
     @Query("DELETE FROM ${keyspaceId}.comment_v1 WHERE account_number = :accountNum")
     void deleteAllByAccountNumber(String accountNum);
+
+    @Query("DELETE FROM ${keyspaceId}.comment_v1 WHERE account_number = :accountNum AND opco = :opco AND comment__type = :type AND comment__comment_date_time = :commentDT")
+    void deleteByKeys(String accountNum, String opco, String type, Instant commentDT);
+
 }

@@ -919,33 +919,27 @@ CREATE TABLE IF NOT EXISTS audit_history_ks.audit_history_v1 (
      AND read_repair_chance = 0.0
      AND speculative_retry = '99PERCENTILE';
 
-CREATE TABLE IF NOT EXISTS centralized_view_ks.centralized_view_v1 (
+    CREATE TABLE IF NOT EXISTS centralized_view_ks.centralized_view_v1 (
     account_number text,
     last_update_tmstp timestamp,
     account_status__status_code text,
     account_status__status_date date,
-    opco_description map<text, text>,  --key=opco_code, value=opco_account_number
-
-     //queries
-     //find account_number from opco account number -> filtered by opco code optionally (could use entire set of opco codes if necessary)
-     //add SAI for keys
-     //
-
+    opco_description map<text, text>,  --key=opco_code, value=opco_account_number  (opco_code->opco_account_number)
     PRIMARY KEY(account_number))
-     WITH bloom_filter_fp_chance = 0.01
-     AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
-     AND comment = ''
-     AND compaction = {'class': 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy', 'enabled': 'true', 'sstable_size_in_mb': '160', 'tombstone_compaction_interval': '86400', 'tombstone_threshold': '0.2', 'unchecked_tombstone_compaction': 'false'}
-     AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
-     AND crc_check_chance = 1.0
-     AND dclocal_read_repair_chance = 0.0
-     AND default_time_to_live = 0
-     AND gc_grace_seconds = 864000
-     AND max_index_interval = 2048
-     AND memtable_flush_period_in_ms = 0
-     AND min_index_interval = 128
-     AND read_repair_chance = 0.0
-     AND speculative_retry = '99PERCENTILE';
+WITH bloom_filter_fp_chance = 0.01
+    AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+    AND comment = ''
+    AND compaction = {'class': 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy', 'enabled': 'true', 'sstable_size_in_mb': '160', 'tombstone_compaction_interval': '86400', 'tombstone_threshold': '0.2', 'unchecked_tombstone_compaction': 'false'}
+    AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+    AND crc_check_chance = 1.0
+    AND dclocal_read_repair_chance = 0.0
+    AND default_time_to_live = 0
+    AND gc_grace_seconds = 864000
+    AND max_index_interval = 2048
+    AND memtable_flush_period_in_ms = 0
+    AND min_index_interval = 128
+    AND read_repair_chance = 0.0
+    AND speculative_retry = '99PERCENTILE';
 
 CREATE TABLE IF NOT EXISTS line_of_business_ks.line_of_business_v1 (
     account_number text,
@@ -1070,12 +1064,12 @@ WITH CLUSTERING ORDER BY (process_time DESC, type ASC, status ASC)
 
 -- expressCustomerAccountDynamicProfile
 -- groundCustomerAccountDynamicProfile
-CREATE TABLE IF NOT EXISTS dynamic_profile_ks.account_dynamic_profile_v1 (  //need _v1 in table name?
+CREATE TABLE IF NOT EXISTS dynamic_profile_ks.account_dynamic_profile_v1 (
     account_number text,
     opco text,
     last_update_tmstp timestamp,
-    payor_type text,                        //slightly altered naming convention, no path prefix - keep simplified?
-    shipment_type text,                     //slightly altered naming convention, no path prefix - keep simplified?
+    payor_type text,                        --slightly altered naming convention, no path prefix - keep simplified?
+    shipment_type text,                     --slightly altered naming convention, no path prefix - keep simplified?
     package_quantity_for_last_year float,
     average_daily_revenue_from_last_year float,
     total_revenue_amount_for_last_year float,
@@ -1086,7 +1080,7 @@ CREATE TABLE IF NOT EXISTS dynamic_profile_ks.account_dynamic_profile_v1 (  //ne
     first_ship_date date,
     last_ship_date date,
     risk_score	int,
-    PRIMARY KEY(account_number, opco, payor_type, shipment_type))       //need confirm keys
+    PRIMARY KEY(account_number, opco, payor_type, shipment_type))       --need to confirm keys
 WITH CLUSTERING ORDER BY (opco ASC, payor_type ASC, shipment_type ASC)
     AND bloom_filter_fp_chance = 0.01
     AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
@@ -1106,7 +1100,7 @@ WITH CLUSTERING ORDER BY (opco ASC, payor_type ASC, shipment_type ASC)
 -- expressCustomerEntityDynamicProfile
 -- groundCustomerEntityDynamicProfile
 -- freightCustomerEntityDynamicProfile
-CREATE TABLE IF NOT EXISTS dynamic_profile_ks.entity_dynamic_profile_v1 ( //need _v1 in table name?
+CREATE TABLE IF NOT EXISTS dynamic_profile_ks.entity_dynamic_profile_v1 (
     entity_number text,
     opco text,
     last_update_tmstp timestamp,
