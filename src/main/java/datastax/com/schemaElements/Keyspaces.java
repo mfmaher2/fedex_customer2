@@ -21,4 +21,6 @@ public enum Keyspaces {
     private String keyspaceName;
     Keyspaces(String ksName) { this.keyspaceName = ksName;}
     public String keyspaceName() { return keyspaceName;}
+
+    //todo - create mechanism to define keyspace relication settings per datacenter
 }
