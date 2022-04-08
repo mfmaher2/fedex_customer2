@@ -36,6 +36,9 @@ public interface CommentDao {
     //@Query("SELECT * FROM ${keyspaceId}.comment_v1 WHERE comment__type = :type")
     //PagingIterable<Comment> findByCommentType(String type);
 
+    @Query("SELECT * FROM ${keyspaceId}.comment_v1 WHERE account_number = :accountNum AND opco = :opco AND comment__comment_id = :commentId")
+    Comment findByAcctOpcoCommentId(String accountNum, String opco, String commentId);
+
     @Query("SELECT * FROM ${keyspaceId}.comment_v1 WHERE comment__comment_id = :commentId")
     Comment findByCommentId(String commentId);
 

@@ -51,7 +51,7 @@ public class CustomerTest {
     private static boolean skipSchemaCreation = true;
     private static boolean skipDataLoad = true;
     private static boolean skipKeyspaceDrop = true;
-    private static boolean skipIndividualTableDrop = true;
+    private static boolean skipIndividualTableDrop = false;
     private static String productName = "Customer" ;
 
     private static String SCHEMA_SCRIPT_PATH = "src/test/resources/create_customer_schema.sh" ;
@@ -716,6 +716,17 @@ public class CustomerTest {
         PagingIterable<Comment> deletedVerifyComments = daoComment.findAllByAccountNumber(acctNum);
         assert(deletedVerifyComments.all().size() == 1);
 
+        Comment foundOtherComment = daoComment.findByAcctOpcoCommentId(acctNum, opco, commentID1);
+
+        //delete other record using full primary key
+        daoComment.deleteByKeys(foundOtherComment.getAccountNumber(),
+                foundOtherComment.getOpco(),
+                foundOtherComment.getCommentType(),
+                foundOtherComment.getCommentDateTime()
+        );
+
+        PagingIterable<Comment> deletedVerifyOtherComments = daoComment.findAllByAccountNumber(acctNum);
+        assert(deletedVerifyOtherComments.all().size() == 0);
     }
 
     @Test
@@ -1608,7 +1619,7 @@ public class CustomerTest {
         assert(foundPayment.getOpco().equals(expectedPaymentOpco));
         assert(foundPayment.getRecordType().equals(expectedType));
         assert(foundPayment.getRecordKey().equals(expectedKey));
-        assert(foundPayment.getCreditCardID().equals(expectedCCId));
+        assert(foundPayment.getPaymentID().equals(expectedCCId));
 
 
         //** check associated account details
@@ -1668,7 +1679,7 @@ public class CustomerTest {
 //        String foundSeq = foundPayment.getRecordSeq();
         System.out.println("Found record_seq - " + foundSeq);
 //        assert(foundPayment.getRecordSeq() == expectedSeq);
-        assert(foundPayment.getCreditCardID().equals(expectedCCId));
+        assert(foundPayment.getPaymentID().equals(expectedCCId));
     }
 
     @Test
@@ -1688,7 +1699,7 @@ public class CustomerTest {
         assert(foundPayment.getRecordType().equals(expectedType));
         assert(foundPayment.getRecordKey().equals(expectedKey));
 //        assert(foundPayment.getRecordSeq() == expectedSeq);
-        assert(foundPayment.getCreditCardID().equals(expectedCCId));
+        assert(foundPayment.getPaymentID().equals(expectedCCId));
     }
 
     @Test

@@ -1987,7 +1987,7 @@ CREATE TABLE IF NOT EXISTS cam_payment_info_l1_archive_ks.payment_info_v1 (
     --recipientServicesCreditCard
     --ukDomesticCreditCard
     type text,
-    credit_card_id text,
+    payment_id text,
     exp_date_month int,
     exp_date_year int,
     order_of_usage int,

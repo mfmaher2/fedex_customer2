@@ -89,6 +89,7 @@ CREATE CUSTOM INDEX IF NOT EXISTS ON cam_account_contact_l1_ks.account_contact (
 CREATE CUSTOM INDEX IF NOT EXISTS ON cam_account_contact_l1_ks.account_contact (address__country_code) USING 'StorageAttachedIndex';
 CREATE CUSTOM INDEX IF NOT EXISTS ON cam_account_contact_l1_ks.account_contact (VALUES(name_line)) USING 'StorageAttachedIndex' WITH OPTIONS = {'case_sensitive': 'false'};
 
+CREATE CUSTOM INDEX IF NOT EXISTS ON cam_comment_l1_ks.comment_v1 (opco) USING 'StorageAttachedIndex';
 CREATE CUSTOM INDEX IF NOT EXISTS ON cam_comment_l1_ks.comment_v1 (last_update_tmstp) USING 'StorageAttachedIndex';
 CREATE CUSTOM INDEX IF NOT EXISTS ON cam_comment_l1_ks.comment_v1 (comment__comment_id) USING 'StorageAttachedIndex';
 
