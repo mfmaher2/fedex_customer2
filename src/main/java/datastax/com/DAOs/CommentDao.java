@@ -24,8 +24,8 @@ public interface CommentDao {
     //@Query("SELECT * FROM ${keyspaceId}.comment_v1 WHERE account_number = :accountNum AND comment__comment_date_time >= :startDateTime AND comment__comment_date_time <= :endDateTime AND comment__type = :type ")
     //PagingIterable<Comment> findByAccountNumTypeDateTimeRange(String accountNum, Instant startDateTime, Instant endDateTime, String type);
 
-//    @Query("SELECT * FROM ${keyspaceId}.comment_v1 WHERE account_number = :accountNum AND opco = :opco AND comment__type in ('GI') AND comment__comment_date_time >= :startDateTime AND comment__comment_date_time <= :endDateTime")
-//    PagingIterable<Comment> findByAccountNumOpcoDateTimeRange(String accountNum, String opco, Instant startDateTime, Instant endDateTime);
+    @Query("SELECT * FROM ${keyspaceId}.comment_v1 WHERE account_number = :accountNum AND opco = :opco AND comment__type IN ('COMTYP1','COMTYP2','COMTYP3') AND comment__comment_date_time >= :startDateTime AND comment__comment_date_time <= :endDateTime")
+    PagingIterable<Comment> findByAccountNumOpcoDateTimeRange(String accountNum, String opco, Instant startDateTime, Instant endDateTime);
 
 //    @Query("SELECT * FROM ${keyspaceId}.comment_v1 WHERE account_number = :accountNum AND opco = :opco AND comment__comment_date_time >= :startDateTime AND comment__comment_date_time <= :endDateTime AND comment__type = :type ")
 //    PagingIterable<Comment> findByAccountNumOpcoTypeDateTimeRange(String accountNum, String opco, Instant startDateTime, Instant endDateTime, String type);
