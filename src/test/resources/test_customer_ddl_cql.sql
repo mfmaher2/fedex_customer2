@@ -253,7 +253,7 @@ CREATE TABLE IF NOT EXISTS cam_account_l1_ks.cust_acct_v1 (
 
     --cargoAccountReceivables
     --express_account_receivables
-    account_receivables__call_zone_desc text,
+    account_receivables__coll_zone_desc text,
     account_receivables__gsp_write_off text,
     account_receivables__online_eligibility boolean,
     account_receivables__partial_pay_letter_flag boolean,
@@ -265,6 +265,9 @@ CREATE TABLE IF NOT EXISTS cam_account_l1_ks.cust_acct_v1 (
     account_receivables__international___ar_date date,
     account_receivables__no_refund_flag boolean,
     account_receivables__debut_company_code text,
+    account_receivables__credit_note_flag boolean,
+    account_receivables__credit_note_exception_flag boolean,
+    account_receivables__fifo_eligibility_code text,
 
     --express_aggregations
     aggregations__ed_aggr_code text,
