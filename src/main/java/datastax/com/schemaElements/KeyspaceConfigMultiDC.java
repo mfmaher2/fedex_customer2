@@ -82,5 +82,6 @@ public class KeyspaceConfigMultiDC extends KeyspaceConfig{
 
         //test only keyspace(s)
         AddKeyspaceDataCenter(Keyspaces.CUSTOMER, datacenters.get(DataCenter.CORE), 1);
+        AddKeyspaceDataCenter(Keyspaces.CUSTOMER, datacenters.get(DataCenter.SEARCH), 1);
     }
 }
