@@ -16,10 +16,7 @@ import static com.datastax.oss.driver.api.querybuilder.SchemaBuilder.*;
 
 import datastax.com.dataObjects.*;
 import datastax.com.DAOs.*;
-import datastax.com.schemaElements.KeyspaceConfig;
-import datastax.com.schemaElements.KeyspaceConfigSingleDC;
-import datastax.com.schemaElements.KeyspaceCreator;
-import datastax.com.schemaElements.Keyspaces;
+import datastax.com.schemaElements.*;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -52,13 +49,13 @@ public class CustomerTest {
     static AccountContactDao daoAccountContact = null;
 
     private static boolean skipSchemaCreation = false;
-    private static boolean skipDataLoad = true;
+    private static boolean skipDataLoad = false;
     private static boolean skipKeyspaceDrop = false;
-    private static boolean skipIndividualTableDrop = true;
+    private static boolean skipIndividualTableDrop = false;
     private static String productName = "Customer" ;
 
-    private static String SCHEMA_SCRIPT_PATH = "src/test/resources/create_customer_schema.sh" ;
-    private static String DATA_SCRIPT_PATH = "src/test/resources/load_customer_data.sh" ;
+    private static String SCHEMA_SCRIPT_PATH = "src/test/resources/L1/create_customer_schema.sh" ;
+    private static String DATA_SCRIPT_PATH = "src/test/resources/L1/load_customer_data.sh" ;
 
     @BeforeClass
     public static void init() {
@@ -87,6 +84,7 @@ public class CustomerTest {
             loadSchema();
             loadData();
 
+            System.out.println("\tBeginning Mapper and DAO creation");
             customerMapper = new CustomerMapperBuilder(session).build();
             daoAccount = customerMapper.accountDao(Keyspaces.ACCOUNT_KS.keyspaceName());
             daoPayment = customerMapper.paymentInfoDao(Keyspaces.PAYMENT_INFO_KS.keyspaceName());
@@ -98,6 +96,7 @@ public class CustomerTest {
             daoComment = customerMapper.commentDao(Keyspaces.COMMENT_KS.keyspaceName());
             daoAuditHistory = customerMapper.auditHistoryDao(Keyspaces.AUDIT_HISTORY_KS.keyspaceName());
             daoAccountContact = customerMapper.accountContactDao(Keyspaces.ACCOUNT_CONTACT_KS.keyspaceName());
+            System.out.println("\tMapper and DAO creation complete");
         }
         catch(Exception e){
             System.out.println(e.getMessage());
@@ -155,19 +154,25 @@ public class CustomerTest {
 //                session.execute(create.build());
 
 //            }
+            System.out.println("\tBeginning keypspace creation");
             KeyspaceConfig config = new KeyspaceConfigSingleDC("SearchGraphAnalytics");
+//            KeyspaceConfig config = new KeyspaceConfigMultiDC("core", "edge", "search");
             KeyspaceCreator.createKeyspacesFromConfig(config, session);
+            System.out.println("\tKeyspace creation complete");
 
+            System.out.println("\tBeginning table and index creation");
             runScript(SCHEMA_SCRIPT_PATH);
+            System.out.println("\tTable and index creation complete");
+
         }
     }
 
-    @Test
-    public void tempSchemaCreateTest(){
-//        KeyspaceConfig config = new KeyspaceConfigSingleDC("SearchGraphAnalytics");
-//        KeyspaceCreator.createKeyspacesFromConfig(config, session);
-        assert(true);
-    }
+//    @Test
+//    public void tempSchemaCreateTest(){
+////        KeyspaceConfig config = new KeyspaceConfigSingleDC("SearchGraphAnalytics");
+////        KeyspaceCreator.createKeyspacesFromConfig(config, session);
+//        assert(true);
+//    }
 
     static void runScript(String scriptPath) throws InterruptedException, IOException {
         ProcessBuilder processBuild = new ProcessBuilder(Paths.get(scriptPath).toAbsolutePath().toString());

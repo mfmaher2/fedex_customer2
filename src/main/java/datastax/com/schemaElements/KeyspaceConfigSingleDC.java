@@ -69,6 +69,6 @@ public class KeyspaceConfigSingleDC extends KeyspaceConfig{
         AddKeyspaceDataCenter(Keyspaces.PAYMENT_INFO_ARCHIVE_KS, dcName, 1);
 
         //test only keyspace(s)
-        AddKeyspaceDataCenter(Keyspaces.PAYMENT_INFO_ARCHIVE_KS, dcName, 1);
+        AddKeyspaceDataCenter(Keyspaces.CUSTOMER, dcName, 1);
     }
 }

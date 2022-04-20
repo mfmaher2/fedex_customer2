@@ -15,12 +15,9 @@ public class KeyspaceCreator {
         Map<Keyspaces, Map<String, Integer>> keyspacMap = config.getDataCenterMapping();
 
         for(Keyspaces ks : keyspacMap.keySet()){
-//            String ksName = ks.keyspaceName();
             String ksName = config.getKeyspaceName(ks);
             System.out.println("Creating keyspace - " + ksName);
             CreateKeyspace create = createKeyspace(ksName).ifNotExists()
-//                        .withNetworkTopologyStrategy(ImmutableMap.of("SearchGraphAnalytics", 1))
-//                    .withNetworkTopologyStrategy(ImmutableMap.of("core", 1))
                     .withNetworkTopologyStrategy(keyspacMap.get(ks))
                     .withDurableWrites(true);
 
