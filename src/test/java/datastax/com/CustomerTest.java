@@ -16,6 +16,9 @@ import static com.datastax.oss.driver.api.querybuilder.SchemaBuilder.*;
 
 import datastax.com.dataObjects.*;
 import datastax.com.DAOs.*;
+import datastax.com.schemaElements.KeyspaceConfig;
+import datastax.com.schemaElements.KeyspaceConfigSingleDC;
+import datastax.com.schemaElements.KeyspaceCreator;
 import datastax.com.schemaElements.Keyspaces;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -49,9 +52,9 @@ public class CustomerTest {
     static AccountContactDao daoAccountContact = null;
 
     private static boolean skipSchemaCreation = false;
-    private static boolean skipDataLoad = false;
-    private static boolean skipKeyspaceDrop = true;
-    private static boolean skipIndividualTableDrop = false;
+    private static boolean skipDataLoad = true;
+    private static boolean skipKeyspaceDrop = false;
+    private static boolean skipIndividualTableDrop = true;
     private static String productName = "Customer" ;
 
     private static String SCHEMA_SCRIPT_PATH = "src/test/resources/create_customer_schema.sh" ;
@@ -101,7 +104,7 @@ public class CustomerTest {
         }
     }
 
-    static void dropTestKeyspace(){
+    static void dropTestKeyspace() throws InterruptedException {
         if(!skipKeyspaceDrop) {
             for(Keyspaces ks : Keyspaces.values()) {
                 String ksName = ks.keyspaceName();
@@ -130,6 +133,8 @@ public class CustomerTest {
                 session.execute(dropKeyspace(ksName).ifExists().build());
                 long stopKeyspace = System.currentTimeMillis();
                 System.out.println("Time for dropping keyspace - " + ((stopKeyspace - startKeySpace) / 1000.0) + "s");
+
+                Thread.sleep(150L);
             }
         }
     }
@@ -138,20 +143,30 @@ public class CustomerTest {
         if (!skipSchemaCreation) {
             System.out.println("Running " + productName + " loadSchema");
 
-            for(Keyspaces ks : Keyspaces.values()) {
-                String ksName = ks.keyspaceName();
-                System.out.println("Creating keyspace - " + ksName);
-                CreateKeyspace create = createKeyspace(ksName).ifNotExists()
-//                        .withNetworkTopologyStrategy(ImmutableMap.of("SearchGraphAnalytics", 1))
-                        .withNetworkTopologyStrategy(ImmutableMap.of("core", 1))
-                        .withDurableWrites(true);
+//            for(Keyspaces ks : Keyspaces.values()) {
+//                String ksName = ks.keyspaceName();
+//                System.out.println("Creating keyspace - " + ksName);
+//                CreateKeyspace create = createKeyspace(ksName).ifNotExists()
+////                        .withNetworkTopologyStrategy(ImmutableMap.of("SearchGraphAnalytics", 1))
+//                        .withNetworkTopologyStrategy(ImmutableMap.of("core", 1))
+//                        .withDurableWrites(true);
+//
+//                //System.out.println(create.asCql()); //optional output of complete keyspace creation CQL statement
+//                session.execute(create.build());
 
-                //System.out.println(create.asCql()); //optional output of complete keyspace creation CQL statement
-                session.execute(create.build());
-            }
+//            }
+            KeyspaceConfig config = new KeyspaceConfigSingleDC("SearchGraphAnalytics");
+            KeyspaceCreator.createKeyspacesFromConfig(config, session);
 
             runScript(SCHEMA_SCRIPT_PATH);
         }
+    }
+
+    @Test
+    public void tempSchemaCreateTest(){
+//        KeyspaceConfig config = new KeyspaceConfigSingleDC("SearchGraphAnalytics");
+//        KeyspaceCreator.createKeyspacesFromConfig(config, session);
+        assert(true);
     }
 
     static void runScript(String scriptPath) throws InterruptedException, IOException {
@@ -181,7 +196,7 @@ public class CustomerTest {
     }
 
     @AfterClass
-    public static void close(){
+    public static void close() throws InterruptedException {
         System.out.println("Running " + productName + " close");
 
         dropTestKeyspace();
