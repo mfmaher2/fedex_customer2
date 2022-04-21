@@ -54,17 +54,12 @@ public class CustomerTest {
     private static boolean skipIndividualTableDrop = false;
     private static String productName = "Customer" ;
 
+    //environment related parameters
+    private static Map<DataCenter, CqlSession>  sessionMap = new HashMap<>();
+    private static KeyspaceConfig ksConfig = null;
+    private static String SCHEMA_SCRIPT_PATH = "";
+    private static String DATA_SCRIPT_PATH = "";
 
-    //Setup for specific test environment - only one (L1 or L4) should be uncommented
-    //L1
-//    private static KeyspaceConfig ksConfig = new KeyspaceConfigSingleDC("SearchGraphAnalytics");
-//    private static String SCHEMA_SCRIPT_PATH = "src/test/resources/L1/create_customer_schema.sh" ;
-//    private static String DATA_SCRIPT_PATH = "src/test/resources/L1/load_customer_data.sh" ;
-
-    //L4
-    private static KeyspaceConfig ksConfig = new KeyspaceConfigMultiDC("core", "edge", "search");
-    private static String SCHEMA_SCRIPT_PATH = "src/test/resources/L4/create_customer_schema.sh" ;
-    private static String DATA_SCRIPT_PATH = "src/test/resources/L4/load_customer_data.sh" ;
 
 
     @BeforeClass
@@ -72,7 +67,54 @@ public class CustomerTest {
         System.out.println(productName + " - before init() method called");
 
         try{
-            session = CqlSession.builder()
+            //Setup for specific test environment - only one (L1 or L4) should be uncommented
+            //L1
+//    ksConfig = new KeyspaceConfigSingleDC("SearchGraphAnalytics");
+//    SCHEMA_SCRIPT_PATH = "src/test/resources/L1/create_customer_schema.sh" ;
+//    DATA_SCRIPT_PATH = "src/test/resources/L1/load_customer_data.sh" ;
+
+//            String sessionConf = "src/test/resources/L1/application.conf";
+//            String confFilePath = Paths.get(sessionConf).toAbsolutePath().toString();
+//            CqlSession commonSession = CqlSession.builder()
+//                    .withConfigLoader(DriverConfigLoader.fromFile(new File(confFilePath)))
+//                    .build();
+//            //in L1 only a single DC, assign each entry in session map to same 'common'
+//            //session value -- all operations will execute using same session
+//            sessionMap.put(DataCenter.CORE, commonSession);
+//            sessionMap.put(DataCenter.EDGE, commonSession);
+//            sessionMap.put(DataCenter.SEARCH, commonSession);
+
+            //L4
+            ksConfig = new KeyspaceConfigMultiDC("core", "edge", "search");
+            SCHEMA_SCRIPT_PATH = "src/test/resources/L4/create_customer_schema.sh" ;
+            DATA_SCRIPT_PATH = "src/test/resources/L4/load_customer_data.sh" ;
+
+            //L4 - core DC session
+            String coreSessionConf = "src/test/resources/L4/core-application.conf";
+            String coreConfFilePath = Paths.get(coreSessionConf).toAbsolutePath().toString();
+            CqlSession coreSession = CqlSession.builder()
+                    .withConfigLoader(DriverConfigLoader.fromFile(new File(coreConfFilePath)))
+                    .build();
+            sessionMap.put(DataCenter.CORE, coreSession);
+
+            //L4 - edge DC session
+            String edgeSessionConf = "src/test/resources/L4/edge-application.conf";
+            String edgeConfFilePath = Paths.get(edgeSessionConf).toAbsolutePath().toString();
+            CqlSession edgeSession = CqlSession.builder()
+                    .withConfigLoader(DriverConfigLoader.fromFile(new File(edgeConfFilePath)))
+                    .build();
+            sessionMap.put(DataCenter.EDGE, edgeSession);
+
+            //L4 - search DC session
+            String searchSessionConf = "src/test/resources/L4/search-application.conf";
+            String searchConfFilePath = Paths.get(searchSessionConf).toAbsolutePath().toString();
+            CqlSession searchSession = CqlSession.builder()
+                    .withConfigLoader(DriverConfigLoader.fromFile(new File(searchConfFilePath)))
+                    .build();
+            sessionMap.put(DataCenter.SEARCH, searchSession);
+
+
+//            session = CqlSession.builder()
 //                    .addContactPoints("127.0.0.1") //should have multiple (2+) contactpoints listed
 //                    .withQueryOptions(new QueryOptions().setConsistencyLevel(ConsistencyLevel.LOCAL_QUORUM))
 //                    .withLoadBalancingPolicy(
@@ -89,14 +131,14 @@ public class CustomerTest {
 //                    .withCompression(ProtocolOptions.Compression.LZ4) //LZ4 jar needs to be in class path
                     //auth information may also be needed
 //                    .withConfigLoader(DriverConfigLoader.fromFile())
-                    .build();
+//                    .build();
 
             dropTestKeyspace();
             loadSchema();
             loadData();
 
             System.out.println("\tBeginning Mapper and DAO creation");
-            customerMapper = new CustomerMapperBuilder(session).build();
+            customerMapper = new CustomerMapperBuilder(sessionMap.get(DataCenter.CORE)).build();
             daoAccount = customerMapper.accountDao(ksConfig.getKeyspaceName(Keyspaces.ACCOUNT_KS));
             daoPayment = customerMapper.paymentInfoDao(ksConfig.getKeyspaceName(Keyspaces.PAYMENT_INFO_KS));
             daoAssoc = customerMapper.assocAccountDao(ksConfig.getKeyspaceName(Keyspaces.ASSOC_ACCOUNT_KS));
@@ -116,6 +158,9 @@ public class CustomerTest {
 
     static void dropTestKeyspace() throws InterruptedException {
         if(!skipKeyspaceDrop) {
+
+            CqlSession localSession = sessionMap.get(DataCenter.SEARCH); //use search for all functionality
+
             for(Keyspaces ks : Keyspaces.values()) {
                 String ksName = ksConfig.getKeyspaceName(ks);
 
@@ -127,11 +172,11 @@ public class CustomerTest {
                             .column("table_name")
                             .whereColumn("keyspace_name").isEqualTo(bindMarker());
 
-                    ResultSet resultSet = session.execute(select.build(ksName));
+                    ResultSet resultSet = localSession.execute(select.build(ksName));
                     List<Row> foundRows = resultSet.all();
                     for (Row curRow : foundRows) {
                         String curTable = curRow.getString("table_name");
-                        session.execute(dropTable(ksName, curTable).ifExists().build());
+                        localSession.execute(dropTable(ksName, curTable).ifExists().build());
                         System.out.println("\tdrop table - " + curTable);
                     }
                     long stopTables = System.currentTimeMillis();
@@ -140,7 +185,7 @@ public class CustomerTest {
 
                 long startKeySpace = System.currentTimeMillis();
                 System.out.println("Dropping keyspace - " + ksName);
-                session.execute(dropKeyspace(ksName).ifExists().build());
+                localSession.execute(dropKeyspace(ksName).ifExists().build());
                 long stopKeyspace = System.currentTimeMillis();
                 System.out.println("Time for dropping keyspace - " + ((stopKeyspace - startKeySpace) / 1000.0) + "s");
 
@@ -154,7 +199,7 @@ public class CustomerTest {
             System.out.println("Running " + productName + " loadSchema");
             System.out.println("\tBeginning keypspace creation");
 
-            KeyspaceCreator.createKeyspacesFromConfig(ksConfig, session);
+            KeyspaceCreator.createKeyspacesFromConfig(ksConfig, sessionMap.get(DataCenter.SEARCH));
             System.out.println("\tKeyspace creation complete");
 
             System.out.println("\tBeginning table and index creation");
@@ -194,22 +239,23 @@ public class CustomerTest {
         System.out.println("Running " + productName + " close");
 
         dropTestKeyspace();
-        if (session != null) session.close();
+        sessionMap.values().forEach(s -> s.close());
     }
 
     @Test
     public void prepareTimout(){
+        CqlSession localSession = sessionMap.get(DataCenter.CORE);
 
         Select select1 = selectFrom(ksConfig.getKeyspaceName(Keyspaces.ACCOUNT_KS), "cust_acct_v1")
                                 .all()
                                 .whereColumn("account_number").in(bindMarker());
-        PreparedStatement prep = session.prepare(select1.asCql());
+        PreparedStatement prep = localSession.prepare(select1.asCql());
 
         Select select2 = selectFrom(ksConfig.getKeyspaceName(Keyspaces.ACCOUNT_KS), "cust_acct_v1")
                             .columns("account_number", "opco", "last_update_tmstp", "profile__customer_type", "profile__account_type", "profile__account_service_level", "profile__account_status__status_code", "profile__account_status__status_date", "profile__account_status__reason_code", "profile__fdx_ok_to_call_flag", "profile__enterprise_source", "profile__nasa_id", "profile__nasa_key", "profile__creation_date", "profile__origin_source", "profile__account_linkage_flag", "profile__welcome_kit__welcome_kit_flag", "profile__welcome_kit__welcome_kit_promo_code", "profile_service_restrictions", "profile_view_restrictions", "profile_tax_exempt", "eligibility__ground", "eligibility__express", "eligibility__freight", "eligibility__office", "profile__customer_requester_name", "profile__employee_requester__opco", "profile__employee_requester__number", "profile__source_group", "profile__source_dept", "profile__source_system", "profile__employee_creator_opco", "profile__employee_creator_number", "profile__account_sub_type", "profile__customer_account_status", "profile__duplicate_account_flag", "profile__archive_date", "profile__archive_reason_code", "profile__archive_options", "profile__cargo_ind", "profile__pref_cust_flag", "profile__sales_rep__opco", "profile__sales_rep__number", "profile__service_level", "profile__scac_code", "profile_special_instructions", "account_receivables__coll_zone_desc", "account_receivables__gsp_write_off", "account_receivables__online_eligibility", "account_receivables__partial_pay_letter_flag", "account_receivables__payment_type", "account_receivables__payment_method_code", "account_receivables__payor_type", "account_receivables__arrow_customer_flag_cd", "account_receivables__international___ar_preference", "account_receivables__international___ar_date", "account_receivables__no_refund_flag", "account_receivables__debut_company_code", "account_receivables__credit_note_flag", "account_receivables__credit_note_exception_flag", "account_receivables__fifo_eligibility_code", "aggregations__ed_aggr_code", "aggregations__geo_acct_number", "aggregations__global_account_number", "aggregations__global_subgroup", "aggregations__ss_account_number", "aggregations__bill_to_number", "aggregations__edi_number", "aggregations__copy_master_address", "claims_preference", "credit_detail__credit_status", "credit_detail__credit_status_reason_code", "credit_detail__denied_flag", "credit_detail__bankruptcy_date", "credit_detail__cash_only_flag", "credit_detail__cash_only_date", "credit_detail__cash_only_reason", "credit_detail__credit_alert_detail", "credit_detail__credit_alert_account_number", "credit_detail__credit_alert_parent_type", "credit_detail__credit_limit", "credit_detail__credit_limit_tolerance_pct", "credit_detail__credit_override_date", "credit_detail__credit_rating", "credit_detail__receivership_account_number", "credit_detail__receivership_date", "credit_detail__rev_auth_id", "edi__cust_inv_rept_flag", "edi__dom_data_frmt", "edi__dom_frmt_ver", "edi__dom_inv_print_until_date", "edi__intl_data_frmt", "edi__intl_inv_frmt_ver", "edi__intl_inv_print_until_date", "edi__mm_bill_3rd_party", "edi__mm_bill_recip", "edi__mm_bill_ship", "edi__mm_bill_pwr_ship", "edi__past_due_medium", "edi__past_due_send_to", "remit_frmt_vers", "sep_exp_grnd_file", "invoice_preference__additional_invoice_copy_flag_cd", "invoice_preference__audit_firm_exp_year_month", "invoice_preference__audit_firm_number", "invoice_preference__billing_closing_day", "invoice_preference__billing_cycle", "invoice_preference__billing_medium", "invoice_preference__billing_payment_day", "invoice_preference__billing_payment_month", "invoice_preference__billing_restriction_indicator", "invoice_preference__billing_type", "invoice_preference__combine_option", "invoice_preference__consolidated_invoicing_flag_cd", "invoice_preference__consolidated_refund_flag", "invoice_preference__cost_center_number", "invoice_preference__currency_code", "invoice_preference__customer_reference_information", "invoice_preference__daysto_credit", "invoice_preference__daysto_pay", "invoice_preference__document_exception_indicator", "invoice_preference__duty_tax_daysto_pay", "invoice_preference__duty_tax_billing_cycle", "invoice_preference__electronic_bill_payment_plan_flag_cd", "invoice_preference__electronic_data_record_proof_of_delivery", "invoice_preference__fax_flag", "invoice_preference__fec_discount_card_flag_cd", "invoice_preference__ground_auto___pod", "invoice_preference__ground_duty_tax_billing_cycle", "invoice_preference__ground_print_weight_indicator", "invoice_preference__international_billing_cycle", "invoice_preference__international_billing_medium", "invoice_preference__international_invoice_bypass", "invoice_preference__international_invoice_program_override_flag", "invoice_preference__international_parent_child_flag", "invoice_preference__international_duty_tax_invoice_bypass", "invoice_preference__invoice__detail_level", "invoice_preference__invoice__level_discount_eff_date", "invoice_preference__invoice__level_discount_exp_date", "invoice_preference__invoice__level_discount_flag_cd", "invoice_preference__invoice__minimum_override_flag", "invoice_preference__invoice__option_flag_cd", "invoice_preference__invoice__page_layout_indicator", "invoice_preference__invoice__transaction_breakup_type", "invoice_preference__invoice__wait_days", "invoice_preference__manage_my_account_at_fed_ex_flag_cd", "invoice_preference__master_account_invoice_summary_flag_cd", "invoice_preference__monthly_billing_indicator", "invoice_preference__past_due_detail_level", "invoice_preference__past_due_flag_cd", "invoice_preference__pod_wait_days", "invoice_preference__primary_sort_option", "invoice_preference__print_summary_page_flag", "invoice_preference__print_weight_indicator", "invoice_preference__reference_append", "invoice_preference__return_envelope_indicator", "invoice_preference__single_invoice_option", "invoice_preference__sort_field_length", "invoice_preference__split_bill_duty_tax", "invoice_preference__statement_of_account__billing_cycle", "invoice_preference__statement_of_account__layout_indicator", "invoice_preference__statement_of_account__receipt_flag_cd", "invoice_preference__statement_type", "invoice_preference__statement_type_date", "invoice_preference__viewed_statement_type", "invoice_preference__direct_link_flag", "invoice_preference__no___pod_flag_cd", "invoice_preference__settlement_level_indicator", "invoice_preference__direct_debit_indicator", "invoice_preference__fbo_eft_flag", "invoice_preference__balance_forward_code", "invoice_preference__late_fee_enterprise_waiver", "mma_stats__last_cancel_code", "mma_stats__last_cancel_date", "mma_stats__last_deactivation_date", "mma_stats__last_registration_date", "mma_stats__last_reject_code", "mma_stats__last_reject_date", "mma_stats__last_update_date_time", "mma_stats__last_update_user", "swipe__cc_eligibility_flag", "swipe__decline_count", "swipe__swipe_lockout_date_time", "duty_tax_info", "tax_info__tax_exempt_code", "tax_info__codice_fiscale", "tax_info__mdb_eff_date", "tax_info__mdb_exp_date", "tax_info__tax_exempt_number", "tax_info__vat__type", "tax_info__vat__number", "tax_info__vat__exemption_code", "tax_info__vat__eff_date", "tax_info__vat__exp_date", "tax_info__vat__response_code", "tax_info__vat__category_code", "tax_info__vat__threshold_amount", "profile__distribution_id", "profile__mailer_id", "profile__pickup_carrier", "profile__return_eligibility_flag", "profile__return_svc_flag", "profile__hub_id", "profile__usps_bound_printed_matter_flag", "profile__usps_media_mail_flag", "profile__usps_parcel_select_flag", "profile__usps_standard_mail_flag", "profile__smartpost_enabled_flag", "profile__delivery_confirmation", "profile__zone_indicator", "profile__multiplier_ref_exp", "profile__mulitiplier_ref_grnd", "profile__agent_flag", "profile__alcohol_flag", "profile__cut_flowers_flag", "profile__declared_value_exception", "profile__derived_station", "profile__drop_ship_flag", "profile__emerge_flag", "profile__doc_prep_service_flag", "profile__ftbd_flag", "profile__ftbd_svc", "profile__hazardous_shipper_flag", "profile__high_value_accept_cd", "profile__interline_cd", "profile__idf_elig_flag", "profile__ifs_flag", "profile__ipd_flag", "profile__money_back_guarantee", "profile__notify_ship_delay_cd", "profile__overnight_frgt_ship_flag", "profile__pak_isrt_flag", "profile__power_of_attorney_date", "profile__power_of_attorney_flag", "profile__regular_stop_flag", "profile__reroutes_allowed_flag", "profile__signature_on_file", "profile__signature_required", "profile__tpc_flag", "profile__emp_ship_emp_number", "profile__supply_no_cut_flag", "profile__starter_kit", "profile__starter_kit_quantity", "profile__exception_flag", "profile__international_shipper", "profile__special_dist_flag", "profile__transmart_flag", "profile__special_comment_cd", "profile__contact_flag", "geographic_info__alpha_id", "geographic_info__station_number", "profile__source_name", "profile__tnt_customer_number", "profile__migration_date", "profile__deactivation_date", "profile__grnd_barcode_type", "profile__grnd_hazmat_flag", "profile__grnd_pickup_type", "profile__grnd_collect_flag", "profile__national_account_number", "profile__grnd_lbl_hazmat_flag", "profile__grnd_lbl_p_r_pflag", "profile__grnd_lbl_univ_waste_flag", "profile__svc_center_code", "profile__airport_code", "profile__business_mode", "profile__coding_instructions", "profile__synonym_name_1", "profile__synonym_name_2", "automation_info__insight_flag", "automation_info__meter_zone_flag", "automation_info__device_type_code", "account_regulatory__fdc_broker_nbr", "account_regulatory__fdc_broker_type_cd", "customer_id__iata_number", "customer_id__custom_importer_id", "customer_id__customer_id_doc_nbr", "account_regulatory__regulated_agentregimeeffyearmonth", "account_regulatory__regulated_agentregimeexpyearmonth", "account_regulatory__bus_registration_id", "account_regulatory__broker_date", "account_regulatory__canadian_broker_id", "account_regulatory__employer_id", "account_regulatory__employer_id_type", "account_regulatory__forwd_brkr_cd", "account_regulatory__gaa_flag", "account_regulatory__import_declaration_cd", "account_regulatory__nri_cd", "account_regulatory__shipper_export_declaration_flag", "profile__spot_rate_ind", "profile__express_plan_flag", "profile__express_plan_activity_date", "profile__catalog_remail_service_cd", "profile__middle_man_cd", "profile__gratuity_flag", "profile__bonus_weight_envelope_flag", "profile__priority_alert_flag", "profile__domestic_max_declared_value_flag", "profile__international_max_declared_value_flag", "profile__linehaul_charge_flag", "profile__pricing_flag", "profile__blind_shipper_flag", "profile__pricing_code", "profile__geo_terr", "profile__marketing_cd", "profile__correspondencecd", "potential_revenue_detail__opening_acct_reason", "potential_revenue_detail__opening_acct_comment", "potential_revenue_detail__lead_employee_opco", "potential_revenue_detail__lead_employee_number", "potential_revenue_detail__revenue_source_system", "potential_revenue_detail__potential_revenue_account_type", "tax_info__tax_data", "tax_info__tax_exempt_detail", "potential_revenue_detail__potential_revenue", "potential_revenue_detail__other_potential_info")
                             .whereColumn("account_number").isEqualTo(bindMarker())
                             .whereColumn("opco").isEqualTo(bindMarker());
-        PreparedStatement prep2 = session.prepare(select2.asCql());
+        PreparedStatement prep2 = localSession.prepare(select2.asCql());
 
         assert(true); //no timeout exception
     }
@@ -255,7 +301,7 @@ public class CustomerTest {
         BatchStatement batch = BatchStatement.builder(BatchType.LOGGED).build();
         batch = batch.add(daoAccountContact.batchSave(acctCont1));
         batch = batch.add(daoAccount.batchDelete(custAcct));
-        session.execute(batch);
+        sessionMap.get(DataCenter.CORE).execute(batch);
 
         //verify new account record is created
         PagingIterable<Account> verifyAccountDeleted = daoAccount.findAllByAccountNumber(acctNum);
@@ -282,7 +328,12 @@ public class CustomerTest {
         String domainName  = "customer";
         String sequenceName = "CAM_TEST_1";
 
-        SequenceNumberGenerator generator = new SequenceNumberGenerator(session, ksConfig.getKeyspaceName(Keyspaces.CUSTOMER), seqNumTableName, "localHost");
+        SequenceNumberGenerator generator = new SequenceNumberGenerator(
+                    sessionMap.get(DataCenter.CORE),
+                    ksConfig.getKeyspaceName(Keyspaces.CUSTOMER),
+                    seqNumTableName,
+                    "localHost"); //todo - handle hostname based on environment
+
         generator.initDomainSequence(domainName, sequenceName, 100, 0, 5000);
         Boolean results =  generator.getSequenceNumbers(3, 10, 4, domainName, sequenceName);
 
@@ -401,7 +452,7 @@ public class CustomerTest {
         batch = batch.add(daoAccountContact.batchSave(acctCont1));
         batch = batch.add(daoAccount.batchSave(custAcct));
 
-        session.execute(batch);
+        sessionMap.get(DataCenter.CORE).execute(batch);
 
         //verify records/values written to database as expected with batch
         AccountContact foundAcctContact = daoAccountContact.findByAccountNumber(acctNum);
@@ -462,7 +513,7 @@ public class CustomerTest {
                 .addStatement(daoAccountContact.batchSave(acctCont1))
                 .addStatement(daoAccount.batchSave(custAcct))
                 .build();
-        session.execute(batch);
+        sessionMap.get(DataCenter.CORE).execute(batch);
 
         //verify records/values written to database as expected with batch
         AccountContact foundAcctContact = daoAccountContact.findByAccountNumber(acctNum);
@@ -1059,7 +1110,7 @@ public class CustomerTest {
                 "    account_number = '" + acctNum + "' AND \n" +
                 "    opco = '" + opco + "';";
 
-        session.execute(dutyTaxAddElement);
+        sessionMap.get(DataCenter.CORE).execute(dutyTaxAddElement);
         Account foundAcct2 = daoAccount.findByAccountNumber(acctNum);
         Map<String, String> foundDutyTax2 = foundAcct2.getDutyTaxInfo();
         assert(foundDutyTax2.get(keyC).equals(valC));
@@ -1323,7 +1374,7 @@ public class CustomerTest {
         System.out.println(select.asCql());
         SimpleStatement stmt = selectStmt.setPageSize(pageSize);
 
-        ResultSet rs =  session.execute(stmt);
+        ResultSet rs =  sessionMap.get(DataCenter.CORE).execute(stmt);
         ByteBuffer pagingState = rs.getExecutionInfo().getPagingState();
         System.out.println("Initial paging state - " + pagingState);
 
@@ -1336,7 +1387,7 @@ public class CustomerTest {
         }
 
         SimpleStatement stmt2 = selectStmt.setPagingState(pagingState);
-        ResultSet rs2 = session.execute(stmt2);
+        ResultSet rs2 = sessionMap.get(DataCenter.CORE).execute(stmt2);
 
         assert(rs2.isFullyFetched() == true );
         assert(rs2.getAvailableWithoutFetching() == (expectedTotalSize - pageSize));
@@ -1361,7 +1412,7 @@ public class CustomerTest {
         System.out.println(select.asCql());
         SimpleStatement stmt = selectStmt.setPageSize(pageSize);
 
-        ResultSet rs =  session.execute(stmt);
+        ResultSet rs =  sessionMap.get(DataCenter.CORE).execute(stmt);
         ByteBuffer pagingState = rs.getExecutionInfo().getPagingState();
         System.out.println("Initial paging state - " + pagingState);
 
@@ -1379,7 +1430,7 @@ public class CustomerTest {
         }
 
         SimpleStatement stmt2 = selectStmt.setPagingState(pagingState);
-        ResultSet rs2 = session.execute(stmt2);
+        ResultSet rs2 = sessionMap.get(DataCenter.CORE).execute(stmt2);
 
         assert(rs2.isFullyFetched() == true );
         assert(rs2.getAvailableWithoutFetching() == (expectedTotalSize - pageSize));
@@ -1408,7 +1459,7 @@ public class CustomerTest {
         int expectedTotalSize = 5;
         int pageSize = 3;
         SimpleStatement stmt = selectStmt.setPageSize(pageSize);
-        ResultSet rs =  session.execute(stmt);
+        ResultSet rs =  sessionMap.get(DataCenter.CORE).execute(stmt);
 
         ByteBuffer pagingState = rs.getExecutionInfo().getPagingState();
         System.out.println("Initial paging state - " + pagingState);
@@ -1421,7 +1472,7 @@ public class CustomerTest {
         }
 
         SimpleStatement stmt2 = selectStmt.setPagingState(pagingState);
-        ResultSet rs2 = session.execute(stmt2);
+        ResultSet rs2 = sessionMap.get(DataCenter.CORE).execute(stmt2);
 
         assert(rs2.isFullyFetched() == true );
         assert(rs2.getAvailableWithoutFetching() == (expectedTotalSize - pageSize));
@@ -1446,7 +1497,7 @@ public class CustomerTest {
         int expectedTotalSize = 5;
         int pageSize = 3;
         SimpleStatement stmt = selectStmt.setPageSize(pageSize).setConsistencyLevel(ConsistencyLevel.LOCAL_ONE);
-        ResultSet rs =  session.execute(stmt);
+        ResultSet rs =  sessionMap.get(DataCenter.CORE).execute(stmt);
 
         ByteBuffer pagingState = rs.getExecutionInfo().getPagingState();
         System.out.println("Initial paging state - " + pagingState);
@@ -1459,7 +1510,7 @@ public class CustomerTest {
         }
 
         SimpleStatement stmt2 = selectStmt.setPagingState(pagingState);
-        ResultSet rs2 = session.execute(stmt2);
+        ResultSet rs2 = sessionMap.get(DataCenter.CORE).execute(stmt2);
 
         assert(rs2.isFullyFetched() == true );
         assert(rs2.getAvailableWithoutFetching() == (expectedTotalSize - pageSize));
@@ -1486,7 +1537,7 @@ public class CustomerTest {
         SimpleStatement stmt = select.build(acctID)
                                     .setPageSize(pageSize)
                                     .setConsistencyLevel(ConsistencyLevel.LOCAL_ONE);
-        ResultSet rs =  session.execute(stmt);
+        ResultSet rs =  sessionMap.get(DataCenter.CORE).execute(stmt);
 
         ByteBuffer pagingState = rs.getExecutionInfo().getPagingState();
         System.out.println("Initial paging state - " + pagingState);
@@ -1504,7 +1555,7 @@ public class CustomerTest {
         SimpleStatement stmt2 = select.build(acctID)
                                     .setPageSize(pageSize)
                                     .setPagingState(pagingState);
-        ResultSet rs2 = session.execute(stmt2);
+        ResultSet rs2 = sessionMap.get(DataCenter.CORE).execute(stmt2);
 
         ByteBuffer pagingState2 = rs2.getExecutionInfo().getPagingState();
         System.out.println("Second paging state - " + pagingState2);
@@ -1521,7 +1572,7 @@ public class CustomerTest {
         SimpleStatement stmt3 = select.build(acctID)
                                     .setPageSize(pageSize)
                                     .setPagingState(pagingState2);
-        ResultSet rs3 = session.execute(stmt2);
+        ResultSet rs3 = sessionMap.get(DataCenter.CORE).execute(stmt2);   //todo - investigate possible bug, should be stmt3?
 
 //        ByteBuffer pagingState3 = rs3.getExecutionInfo().getPagingState();
 //        System.out.println("Third paging state - " + pagingState2);
@@ -1581,7 +1632,7 @@ public class CustomerTest {
                 .whereColumn("account_number").isEqualTo(literal(acctID))
                 .whereColumn("opco").isEqualTo(literal(opco));
 
-        session.execute(deleteSingleProp.build());
+        sessionMap.get(DataCenter.CORE).execute(deleteSingleProp.build());
         Account foundCustDelProp = daoAccount.findByAccountNumber(acctID);
         //check that deleted property is no longer in record
         assert(foundCustDelProp.getProfileAccountType() == null);
@@ -1598,7 +1649,7 @@ public class CustomerTest {
                 .whereColumn("account_number").isEqualTo(literal(acctID))
                 .whereColumn("opco").isEqualTo(literal(opco));
 
-        session.execute(deleteMultiProps.build());
+        sessionMap.get(DataCenter.CORE).execute(deleteMultiProps.build());
         Account foundCustDelMultiProps = daoAccount.findByAccountNumber(acctID);
         //check that deleted properties are no longer in record
         assert(foundCustDelMultiProps.getProfileCustomerType() == null);
@@ -1916,7 +1967,7 @@ public class CustomerTest {
                             .all()
                             .whereColumn("contact_document_id").isEqualTo(literal(83));
 
-        ResultSet resCheck = session.execute(select.build());
+        ResultSet resCheck = sessionMap.get(DataCenter.CORE).execute(select.build());
 
         if(null != resCheck) {
             Row rowVal = resCheck.one();
@@ -1941,19 +1992,10 @@ public class CustomerTest {
                 "{\"q\": \"{!tuple}tele_com.area_code:123\"," +
                 "\"sort\": \"contact_document_id asc\"}'";
 
-        String searchSesionConf = "src/test/resources/L4/search-application.conf";
-        String confFilePath = Paths.get(searchSesionConf).toAbsolutePath().toString();
-        CqlSession localSesion = CqlSession.builder()
-            .withConfigLoader(DriverConfigLoader.fromFile(new File(confFilePath)))
-            .build();
-
-//        ResultSet resCheck = session.execute(solrQuery);
-        ResultSet resCheck = localSesion.execute(solrQuery);
+        ResultSet resCheck = sessionMap.get(DataCenter.SEARCH).execute(solrQuery);
 
         //call common verification method
         verifyExpectedUdtValues(resCheck);
-
-        localSesion.close();
     }
 
     private void verifyExpectedUdtValues(ResultSet resCheck){
@@ -2093,19 +2135,21 @@ public class CustomerTest {
 
     @Test
     public void verifyContactUDTInsertUpdate(){
+        CqlSession localSession = sessionMap.get(DataCenter.CORE);
+
         //cleanup any existing records and verify
         SimpleStatement cleanupStmt =
                 deleteFrom(ksConfig.getKeyspaceName(Keyspaces.CUSTOMER), "contact")
                 .whereColumn("contact_document_id").isEqualTo(literal(2001))
                 .build();
-        session.execute(cleanupStmt);
+        localSession.execute(cleanupStmt);
 
         SimpleStatement checkStmt =
                 selectFrom(ksConfig.getKeyspaceName(Keyspaces.CUSTOMER), "contact")
                 .all()
                 .whereColumn("contact_document_id").isEqualTo(literal(2001))
                 .build();
-        ResultSet rsInitialCheck = session.execute(checkStmt);
+        ResultSet rsInitialCheck = localSession.execute(checkStmt);
 
         assert(rsInitialCheck != null && rsInitialCheck.all().size() == 0);
 
@@ -2125,10 +2169,10 @@ public class CustomerTest {
                 ";";
 
         //add new record
-        session.execute(insertStmt);
+        localSession.execute(insertStmt);
 
         //verify record exists
-        ResultSet rsDataCheck = session.execute(checkStmt);
+        ResultSet rsDataCheck = localSession.execute(checkStmt);
 
         Row dataRow = rsDataCheck.one();
         assert(dataRow.getLong("contact_document_id") == (long)2001);
@@ -2146,10 +2190,10 @@ public class CustomerTest {
                 "    ;";
 
         //update set of UDTs
-        session.execute(updateStmt);
+        localSession.execute(updateStmt);
 
         //verify record updated
-        ResultSet rsDataCheckUpdate = session.execute(checkStmt);
+        ResultSet rsDataCheckUpdate = localSession.execute(checkStmt);
 
         Row dataRowUpdated = rsDataCheckUpdate.one();
         assert(dataRowUpdated.getLong("contact_document_id") == (long)2001);
@@ -2174,7 +2218,7 @@ public class CustomerTest {
                     checkQuery += "'" + curQuery.recordIDval + "'";
                 }
 
-                ResultSet resCheck = session.execute(checkQuery);
+                ResultSet resCheck = sessionMap.get(DataCenter.CORE).execute(checkQuery);
 
                 if(null != resCheck){
                     Row rowVal = resCheck.one();
