@@ -35,7 +35,6 @@ import java.util.function.Function;
 
 public class CustomerTest {
 
-    private static CqlSession session = null;
     private static CustomerMapper customerMapper = null;
     private static CustomerMapperEdge customerMapperEdge = null;
     static AccountDao daoAccount = null;
@@ -55,13 +54,11 @@ public class CustomerTest {
     private static boolean skipIndividualTableDrop = false;
     private static String productName = "Customer" ;
 
-    //environment related parameters
+    //Create environment related parameters
     private static Map<DataCenter, CqlSession>  sessionMap = new HashMap<>();
     private static KeyspaceConfig ksConfig = null;
     private static String SCHEMA_SCRIPT_PATH = "";
     private static String DATA_SCRIPT_PATH = "";
-
-
 
     @BeforeClass
     public static void init() {
@@ -69,11 +66,12 @@ public class CustomerTest {
 
         try{
             //Setup for specific test environment - only one (L1 or L4) should be uncommented
-            //L1
-//    ksConfig = new KeyspaceConfigSingleDC("SearchGraphAnalytics");
-//    SCHEMA_SCRIPT_PATH = "src/test/resources/L1/create_customer_schema.sh" ;
-//    DATA_SCRIPT_PATH = "src/test/resources/L1/load_customer_data.sh" ;
-
+            //**********
+            //** Begin L1 environment config
+//            ksConfig = new KeyspaceConfigSingleDC("SearchGraphAnalytics");
+//            SCHEMA_SCRIPT_PATH = "src/test/resources/L1/create_customer_schema.sh" ;
+//            DATA_SCRIPT_PATH = "src/test/resources/L1/load_customer_data.sh" ;
+//
 //            String sessionConf = "src/test/resources/L1/application.conf";
 //            String confFilePath = Paths.get(sessionConf).toAbsolutePath().toString();
 //            CqlSession commonSession = CqlSession.builder()
@@ -84,8 +82,11 @@ public class CustomerTest {
 //            sessionMap.put(DataCenter.CORE, commonSession);
 //            sessionMap.put(DataCenter.EDGE, commonSession);
 //            sessionMap.put(DataCenter.SEARCH, commonSession);
+            //** End L1 environment config
+            //**********
 
-            //L4
+            //**********
+            //** Begin L4 environment config
             ksConfig = new KeyspaceConfigMultiDC("core", "edge", "search");
             SCHEMA_SCRIPT_PATH = "src/test/resources/L4/create_customer_schema.sh" ;
             DATA_SCRIPT_PATH = "src/test/resources/L4/load_customer_data.sh" ;
@@ -113,27 +114,10 @@ public class CustomerTest {
                     .withConfigLoader(DriverConfigLoader.fromFile(new File(searchConfFilePath)))
                     .build();
             sessionMap.put(DataCenter.SEARCH, searchSession);
+            //** End L4 environment config
+            //**********
 
-
-//            session = CqlSession.builder()
-//                    .addContactPoints("127.0.0.1") //should have multiple (2+) contactpoints listed
-//                    .withQueryOptions(new QueryOptions().setConsistencyLevel(ConsistencyLevel.LOCAL_QUORUM))
-//                    .withLoadBalancingPolicy(
-//                            new TokenAwarePolicy(
-//                                    LatencyAwarePolicy.builder(
-//                                            DCAwareRoundRobinPolicy.builder()
-//                                                    .withLocalDc("dc1")
-//                                                    .build()
-//                                    )
-//                            )
-//                        .withExclusionThreshold(2.0)
-//                        .build()
-//                    )
-//                    .withCompression(ProtocolOptions.Compression.LZ4) //LZ4 jar needs to be in class path
-                    //auth information may also be needed
-//                    .withConfigLoader(DriverConfigLoader.fromFile())
-//                    .build();
-
+            //setup schema and data
             dropTestKeyspace();
             loadSchema();
             loadData();
@@ -161,7 +145,7 @@ public class CustomerTest {
     static void dropTestKeyspace() throws InterruptedException {
         if(!skipKeyspaceDrop) {
 
-            CqlSession localSession = sessionMap.get(DataCenter.SEARCH); //use search for all functionality
+            CqlSession localSession = sessionMap.get(DataCenter.SEARCH); //**Note use search for all functionality
 
             for(Keyspaces ks : Keyspaces.values()) {
                 String ksName = ksConfig.getKeyspaceName(ks);
@@ -199,8 +183,8 @@ public class CustomerTest {
     static void loadSchema() throws IOException, InterruptedException {
         if (!skipSchemaCreation) {
             System.out.println("Running " + productName + " loadSchema");
-            System.out.println("\tBeginning keypspace creation");
 
+            System.out.println("\tBeginning keypspace creation");
             KeyspaceCreator.createKeyspacesFromConfig(ksConfig, sessionMap.get(DataCenter.SEARCH));
             System.out.println("\tKeyspace creation complete");
 
