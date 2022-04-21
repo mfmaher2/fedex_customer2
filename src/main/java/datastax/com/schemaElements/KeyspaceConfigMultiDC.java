@@ -12,8 +12,7 @@ public class KeyspaceConfigMultiDC extends KeyspaceConfig{
         this.datacenters.put(DataCenter.EDGE, edgeDC);
         this.datacenters.put(DataCenter.SEARCH, searchDC);
 
-        AssignKeyspaceNames();
-        AssignDataCenterMappings();
+        init();
     }
     @Override
     protected void AssignKeyspaceNames(){

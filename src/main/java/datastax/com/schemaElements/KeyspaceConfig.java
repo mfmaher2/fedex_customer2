@@ -11,6 +11,11 @@ public abstract class KeyspaceConfig {
     KeyspaceConfig(){
     }
 
+    protected void init(){
+        AssignKeyspaceNames();
+        AssignDataCenterMappings();
+    }
+
     protected void AssignKeyspaceNames(){
         //todo throw exception
     }

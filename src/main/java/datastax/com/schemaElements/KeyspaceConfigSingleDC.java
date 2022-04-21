@@ -2,14 +2,13 @@ package datastax.com.schemaElements;
 
 public class KeyspaceConfigSingleDC extends KeyspaceConfig{
 
-    String dcName;
+    String datacenterName;
 
-    public KeyspaceConfigSingleDC(String datacenterName){
+    public KeyspaceConfigSingleDC(String dcName){
         super();
-        this.dcName = datacenterName;
+        this.datacenterName = dcName;
 
-        AssignKeyspaceNames();
-        AssignDataCenterMappings();
+       init();
     }
 
     @Override
@@ -44,31 +43,31 @@ public class KeyspaceConfigSingleDC extends KeyspaceConfig{
 
     @Override
     protected void AssignDataCenterMappings(){
-        AddKeyspaceDataCenter(Keyspace.ACCOUNT_KS, dcName, 1);
-        AddKeyspaceDataCenter(Keyspace.ACCOUNT_CONTACT_KS, dcName, 1);
-        AddKeyspaceDataCenter(Keyspace.ASSOC_ACCOUNT_KS, dcName, 1);
-        AddKeyspaceDataCenter(Keyspace.APPLY_DISCOUNT_KS, dcName, 1);
-        AddKeyspaceDataCenter(Keyspace.LINE_OF_BUSINESS_KS, dcName, 1);
-        AddKeyspaceDataCenter(Keyspace.COMMENT_KS, dcName, 1);
-        AddKeyspaceDataCenter(Keyspace.GROUP_KS, dcName, 1);
-        AddKeyspaceDataCenter(Keyspace.AUDIT_HISTORY_KS, dcName, 1);
-        AddKeyspaceDataCenter(Keyspace.TIME_EVENT_KS, dcName, 1);
-        AddKeyspaceDataCenter(Keyspace.CENTRALIZED_VIEW_KS, dcName, 1);
-        AddKeyspaceDataCenter(Keyspace.PAYMENT_INFO_KS, dcName, 1);
-        AddKeyspaceDataCenter(Keyspace.DYNAMIC_PROFILE_KS, dcName, 1);
-        AddKeyspaceDataCenter(Keyspace.SEARCH_KS, dcName, 1);
-        AddKeyspaceDataCenter(Keyspace.SEQUENCE_KS, dcName, 1);
+        AddKeyspaceDataCenter(Keyspace.ACCOUNT_KS, datacenterName, 1);
+        AddKeyspaceDataCenter(Keyspace.ACCOUNT_CONTACT_KS, datacenterName, 1);
+        AddKeyspaceDataCenter(Keyspace.ASSOC_ACCOUNT_KS, datacenterName, 1);
+        AddKeyspaceDataCenter(Keyspace.APPLY_DISCOUNT_KS, datacenterName, 1);
+        AddKeyspaceDataCenter(Keyspace.LINE_OF_BUSINESS_KS, datacenterName, 1);
+        AddKeyspaceDataCenter(Keyspace.COMMENT_KS, datacenterName, 1);
+        AddKeyspaceDataCenter(Keyspace.GROUP_KS, datacenterName, 1);
+        AddKeyspaceDataCenter(Keyspace.AUDIT_HISTORY_KS, datacenterName, 1);
+        AddKeyspaceDataCenter(Keyspace.TIME_EVENT_KS, datacenterName, 1);
+        AddKeyspaceDataCenter(Keyspace.CENTRALIZED_VIEW_KS, datacenterName, 1);
+        AddKeyspaceDataCenter(Keyspace.PAYMENT_INFO_KS, datacenterName, 1);
+        AddKeyspaceDataCenter(Keyspace.DYNAMIC_PROFILE_KS, datacenterName, 1);
+        AddKeyspaceDataCenter(Keyspace.SEARCH_KS, datacenterName, 1);
+        AddKeyspaceDataCenter(Keyspace.SEQUENCE_KS, datacenterName, 1);
 
         //archive specific keyspace
-        AddKeyspaceDataCenter(Keyspace.ACCOUNT_ARCHIVE_KS, dcName, 1);
-        AddKeyspaceDataCenter(Keyspace.ACCOUNT_CONTACT_ARCHIVE_KS, dcName, 1);
-        AddKeyspaceDataCenter(Keyspace.ASSOC_ACCOUNT_ARCHIVE_KS, dcName, 1);
-        AddKeyspaceDataCenter(Keyspace.APPLY_DISCOUNT_ARCHIVE_KS, dcName, 1);
-        AddKeyspaceDataCenter(Keyspace.LINE_OF_BUSINESS_ARCHIVE_KS, dcName, 1);
-        AddKeyspaceDataCenter(Keyspace.CENTRALIZED_VIEW_ARCHIVE_KS, dcName, 1);
-        AddKeyspaceDataCenter(Keyspace.PAYMENT_INFO_ARCHIVE_KS, dcName, 1);
+        AddKeyspaceDataCenter(Keyspace.ACCOUNT_ARCHIVE_KS, datacenterName, 1);
+        AddKeyspaceDataCenter(Keyspace.ACCOUNT_CONTACT_ARCHIVE_KS, datacenterName, 1);
+        AddKeyspaceDataCenter(Keyspace.ASSOC_ACCOUNT_ARCHIVE_KS, datacenterName, 1);
+        AddKeyspaceDataCenter(Keyspace.APPLY_DISCOUNT_ARCHIVE_KS, datacenterName, 1);
+        AddKeyspaceDataCenter(Keyspace.LINE_OF_BUSINESS_ARCHIVE_KS, datacenterName, 1);
+        AddKeyspaceDataCenter(Keyspace.CENTRALIZED_VIEW_ARCHIVE_KS, datacenterName, 1);
+        AddKeyspaceDataCenter(Keyspace.PAYMENT_INFO_ARCHIVE_KS, datacenterName, 1);
 
         //test only keyspace(s)
-        AddKeyspaceDataCenter(Keyspace.CUSTOMER, dcName, 1);
+        AddKeyspaceDataCenter(Keyspace.CUSTOMER, datacenterName, 1);
     }
 }

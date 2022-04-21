@@ -125,6 +125,7 @@ public class CustomerTest {
             System.out.println("\tBeginning Mapper and DAO creation");
             customerMapper = new CustomerMapperBuilder(sessionMap.get(DataCenter.CORE)).build();
             customerMapperEdge = new CustomerMapperEdgeBuilder(sessionMap.get(DataCenter.EDGE)).build();
+
             daoAccount = customerMapper.accountDao(ksConfig.getKeyspaceName(Keyspace.ACCOUNT_KS));
             daoPayment = customerMapper.paymentInfoDao(ksConfig.getKeyspaceName(Keyspace.PAYMENT_INFO_KS));
             daoAssoc = customerMapper.assocAccountDao(ksConfig.getKeyspaceName(Keyspace.ASSOC_ACCOUNT_KS));
@@ -226,6 +227,12 @@ public class CustomerTest {
 
         dropTestKeyspace();
         sessionMap.values().forEach(s -> s.close());
+    }
+
+    @Test
+    public void outputKeyspaceCreation() throws IOException {
+        String outputFilePath = "/Users/michaeldownie/Downloads/camKeyspaceCreate.cql";
+        KeyspaceCreator.outputKeyspacesCreationCQL(ksConfig, outputFilePath);
     }
 
     @Test
