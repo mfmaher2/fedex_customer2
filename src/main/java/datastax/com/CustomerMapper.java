@@ -35,6 +35,6 @@ public interface CustomerMapper {
     @DaoFactory
     AuditHistoryDao auditHistoryDao(@DaoKeyspace String keyspace);
 
-    @DaoFactory
-    AccountContactDao accountContactDao(@DaoKeyspace String keyspace);
+//    @DaoFactory
+//    AccountContactDao accountContactDao(@DaoKeyspace String keyspace); //todo - test with enabled, two instances of DAO with different mappers
 }

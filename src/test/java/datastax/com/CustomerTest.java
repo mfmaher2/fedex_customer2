@@ -37,6 +37,7 @@ public class CustomerTest {
 
     private static CqlSession session = null;
     private static CustomerMapper customerMapper = null;
+    private static CustomerMapperEdge customerMapperEdge = null;
     static AccountDao daoAccount = null;
     static PaymentInfoDao daoPayment = null;
     static AssocAccountDao daoAssoc = null;
@@ -139,6 +140,7 @@ public class CustomerTest {
 
             System.out.println("\tBeginning Mapper and DAO creation");
             customerMapper = new CustomerMapperBuilder(sessionMap.get(DataCenter.CORE)).build();
+            customerMapperEdge = new CustomerMapperEdgeBuilder(sessionMap.get(DataCenter.EDGE)).build();
             daoAccount = customerMapper.accountDao(ksConfig.getKeyspaceName(Keyspaces.ACCOUNT_KS));
             daoPayment = customerMapper.paymentInfoDao(ksConfig.getKeyspaceName(Keyspaces.PAYMENT_INFO_KS));
             daoAssoc = customerMapper.assocAccountDao(ksConfig.getKeyspaceName(Keyspaces.ASSOC_ACCOUNT_KS));
@@ -148,7 +150,7 @@ public class CustomerTest {
             daoApplyDiscount = customerMapper.applyDiscountDao(ksConfig.getKeyspaceName(Keyspaces.APPLY_DISCOUNT_KS));
             daoComment = customerMapper.commentDao(ksConfig.getKeyspaceName(Keyspaces.COMMENT_KS));
             daoAuditHistory = customerMapper.auditHistoryDao(ksConfig.getKeyspaceName(Keyspaces.AUDIT_HISTORY_KS));
-            daoAccountContact = customerMapper.accountContactDao(ksConfig.getKeyspaceName(Keyspaces.ACCOUNT_CONTACT_KS));
+            daoAccountContact = customerMapperEdge.accountContactDao(ksConfig.getKeyspaceName(Keyspaces.ACCOUNT_CONTACT_KS));
             System.out.println("\tMapper and DAO creation complete");
         }
         catch(Exception e){
