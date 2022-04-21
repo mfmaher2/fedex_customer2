@@ -1,6 +1,6 @@
 package datastax.com.schemaElements;
 
-public enum Keyspaces {
+public enum Keyspace {
     ACCOUNT_KS,
     ACCOUNT_CONTACT_KS,
     ASSOC_ACCOUNT_KS,

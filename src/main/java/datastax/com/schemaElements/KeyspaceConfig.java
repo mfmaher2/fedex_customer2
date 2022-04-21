@@ -5,8 +5,8 @@ import java.util.Map;
 
 public abstract class KeyspaceConfig {
 
-    protected Map<Keyspaces, String> keyspaceNames = new HashMap<>();
-    protected Map<Keyspaces, Map<String, Integer>> dataCenterMapping = new HashMap<>();
+    protected Map<Keyspace, String> keyspaceNames = new HashMap<>();
+    protected Map<Keyspace, Map<String, Integer>> dataCenterMapping = new HashMap<>();
 
     KeyspaceConfig(){
     }
@@ -19,17 +19,17 @@ public abstract class KeyspaceConfig {
         //todo throw exception
     }
 
-    protected void AddKeyspaceDataCenter(Keyspaces keyspace, String datacenter, Integer replicationFactor){
+    protected void AddKeyspaceDataCenter(Keyspace keyspace, String datacenter, Integer replicationFactor){
         Map<String, Integer> keyspaceEntry = dataCenterMapping.getOrDefault(keyspace, new HashMap<>());
         keyspaceEntry.put(datacenter, replicationFactor);
         dataCenterMapping.put(keyspace, keyspaceEntry);
     }
 
-    public String getKeyspaceName(Keyspaces keyspace){
+    public String getKeyspaceName(Keyspace keyspace){
         return keyspaceNames.getOrDefault(keyspace, "");
     }
 
-    public Map<Keyspaces, Map<String, Integer>> getDataCenterMapping(){
+    public Map<Keyspace, Map<String, Integer>> getDataCenterMapping(){
         return dataCenterMapping;
     }
 

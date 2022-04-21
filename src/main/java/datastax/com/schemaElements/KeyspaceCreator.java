@@ -2,7 +2,6 @@ package datastax.com.schemaElements;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.querybuilder.schema.CreateKeyspace;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 
 import java.util.Map;
 
@@ -12,9 +11,9 @@ public class KeyspaceCreator {
 
     public static void createKeyspacesFromConfig(KeyspaceConfig config, CqlSession session){
 
-        Map<Keyspaces, Map<String, Integer>> keyspacMap = config.getDataCenterMapping();
+        Map<Keyspace, Map<String, Integer>> keyspacMap = config.getDataCenterMapping();
 
-        for(Keyspaces ks : keyspacMap.keySet()){
+        for(Keyspace ks : keyspacMap.keySet()){
             String ksName = config.getKeyspaceName(ks);
             System.out.println("Creating keyspace - " + ksName);
             CreateKeyspace create = createKeyspace(ksName).ifNotExists()
