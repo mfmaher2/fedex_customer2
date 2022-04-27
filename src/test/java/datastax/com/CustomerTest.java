@@ -1,9 +1,7 @@
 package datastax.com;
 
-import com.datastax.oss.driver.api.core.ConsistencyLevel;
-import com.datastax.oss.driver.api.core.CqlSession;
-import com.datastax.oss.driver.api.core.MappedAsyncPagingIterable;
-import com.datastax.oss.driver.api.core.PagingIterable;
+import com.datastax.oss.driver.api.core.*;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.cql.*;
 import com.datastax.oss.driver.api.core.data.UdtValue;
@@ -68,52 +66,53 @@ public class CustomerTest {
             //Setup for specific test environment - only one (L1 or L4) should be uncommented
             //**********
             //** Begin L1 environment config
-//            ksConfig = new KeyspaceConfigSingleDC("SearchGraphAnalytics");
-//            SCHEMA_SCRIPT_PATH = "src/test/resources/L1/create_customer_schema.sh" ;
-//            DATA_SCRIPT_PATH = "src/test/resources/L1/load_customer_data.sh" ;
-//
-//            String sessionConf = "src/test/resources/L1/application.conf";
-//            String confFilePath = Paths.get(sessionConf).toAbsolutePath().toString();
-//            CqlSession commonSession = CqlSession.builder()
-//                    .withConfigLoader(DriverConfigLoader.fromFile(new File(confFilePath)))
-//                    .build();
-//            //in L1 only a single DC, assign each entry in session map to same 'common'
-//            //session value -- all operations will execute using same session
-//            sessionMap.put(DataCenter.CORE, commonSession);
-//            sessionMap.put(DataCenter.EDGE, commonSession);
-//            sessionMap.put(DataCenter.SEARCH, commonSession);
+
             //** End L1 environment config
             //**********
+            ksConfig = new KeyspaceConfigSingleDC("SearchGraphAnalytics");
+            SCHEMA_SCRIPT_PATH = "src/test/resources/L1/create_customer_schema.sh" ;
+            DATA_SCRIPT_PATH = "src/test/resources/L1/load_customer_data.sh" ;
 
+            String sessionConf = "src/test/resources/L1/application.conf";
+            String confFilePath = Paths.get(sessionConf).toAbsolutePath().toString();
+            CqlSession commonSession = CqlSession.builder()
+                    .withConfigLoader(DriverConfigLoader.fromFile(new File(confFilePath)))
+                    .build();
+
+            //in L1 only a single DC, assign each entry in session map to same 'common'
+            //session value -- all operations will execute using same session
+            sessionMap.put(DataCenter.CORE, commonSession);
+            sessionMap.put(DataCenter.EDGE, commonSession);
+            sessionMap.put(DataCenter.SEARCH, commonSession);
             //**********
             //** Begin L4 environment config
-            ksConfig = new KeyspaceConfigMultiDC("core", "edge", "search");
-            SCHEMA_SCRIPT_PATH = "src/test/resources/L4/create_customer_schema.sh" ;
-            DATA_SCRIPT_PATH = "src/test/resources/L4/load_customer_data.sh" ;
-
-            //L4 - core DC session
-            String coreSessionConf = "src/test/resources/L4/core-application.conf";
-            String coreConfFilePath = Paths.get(coreSessionConf).toAbsolutePath().toString();
-            CqlSession coreSession = CqlSession.builder()
-                    .withConfigLoader(DriverConfigLoader.fromFile(new File(coreConfFilePath)))
-                    .build();
-            sessionMap.put(DataCenter.CORE, coreSession);
-
-            //L4 - edge DC session
-            String edgeSessionConf = "src/test/resources/L4/edge-application.conf";
-            String edgeConfFilePath = Paths.get(edgeSessionConf).toAbsolutePath().toString();
-            CqlSession edgeSession = CqlSession.builder()
-                    .withConfigLoader(DriverConfigLoader.fromFile(new File(edgeConfFilePath)))
-                    .build();
-            sessionMap.put(DataCenter.EDGE, edgeSession);
-
-            //L4 - search DC session
-            String searchSessionConf = "src/test/resources/L4/search-application.conf";
-            String searchConfFilePath = Paths.get(searchSessionConf).toAbsolutePath().toString();
-            CqlSession searchSession = CqlSession.builder()
-                    .withConfigLoader(DriverConfigLoader.fromFile(new File(searchConfFilePath)))
-                    .build();
-            sessionMap.put(DataCenter.SEARCH, searchSession);
+//            ksConfig = new KeyspaceConfigMultiDC("core", "edge", "search");
+//            SCHEMA_SCRIPT_PATH = "src/test/resources/L4/create_customer_schema.sh" ;
+//            DATA_SCRIPT_PATH = "src/test/resources/L4/load_customer_data.sh" ;
+//
+//            //L4 - core DC session
+//            String coreSessionConf = "src/test/resources/L4/core-application.conf";
+//            String coreConfFilePath = Paths.get(coreSessionConf).toAbsolutePath().toString();
+//            CqlSession coreSession = CqlSession.builder()
+//                    .withConfigLoader(DriverConfigLoader.fromFile(new File(coreConfFilePath)))
+//                    .build();
+//            sessionMap.put(DataCenter.CORE, coreSession);
+//
+//            //L4 - edge DC session
+//            String edgeSessionConf = "src/test/resources/L4/edge-application.conf";
+//            String edgeConfFilePath = Paths.get(edgeSessionConf).toAbsolutePath().toString();
+//            CqlSession edgeSession = CqlSession.builder()
+//                    .withConfigLoader(DriverConfigLoader.fromFile(new File(edgeConfFilePath)))
+//                    .build();
+//            sessionMap.put(DataCenter.EDGE, edgeSession);
+//
+//            //L4 - search DC session
+//            String searchSessionConf = "src/test/resources/L4/search-application.conf";
+//            String searchConfFilePath = Paths.get(searchSessionConf).toAbsolutePath().toString();
+//            CqlSession searchSession = CqlSession.builder()
+//                    .withConfigLoader(DriverConfigLoader.fromFile(new File(searchConfFilePath)))
+//                    .build();
+//            sessionMap.put(DataCenter.SEARCH, searchSession);
             //** End L4 environment config
             //**********
 
@@ -227,6 +226,16 @@ public class CustomerTest {
 
         dropTestKeyspace();
         sessionMap.values().forEach(s -> s.close());
+    }
+
+    @Test
+    public void customizeEnvironmentTest() throws IOException {
+        EnvironmentCustomizeParameters envParams = new EnvironmentCustomizeParameters();
+        envParams.environmentID = "l1";
+        envParams.schemaSourceFilesPath = Paths.get("src/main/resources/genericSchema/").toAbsolutePath().toString();
+
+        EnvironmentCustomize envCustomizer = new EnvironmentCustomize(envParams);
+        envCustomizer.generateCustomizeEnvironment();
     }
 
     @Test
@@ -1984,8 +1993,11 @@ public class CustomerTest {
                 "    solr_query = '" +
                 "{\"q\": \"{!tuple}tele_com.area_code:123\"," +
                 "\"sort\": \"contact_document_id asc\"}'";
+        ;
 
-        ResultSet resCheck = sessionMap.get(DataCenter.SEARCH).execute(solrQuery);
+        ResultSet resCheck = sessionMap.get(DataCenter.SEARCH).execute(
+                SimpleStatement.builder(solrQuery).setExecutionProfileName("search").build()
+        );
 
         //call common verification method
         verifyExpectedUdtValues(resCheck);
