@@ -1,7 +1,6 @@
 package datastax.com;
 
 import com.datastax.oss.driver.api.core.*;
-import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.cql.*;
 import com.datastax.oss.driver.api.core.data.UdtValue;
@@ -14,6 +13,7 @@ import static com.datastax.oss.driver.api.querybuilder.SchemaBuilder.*;
 import datastax.com.dataObjects.*;
 import datastax.com.DAOs.*;
 import datastax.com.schemaElements.*;
+import org.apache.commons.lang.text.StrSubstitutor;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -230,12 +230,51 @@ public class CustomerTest {
 
     @Test
     public void customizeEnvironmentTest() throws IOException {
+
         EnvironmentCustomizeParameters envParams = new EnvironmentCustomizeParameters();
         envParams.environmentID = "l1";
-        envParams.schemaSourceFilesPath = Paths.get("src/main/resources/genericSchema/").toAbsolutePath().toString();
+        envParams.sourcFilesPath = Paths.get("src/main/resources/genericSchema/").toAbsolutePath().toString();
+        envParams.schemaCreateHost = "127.0.0.1";
+        envParams.schemaCreatePort = "9042";
+        envParams.searchIndexCreateHost = "127.0.0.1";
+        envParams.searchIndexCreatePort = "9042";
+        envParams.cqlshPath = "/Users/michaeldownie/dse/dse-5.1.14/bin/cqlsh";
+        envParams.bulkLoadPath = "/Users/michaeldownie/DSE/dsbulk-1.8.0/bin/dsbulk";
+
+
+        Map<String, String> mapScriptReplaceContent = new HashMap<>();
+
+        mapScriptReplaceContent.put("CQLSH_PATH", envParams.cqlshPath);
+        mapScriptReplaceContent.put("<SCHEMA_HOST>", envParams.schemaCreateHost);
+        mapScriptReplaceContent.put("<SCHEMA_PORT>", envParams.schemaCreatePort);
+        mapScriptReplaceContent.put("<SEARCH_HOST>", envParams.searchIndexCreateHost);
+        mapScriptReplaceContent.put("<SEARCH_PORT>", envParams.searchIndexCreatePort);
+
+        String testLine = "<CQLSH_PATH> <SCHEMA_HOST> <SCHEMA_PORT> -e\"SOURCE '<SCHEMA_FOLDER>/<DDL_FILE>';\"";
+//        StrSubstitutor substitutor = new  StrSubstitutor(mapScriptReplaceContent, "<", ">");
+        StrSubstitutor substitutor = new  StrSubstitutor(mapScriptReplaceContent);
+        String replacedText = substitutor.replace(testLine);
+        System.out.println(replacedText);
+
+
+        String testString = "Hello {USERNAME}! Welcome to the {WEBSITE_NAME}!";
+//        Map<String, String> replacementStrings = Map.of(
+//                "USERNAME", "My name",
+//                "WEBSITE_NAME", "My website name"
+//        );
+
+        Map<String, String> replacementStrings = new HashMap<>();
+        replacementStrings.put("USERNAME", "My name");
+        replacementStrings.put("WEBSITE_NAME", "My website name");
+
+
+        StrSubstitutor sub = new StrSubstitutor(replacementStrings , "{", "}");
+        String result = sub.replace(testString );
+        System.out.println(result);
+
 
         EnvironmentCustomize envCustomizer = new EnvironmentCustomize(envParams);
-        envCustomizer.generateCustomizeEnvironment();
+        envCustomizer.generateCustomizedEnvironment();
     }
 
     @Test
