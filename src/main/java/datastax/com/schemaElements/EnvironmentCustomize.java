@@ -95,7 +95,7 @@ public class EnvironmentCustomize
         setFileAsExecutable(outputDirectory + "/" + SCHEMA_CREATE_FILE);
         setFileAsExecutable(outputDirectory + "/" + DATA_LOAD_FILE);
 
-        //setCleanupOnExit();
+        setCleanupOnExit();
     }
 
     protected void setFileAsExecutable(String fileLocation){
