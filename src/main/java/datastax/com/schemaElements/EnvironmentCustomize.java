@@ -5,6 +5,7 @@ import org.apache.commons.lang.text.StrSubstitutor;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -15,7 +16,7 @@ import java.util.stream.Stream;
 public class EnvironmentCustomize
 {
     //schema replacement values
-    protected final String ENV_ID_PLACEHOLDER = "<ENV_LEVEL_ID>";
+    protected final String ENV_ID_PLACEHOLDER = "ENV_LEVEL_ID";
 
     //output schema files, output files with customized values
     protected final String CAM_DDL_FILE = "cam_ddl.cql";
@@ -31,39 +32,42 @@ public class EnvironmentCustomize
 
     protected String outputDirectory = "";
     protected EnvironmentCustomizeParameters envConfig;
-    protected Map<String, String> mapSchemaSourceToDestFiles = new HashMap<>();
-    protected Map<String, String> mapScriptSourceToDestFiles = new HashMap<>();
-    protected Map<String, String> mapScriptReplaceContent = new HashMap<>();
+    protected Map<String, String> mapSourceToDestFiles = new HashMap<>();
+    protected Map<String, String> mapReplaceContent = new HashMap<>();
 
     public EnvironmentCustomize(EnvironmentCustomizeParameters config) throws IOException {
         this.envConfig = config;
 
         //map schema files source -> destination
-        mapSchemaSourceToDestFiles.put("cam_ddl_cql.sql", CAM_DDL_FILE);
-        mapSchemaSourceToDestFiles.put("cam_sai_ddl_cql.sql", CAM_SAI_FILE);
-        mapSchemaSourceToDestFiles.put("cam_search_ddl_cql.sql", CAM_SEARCH_FILE);
-        mapSchemaSourceToDestFiles.put("test_only_schema_cql.sql", TEST_SCHEMA_FILE);
-        mapSchemaSourceToDestFiles.put("test_seq_num_cql.sql", TEST_SEQ_NUM_FILE);
+        mapSourceToDestFiles.put("cam_ddl_cql.sql", CAM_DDL_FILE);
+        mapSourceToDestFiles.put("cam_sai_ddl_cql.sql", CAM_SAI_FILE);
+        mapSourceToDestFiles.put("cam_search_ddl_cql.sql", CAM_SEARCH_FILE);
+        mapSourceToDestFiles.put("test_only_schema_cql.sql", TEST_SCHEMA_FILE);
+        mapSourceToDestFiles.put("test_seq_num_cql.sql", TEST_SEQ_NUM_FILE);
 
         //map script files source -> destination
-        mapScriptSourceToDestFiles.put("create_customer_schema_template.sh", SCHEMA_CREATE_FILE);
-        mapScriptSourceToDestFiles.put("load_customer_data_template.sh", DATA_LOAD_FILE);
+        mapSourceToDestFiles.put("create_customer_schema_template.sh", SCHEMA_CREATE_FILE);
+        mapSourceToDestFiles.put("load_customer_data_template.sh", DATA_LOAD_FILE);
     }
 
     protected void assignScriptReplacementValues(){
-        mapScriptReplaceContent.put("CQLSH_PATH", envConfig.cqlshPath);
-        mapScriptReplaceContent.put("SCHEMA_HOST", envConfig.schemaCreateHost);
-        mapScriptReplaceContent.put("SCHEMA_PORT", envConfig.schemaCreatePort);
-        mapScriptReplaceContent.put("SEARCH_HOST", envConfig.searchIndexCreateHost);
-        mapScriptReplaceContent.put("SEARCH_PORT", envConfig.searchIndexCreatePort);
+        mapReplaceContent.put("CQLSH_PATH", envConfig.cqlshPath);
+        mapReplaceContent.put("DSBULK_PATH", envConfig.bulkLoadPath);
+        mapReplaceContent.put("SCHEMA_HOST", envConfig.schemaCreateHost);
+        mapReplaceContent.put("SCHEMA_PORT", envConfig.schemaCreatePort);
+        mapReplaceContent.put("SEARCH_HOST", envConfig.searchIndexCreateHost);
+        mapReplaceContent.put("SEARCH_PORT", envConfig.searchIndexCreatePort);
 
-        mapScriptReplaceContent.put("DDL_FILE", CAM_DDL_FILE);
-        mapScriptReplaceContent.put("SAI_DDL_FILE", CAM_SAI_FILE);
-        mapScriptReplaceContent.put("SEARCH_DDL_FILE", CAM_SEARCH_FILE);
-        mapScriptReplaceContent.put("TEST_SCHEMA", TEST_SCHEMA_FILE);
-        mapScriptReplaceContent.put("SEQ_NUM_SCHEMA", TEST_SEQ_NUM_FILE);
+        mapReplaceContent.put("DDL_FILE", CAM_DDL_FILE);
+        mapReplaceContent.put("SAI_DDL_FILE", CAM_SAI_FILE);
+        mapReplaceContent.put("SEARCH_DDL_FILE", CAM_SEARCH_FILE);
+        mapReplaceContent.put("TEST_SCHEMA", TEST_SCHEMA_FILE);
+        mapReplaceContent.put("SEQ_NUM_SCHEMA", TEST_SEQ_NUM_FILE);
 
-        mapScriptReplaceContent.put("SCHEMA_FOLDER", outputDirectory);
+        mapReplaceContent.put(ENV_ID_PLACEHOLDER, envConfig.environmentID);
+
+        mapReplaceContent.put("SCHEMA_FOLDER", outputDirectory);
+        mapReplaceContent.put("DATA_FILES_PATH", envConfig.dataFilesPath);
     }
 
     public void generateCustomizedEnvironment() throws IOException {
@@ -73,86 +77,60 @@ public class EnvironmentCustomize
         outputDirectory = outputPath.toString();
         System.out.println("Temporary folder created - " + outputDirectory);
 
+
+        //assign translation values and create common substitutor to be used for all files
         assignScriptReplacementValues();
+        StrSubstitutor substitutor = new  StrSubstitutor(mapReplaceContent, "<", ">");
 
-        mapSchemaSourceToDestFiles.forEach((sourceFile, destinationFile) -> {
-            String sourceFullPath = envConfig.sourcFilesPath + "/" + sourceFile;
+        mapSourceToDestFiles.forEach((sourceFile, destinationFile) -> {
+            String sourceFullPath = envConfig.sourceFilesPath + "/" + sourceFile;
             String destinationFullPath = outputPath.toAbsolutePath() + "/" + destinationFile ;
             try {
-                translateSchemaFile(sourceFullPath, destinationFullPath);
+                translateFile(sourceFullPath, destinationFullPath, substitutor);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         } );
 
-        mapScriptSourceToDestFiles.forEach((sourceFile, destinationFile) -> {
-            String sourceFullPath = envConfig.sourcFilesPath + "/" + sourceFile;
-            String destinationFullPath = outputPath.toAbsolutePath() + "/" + destinationFile ;
-            try {
-                translateScriptFile(sourceFullPath, destinationFullPath);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+        setFileAsExecutable(outputDirectory + "/" + SCHEMA_CREATE_FILE);
+        setFileAsExecutable(outputDirectory + "/" + DATA_LOAD_FILE);
+
+        //setCleanupOnExit();
+    }
+
+    protected void setFileAsExecutable(String fileLocation){
+        try {
+            Path executableFile = Paths.get(fileLocation);
+            executableFile.toFile().setExecutable(true);
+        } catch(Exception e){
+            System.out.println(e.getMessage());
+        }
+    }
+
+    protected void setCleanupOnExit(){
+
+        Path tempDirPath = Paths.get(outputDirectory);
+
+        try (DirectoryStream<Path> tempDirStream = Files.newDirectoryStream(tempDirPath)){
+            tempDirPath.toFile().deleteOnExit();
+
+            for(Path tempFilePath : tempDirStream){
+                tempFilePath.toFile().deleteOnExit();
             }
-        } );
-    }
 
-    protected void translateSchemaFile(String sourceFile, String destinationFile) throws IOException {
-        try{
-            BufferedWriter writer = new BufferedWriter(new FileWriter(destinationFile));
-            Stream<String> readStream = Files.lines(Paths.get(sourceFile));
-                readStream.forEach(line -> {
-                    try {
-                        writer.write(line.replace(ENV_ID_PLACEHOLDER, envConfig.environmentID) + "\n");
-                    } catch (IOException e) {
-                        System.out.println("Error writing to temporary schema file " + destinationFile);
-                        System.out.println(e.getMessage());
-                        throw new RuntimeException(e);
-                    }
-                    catch(Exception e){
-                        System.out.println("General exception writing to temporary schema file " + destinationFile);
-                        System.out.println(e.getMessage());
-                        throw new RuntimeException(e);
-                    }
-                });
-
-            writer.close();
-
-        } catch (IOException e) {
-            System.out.println("Error processing schema file translation, source- " +  sourceFile + "  destination- " + destinationFile);
+        } catch(IOException e){
             System.out.println(e.getMessage());
-            throw new RuntimeException(e);
-        }
-        catch(Exception e){
-            System.out.println("General exception processing schema file translation, source- " +  sourceFile + "  destination- " + destinationFile);
-            System.out.println(e.getMessage());
-            throw new RuntimeException(e);
-
         }
     }
 
-    protected String replaceStringContent(String source, String placeHolder, String content){
-        return source.replace(placeHolder, content);
-    }
-    protected void translateScriptFile(String sourceFile, String destinationFile) throws IOException {
+    protected void translateFile(String sourceFile, String destinationFile, StrSubstitutor substitutor) throws IOException {
         try{
             BufferedWriter writer = new BufferedWriter(new FileWriter(destinationFile));
             Stream<String> readStream = Files.lines(Paths.get(sourceFile));
-            StrSubstitutor substitutor = new  StrSubstitutor(mapScriptReplaceContent, "<", ">");
-            System.out.println(mapScriptReplaceContent.toString());
 
             readStream.forEach(line -> {
                 try {
-
-//                    Str
-//
-//                    line = mapScriptReplaceContent.forEach((placeholder, envContent) -> {
-//                        //line = line.replace(placeholder, envContent);
-//                        replaceStringContent(line, placeholder, envContent);
-//                    });
-//                    writer.write(line.replace(ENV_ID_PLACEHOLDER, envConfig.environmentID) + "\n");
                     String outLine = substitutor.replace(line);
-                    System.out.println("source line - " + line);
-                    System.out.println("replaced line - " + outLine);
                     writer.write(outLine + "\n");
                 } catch (IOException e) {
                     System.out.println("Error writing to temporary script file " + destinationFile);
@@ -177,12 +155,13 @@ public class EnvironmentCustomize
             System.out.println("General exception processing script file translation, source- " +  sourceFile + "  destination- " + destinationFile);
             System.out.println(e.getMessage());
             throw new RuntimeException(e);
-
         }
     }
 
-
     public String getSchemaCreationFilePath(){
-        return outputDirectory; //todo add file path
+        return outputDirectory + "/" + SCHEMA_CREATE_FILE;
+    }
+    public String getLoadDataFilePath(){
+        return outputDirectory + "/" + DATA_LOAD_FILE;
     }
 }

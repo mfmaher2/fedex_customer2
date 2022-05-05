@@ -46,13 +46,16 @@ public class CustomerTest {
     static AuditHistoryDao daoAuditHistory = null;
     static AccountContactDao daoAccountContact = null;
 
-    private static boolean skipSchemaCreation = true;
-    private static boolean skipDataLoad = true;
-    private static boolean skipKeyspaceDrop = true;
+    private static boolean skipSchemaCreation = false;
+    private static boolean skipDataLoad = false;
+    private static boolean skipKeyspaceDrop = false;
     private static boolean skipIndividualTableDrop = false;
     private static String productName = "Customer" ;
 
     //Create environment related parameters
+    private static EnvironmentCustomizeParameters environmentParams = new EnvironmentCustomizeParameters();
+    private static EnvironmentCustomize environment = null;
+
     private static Map<DataCenter, CqlSession>  sessionMap = new HashMap<>();
     private static KeyspaceConfig ksConfig = null;
     private static String SCHEMA_SCRIPT_PATH = "";
@@ -67,11 +70,23 @@ public class CustomerTest {
             //**********
             //** Begin L1 environment config
 
+            //common values
+            environmentParams.sourceFilesPath = Paths.get("src/main/resources/genericSchema/").toAbsolutePath().toString();
+            environmentParams.dataFilesPath = Paths.get("src/test/testData").toAbsolutePath().toString();
+            environmentParams.cqlshPath = "/Users/michaeldownie/dse/dse-5.1.14/bin/cqlsh";
+            environmentParams.bulkLoadPath = "/Users/michaeldownie/DSE/dsbulk-1.8.0/bin/dsbulk";
+
             //** End L1 environment config
             //**********
             ksConfig = new KeyspaceConfigSingleDC("SearchGraphAnalytics");
             SCHEMA_SCRIPT_PATH = "src/test/resources/L1/create_customer_schema.sh" ;
             DATA_SCRIPT_PATH = "src/test/resources/L1/load_customer_data.sh" ;
+
+            environmentParams.environmentID = "l1";
+            environmentParams.schemaCreateHost = "127.0.0.1";
+            environmentParams.schemaCreatePort = "9042";
+            environmentParams.searchIndexCreateHost = "127.0.0.1";
+            environmentParams.searchIndexCreatePort = "9042";
 
             String sessionConf = "src/test/resources/L1/application.conf";
             String confFilePath = Paths.get(sessionConf).toAbsolutePath().toString();
@@ -115,6 +130,10 @@ public class CustomerTest {
 //            sessionMap.put(DataCenter.SEARCH, searchSession);
             //** End L4 environment config
             //**********
+
+            environment = new EnvironmentCustomize(environmentParams);
+            environment.generateCustomizedEnvironment();
+
 
             //setup schema and data
             dropTestKeyspace();
@@ -189,7 +208,8 @@ public class CustomerTest {
             System.out.println("\tKeyspace creation complete");
 
             System.out.println("\tBeginning table and index creation");
-            runScript(SCHEMA_SCRIPT_PATH);
+//            runScript(SCHEMA_SCRIPT_PATH);
+            runScript(environment.getSchemaCreationFilePath());
             System.out.println("\tTable and index creation complete");
         }
     }
@@ -210,7 +230,8 @@ public class CustomerTest {
         if(!skipDataLoad){
             System.out.println("Running " + productName + " data load");
 
-            runScript(DATA_SCRIPT_PATH);
+//            runScript(DATA_SCRIPT_PATH);
+            runScript(environment.getLoadDataFilePath());
 
             //sleep for a time to allow Solr indexes to update completely
             System.out.println("Completed " + productName + " data load.  Pausing to allow indexes to update...");
@@ -233,7 +254,7 @@ public class CustomerTest {
 
         EnvironmentCustomizeParameters envParams = new EnvironmentCustomizeParameters();
         envParams.environmentID = "l1";
-        envParams.sourcFilesPath = Paths.get("src/main/resources/genericSchema/").toAbsolutePath().toString();
+        envParams.sourceFilesPath = Paths.get("src/main/resources/genericSchema/").toAbsolutePath().toString();
         envParams.schemaCreateHost = "127.0.0.1";
         envParams.schemaCreatePort = "9042";
         envParams.searchIndexCreateHost = "127.0.0.1";
@@ -273,8 +294,8 @@ public class CustomerTest {
         System.out.println(result);
 
 
-        EnvironmentCustomize envCustomizer = new EnvironmentCustomize(envParams);
-        envCustomizer.generateCustomizedEnvironment();
+//        EnvironmentCustomize envCustomizer = new EnvironmentCustomize(envParams);
+//        envCustomizer.generateCustomizedEnvironment();
     }
 
     @Test
