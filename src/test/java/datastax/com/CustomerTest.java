@@ -76,63 +76,60 @@ public class CustomerTest {
 
             //** End L1 environment config
             //**********
-            ksConfig = new KeyspaceConfigSingleDC("SearchGraphAnalytics");
-
-            environmentParams.environmentID = "l1";
-            environmentParams.schemaCreateHost = "127.0.0.1";
-            environmentParams.schemaCreatePort = "9042";
-            environmentParams.searchIndexCreateHost = "127.0.0.1";
-            environmentParams.searchIndexCreatePort = "9042";
-
-            String sessionConf = "src/test/resources/L1/application.conf";
-            String confFilePath = Paths.get(sessionConf).toAbsolutePath().toString();
-            CqlSession commonSession = CqlSession.builder()
-                    .withConfigLoader(DriverConfigLoader.fromFile(new File(confFilePath)))
-                    .build();
-
-            //in L1 only a single DC, assign each entry in session map to same 'common'
-            //session value -- all operations will execute using same session
-            sessionMap.put(DataCenter.CORE, commonSession);
-            sessionMap.put(DataCenter.EDGE, commonSession);
-            sessionMap.put(DataCenter.SEARCH, commonSession);
+//            ksConfig = new KeyspaceConfigSingleDC("SearchGraphAnalytics");
+//
+//            environmentParams.environmentID = "l1";
+//            environmentParams.schemaCreateHost = "127.0.0.1";
+//            environmentParams.schemaCreatePort = "9042";
+//            environmentParams.searchIndexCreateHost = "127.0.0.1";
+//            environmentParams.searchIndexCreatePort = "9042";
+//
+//            String sessionConf = "src/test/resources/L1/application.conf";
+//            String confFilePath = Paths.get(sessionConf).toAbsolutePath().toString();
+//            CqlSession commonSession = CqlSession.builder()
+//                    .withConfigLoader(DriverConfigLoader.fromFile(new File(confFilePath)))
+//                    .build();
+//
+//            //in L1 only a single DC, assign each entry in session map to same 'common'
+//            //session value -- all operations will execute using same session
+//            sessionMap.put(DataCenter.CORE, commonSession);
+//            sessionMap.put(DataCenter.EDGE, commonSession);
+//            sessionMap.put(DataCenter.SEARCH, commonSession);
             //**********
 
 
             //** Begin L4 environment config
-//            ksConfig = new KeyspaceConfigMultiDC("core", "edge", "search");
-//            SCHEMA_SCRIPT_PATH = "src/test/resources/L4/create_customer_schema.sh" ;
-//            DATA_SCRIPT_PATH = "src/test/resources/L4/load_customer_data.sh" ;
-//
-//            environmentParams.environmentID = "l4";
-//            environmentParams.schemaCreateHost = "127.0.0.1";
-//            environmentParams.schemaCreatePort = "9042";
-//            environmentParams.searchIndexCreateHost = "127.0.0.1";
-//            environmentParams.searchIndexCreatePort = "9044";
+            ksConfig = new KeyspaceConfigMultiDC("core", "edge", "search");
 
+            environmentParams.environmentID = "l4";
+            environmentParams.schemaCreateHost = "127.0.0.1";
+            environmentParams.schemaCreatePort = "9042";
+            environmentParams.searchIndexCreateHost = "127.0.0.1";
+            environmentParams.searchIndexCreatePort = "9044";
 
-//            //L4 - core DC session
-//            String coreSessionConf = "src/test/resources/L4/core-application.conf";
-//            String coreConfFilePath = Paths.get(coreSessionConf).toAbsolutePath().toString();
-//            CqlSession coreSession = CqlSession.builder()
-//                    .withConfigLoader(DriverConfigLoader.fromFile(new File(coreConfFilePath)))
-//                    .build();
-//            sessionMap.put(DataCenter.CORE, coreSession);
-//
-//            //L4 - edge DC session
-//            String edgeSessionConf = "src/test/resources/L4/edge-application.conf";
-//            String edgeConfFilePath = Paths.get(edgeSessionConf).toAbsolutePath().toString();
-//            CqlSession edgeSession = CqlSession.builder()
-//                    .withConfigLoader(DriverConfigLoader.fromFile(new File(edgeConfFilePath)))
-//                    .build();
-//            sessionMap.put(DataCenter.EDGE, edgeSession);
-//
-//            //L4 - search DC session
-//            String searchSessionConf = "src/test/resources/L4/search-application.conf";
-//            String searchConfFilePath = Paths.get(searchSessionConf).toAbsolutePath().toString();
-//            CqlSession searchSession = CqlSession.builder()
-//                    .withConfigLoader(DriverConfigLoader.fromFile(new File(searchConfFilePath)))
-//                    .build();
-//            sessionMap.put(DataCenter.SEARCH, searchSession);
+            //L4 - core DC session
+            String coreSessionConf = "src/test/resources/L4/core-application.conf";
+            String coreConfFilePath = Paths.get(coreSessionConf).toAbsolutePath().toString();
+            CqlSession coreSession = CqlSession.builder()
+                    .withConfigLoader(DriverConfigLoader.fromFile(new File(coreConfFilePath)))
+                    .build();
+            sessionMap.put(DataCenter.CORE, coreSession);
+
+            //L4 - edge DC session
+            String edgeSessionConf = "src/test/resources/L4/edge-application.conf";
+            String edgeConfFilePath = Paths.get(edgeSessionConf).toAbsolutePath().toString();
+            CqlSession edgeSession = CqlSession.builder()
+                    .withConfigLoader(DriverConfigLoader.fromFile(new File(edgeConfFilePath)))
+                    .build();
+            sessionMap.put(DataCenter.EDGE, edgeSession);
+
+            //L4 - search DC session
+            String searchSessionConf = "src/test/resources/L4/search-application.conf";
+            String searchConfFilePath = Paths.get(searchSessionConf).toAbsolutePath().toString();
+            CqlSession searchSession = CqlSession.builder()
+                    .withConfigLoader(DriverConfigLoader.fromFile(new File(searchConfFilePath)))
+                    .build();
+            sessionMap.put(DataCenter.SEARCH, searchSession);
             //** End L4 environment config
             //**********
 
