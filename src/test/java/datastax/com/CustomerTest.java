@@ -13,14 +13,16 @@ import static com.datastax.oss.driver.api.querybuilder.SchemaBuilder.*;
 import datastax.com.dataObjects.*;
 import datastax.com.DAOs.*;
 import datastax.com.schemaElements.*;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
+import sun.net.www.http.HttpClient;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
+import java.net.*;
 import java.nio.ByteBuffer;
 import java.nio.file.Paths;
 import java.text.ParseException;
@@ -247,6 +249,38 @@ public class CustomerTest {
 
         dropTestKeyspace();
         sessionMap.values().forEach(s -> s.close());
+    }
+
+    @Ignore
+    @Test
+    public void outsideWebServiceCall() throws IOException, JSONException {
+
+        String acctNum = "987xyz";
+        String urlWithParameter = "http://localhost:8080/accountBalance?accountNum=" + acctNum;
+
+        URL urlAccountBal = new URL(urlWithParameter);
+        HttpURLConnection connectAcctBal = (HttpURLConnection) urlAccountBal.openConnection();
+        connectAcctBal.setRequestMethod("GET");
+
+        BufferedReader response = new BufferedReader(new InputStreamReader(connectAcctBal.getInputStream()));
+        String responseLine;
+        StringBuffer fullResponse = new StringBuffer();
+
+        while((responseLine = response.readLine()) != null){
+            fullResponse.append(responseLine);
+        }
+        response.close();
+
+        System.out.println(fullResponse.toString());
+
+        JSONObject jsonReponse = new JSONObject(fullResponse.toString());
+        String retrievedAcctID = jsonReponse.getString("accountID");
+        Float retrievedBalance = (float) jsonReponse.getDouble("accountBalance");
+
+        System.out.println("Retrieved information, account: " + retrievedAcctID + "    balance:" + retrievedBalance);
+
+        //verify sent parameter matches retreived parameter for account ID
+        assert(retrievedAcctID.equals(acctNum));
     }
 
    @Ignore
