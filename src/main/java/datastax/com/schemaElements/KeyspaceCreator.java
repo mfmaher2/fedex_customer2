@@ -18,12 +18,11 @@ public class KeyspaceCreator {
 
         for(Keyspace ks : keyspacMap.keySet()){
             String ksName = config.getKeyspaceName(ks);
-            System.out.println("Creating keyspace - " + ksName);
             CreateKeyspace create = createKeyspace(ksName).ifNotExists()
                     .withNetworkTopologyStrategy(keyspacMap.get(ks))
                     .withDurableWrites(true);
 
-            System.out.println(create.asCql()); //optional output of complete keyspace creation CQL statement
+            System.out.println("\t\t" + create.asCql());
             session.execute(create.build());
         }
     }
@@ -35,12 +34,11 @@ public class KeyspaceCreator {
 
             for (Keyspace ks : keyspacMap.keySet()) {
                 String ksName = config.getKeyspaceName(ks);
-                System.out.println("Creating keyspace - " + ksName);
                 CreateKeyspace create = createKeyspace(ksName).ifNotExists()
                         .withNetworkTopologyStrategy(keyspacMap.get(ks))
                         .withDurableWrites(true);
 
-                System.out.println(create.asCql()); //optional output of complete keyspace creation CQL statement
+                System.out.println(create.asCql());
                 writer.write(create.asCql() + "\n");
             }
         }
