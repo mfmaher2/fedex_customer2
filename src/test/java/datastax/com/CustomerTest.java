@@ -5,6 +5,7 @@ import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.cql.*;
 import com.datastax.oss.driver.api.core.data.UdtValue;
 import com.datastax.oss.driver.api.querybuilder.delete.Delete;
+import com.datastax.oss.driver.api.querybuilder.insert.Insert;
 import com.datastax.oss.driver.api.querybuilder.select.Select;
 import com.datastax.oss.protocol.internal.util.Bytes;
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.*;
@@ -252,6 +253,40 @@ public class CustomerTest {
 
         dropTestKeyspace();
         sessionMap.values().forEach(s -> s.close());
+    }
+
+    @Ignore
+    @Test
+    public void multiSessionBatchTest(){
+
+        final String acctNum = "batchTest123";
+        final String opco = "opBatchTest";
+        final String contactType = "type1";
+        final String businessID = "bID1";
+
+        CqlSession localSession = CqlSession.builder().build();
+        CqlSession sharedSession = sessionMap.get(DataCenter.EDGE);
+
+        assert(localSession != sharedSession);
+
+        Insert acctInsert =  insertInto(ksConfig.getKeyspaceName(ACCOUNT_KS), "cust_acct_v1")
+                                .value("account_number", literal(acctNum))
+                                .value("opco", literal(opco));
+//        localSession.execute(acctInsert.build());
+
+        Insert acctContactInsert =  insertInto(ksConfig.getKeyspaceName(ACCOUNT_CONTACT_KS), "account_contact")
+                .value("account_number", literal(acctNum))
+                .value("opco", literal(opco))
+                .value("contact_type_code", literal(contactType))
+                .value("contact_business_id", literal(businessID));
+//        localSession.execute(acctContactInsert.build());
+
+        BatchStatement batch = BatchStatement.builder(BatchType.LOGGED).build();
+        batch = batch.add(acctInsert.build());
+        batch = batch.add(acctContactInsert.build());
+//        batch = batch.add(daoAccount.batchDelete(custAcct));
+        sessionMap.get(DataCenter.CORE).execute(batch);
+
     }
 
     @Ignore
