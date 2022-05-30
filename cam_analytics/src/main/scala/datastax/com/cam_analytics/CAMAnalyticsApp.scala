@@ -4,6 +4,6 @@ package datastax.com.cam_analytics
  * Hello world!
  *
  */
-object App extends Application {
+object CAMAnalyticsApp extends App {
   println( "Hello World!" )
 }

@@ -6,7 +6,11 @@
 
   <groupId>datastax.com</groupId>
   <artifactId>fedex_customer</artifactId>
+  <packaging>pom</packaging>
   <version>1.0-SNAPSHOT</version>
+  <modules>
+    <module>cam_analytics</module>
+  </modules>
 
   <name>fedex_customer</name>
   <!-- FIXME change it to the project's website -->
