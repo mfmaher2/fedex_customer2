@@ -57,12 +57,8 @@ public class CustomerTest {
     private static boolean skipKeyspaceDrop = false;
     private static boolean skipIndividualTableDrop = false;
     private static String productName = "Customer" ;
-
-    //Create environment related parameters
-    private static EnvironmentCustomizeParameters environmentParams = new EnvironmentCustomizeParameters();
-    private static EnvironmentCustomize environment = null;
-
-    private static Map<DataCenter, CqlSession>  sessionMap = new HashMap<>();
+    private static Environment environment = null;
+    private static Map<DataCenter, CqlSession> sessionMap = null;
     private static KeyspaceConfig ksConfig = null;
 
     @BeforeClass
@@ -70,78 +66,18 @@ public class CustomerTest {
         System.out.println(productName + " - before init() method called");
 
         try{
-            //Setup for specific test environment - only one (L1 or L4) should be uncommented
             //**********
-            //** Begin L1 environment config
+            //setup environment to match current test setup
+            //L1
+            environment = new Environment(Environment.AvailableEnviroments.L1);
 
-            //common values
-            environmentParams.sourceFilesPath = Paths.get("src/main/resources/genericSchema/").toAbsolutePath().toString();
-            environmentParams.dataFilesPath = Paths.get("src/test/testData").toAbsolutePath().toString();
-            environmentParams.cqlshPath = "/Users/michaeldownie/dse/dse-5.1.14/bin/cqlsh";
-            environmentParams.bulkLoadPath = "/Users/michaeldownie/DSE/dsbulk-1.8.0/bin/dsbulk";
-
-            //** End L1 environment config
-            //**********
-            ksConfig = new KeyspaceConfigSingleDC("SearchGraphAnalytics");
-
-            environmentParams.environmentID = "l1";
-            environmentParams.schemaCreateHost = "127.0.0.1";
-            environmentParams.schemaCreatePort = "9042";
-            environmentParams.searchIndexCreateHost = "127.0.0.1";
-            environmentParams.searchIndexCreatePort = "9042";
-
-            String sessionConf = "src/test/resources/L1/application.conf";
-            String confFilePath = Paths.get(sessionConf).toAbsolutePath().toString();
-            CqlSession commonSession = CqlSession.builder()
-                    .withConfigLoader(DriverConfigLoader.fromFile(new File(confFilePath)))
-                    .build();
-
-            //in L1 only a single DC, assign each entry in session map to same 'common'
-            //session value -- all operations will execute using same session
-            sessionMap.put(DataCenter.CORE, commonSession);
-            sessionMap.put(DataCenter.EDGE, commonSession);
-            sessionMap.put(DataCenter.SEARCH, commonSession);
+            //L4
+            //environment = new Environment(Environment.AvailableEnviroments.L4);
             //**********
 
-
-            //** Begin L4 environment config
-//            ksConfig = new KeyspaceConfigMultiDC("core", "edge", "search");
-//
-//            environmentParams.environmentID = "l4";
-//            environmentParams.schemaCreateHost = "127.0.0.1";
-//            environmentParams.schemaCreatePort = "9042";
-//            environmentParams.searchIndexCreateHost = "127.0.0.1";
-//            environmentParams.searchIndexCreatePort = "9044";
-
-            //L4 - core DC session
-//            String coreSessionConf = "src/test/resources/L4/core-application.conf";
-//            String coreConfFilePath = Paths.get(coreSessionConf).toAbsolutePath().toString();
-//            CqlSession coreSession = CqlSession.builder()
-//                    .withConfigLoader(DriverConfigLoader.fromFile(new File(coreConfFilePath)))
-//                    .build();
-//            sessionMap.put(DataCenter.CORE, coreSession);
-//
-//            //L4 - edge DC session
-//            String edgeSessionConf = "src/test/resources/L4/edge-application.conf";
-//            String edgeConfFilePath = Paths.get(edgeSessionConf).toAbsolutePath().toString();
-//            CqlSession edgeSession = CqlSession.builder()
-//                    .withConfigLoader(DriverConfigLoader.fromFile(new File(edgeConfFilePath)))
-//                    .build();
-//            sessionMap.put(DataCenter.EDGE, edgeSession);
-//
-//            //L4 - search DC session
-//            String searchSessionConf = "src/test/resources/L4/search-application.conf";
-//            String searchConfFilePath = Paths.get(searchSessionConf).toAbsolutePath().toString();
-//            CqlSession searchSession = CqlSession.builder()
-//                    .withConfigLoader(DriverConfigLoader.fromFile(new File(searchConfFilePath)))
-//                    .build();
-//            sessionMap.put(DataCenter.SEARCH, searchSession);
-            //** End L4 environment config
-            //**********
-
-            environment = new EnvironmentCustomize(environmentParams);
-            environment.generateCustomizedEnvironment();
-
+            //set local convenience variables based on environment
+            sessionMap = environment.getSessionMap();
+            ksConfig = environment.getKeyspaceConfig();
 
             //setup schema and data
             dropTestKeyspace();
@@ -171,86 +107,28 @@ public class CustomerTest {
 
     static void dropTestKeyspace() throws InterruptedException {
         if(!skipKeyspaceDrop) {
-
-            CqlSession localSession = sessionMap.get(DataCenter.SEARCH); //**Note use search for all functionality
-
-            for(Keyspace ks : Keyspace.values()) {
-                String ksName = ksConfig.getKeyspaceName(ks);
-
-                if (!skipIndividualTableDrop) {
-                    System.out.println("Dropping tables from keyspace - " + ksName);
-                    long startTables = System.currentTimeMillis();
-
-                    Select select = selectFrom("system_schema", "tables")
-                            .column("table_name")
-                            .whereColumn("keyspace_name").isEqualTo(bindMarker());
-
-                    ResultSet resultSet = localSession.execute(select.build(ksName));
-                    List<Row> foundRows = resultSet.all();
-                    for (Row curRow : foundRows) {
-                        String curTable = curRow.getString("table_name");
-                        localSession.execute(dropTable(ksName, curTable).ifExists().build());
-                        System.out.println("\tdrop table - " + curTable);
-                    }
-                    long stopTables = System.currentTimeMillis();
-                    System.out.println("Time for dropping all tables from keyspace " + ksName + "- " + ((stopTables - startTables) / 1000.0) + "s");
-                }
-
-                long startKeySpace = System.currentTimeMillis();
-                System.out.println("Dropping keyspace - " + ksName);
-                localSession.execute(dropKeyspace(ksName).ifExists().build());
-                long stopKeyspace = System.currentTimeMillis();
-                System.out.println("Time for dropping keyspace - " + ((stopKeyspace - startKeySpace) / 1000.0) + "s");
-
-                Thread.sleep(150L);
-            }
+            EnvironmentHelpers.dropEnvironmentKeyspaces(environment, !skipIndividualTableDrop);
         }
     }
 
     static void loadSchema() throws IOException, InterruptedException {
         if (!skipSchemaCreation) {
             System.out.println("Running " + productName + " loadSchema");
-
-            System.out.println("\tBeginning keypspace creation");
-            KeyspaceCreator.createKeyspacesFromConfig(ksConfig, sessionMap.get(DataCenter.SEARCH));
-            System.out.println("\tKeyspace creation complete");
-
-            System.out.println("\tBeginning table and index creation");
-            runScript(environment.getSchemaCreationFilePath());
-            System.out.println("\tTable and index creation complete");
-        }
-    }
-
-    static void runScript(String scriptPath) throws InterruptedException, IOException {
-        ProcessBuilder processBuild = new ProcessBuilder(Paths.get(scriptPath).toAbsolutePath().toString());
-        Process process = processBuild.start();
-
-        int exitValue = process.waitFor();
-        if (exitValue != 0) {
-            // check for errors
-            new BufferedInputStream(process.getErrorStream());
-            throw new RuntimeException("execution of script failed!");
+            EnvironmentHelpers.loadEnvironmentSchema(environment);
         }
     }
 
     static void loadData() throws Exception {
         if(!skipDataLoad){
             System.out.println("Running " + productName + " data load");
-
-            runScript(environment.getLoadDataFilePath());
-
-            //sleep for a time to allow Solr indexes to update completely
-            System.out.println("Completed " + productName + " data load.  Pausing to allow indexes to update...");
-            Thread.sleep(11000);
-
-            System.out.println("Index update complete, starting tests...");
+            EnvironmentHelpers.loadEnvironmentData(environment);
+            System.out.println("Data load and index update complete, starting tests...");
         }
     }
 
     @AfterClass
     public static void close() throws InterruptedException {
         System.out.println("Running " + productName + " close");
-
         dropTestKeyspace();
         sessionMap.values().forEach(s -> s.close());
     }

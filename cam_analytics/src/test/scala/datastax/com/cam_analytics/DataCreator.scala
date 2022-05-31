@@ -2,11 +2,10 @@ package datastax.com.cam_analytics
 
 import com.datastax.spark.connector.cql.CassandraConnector
 import com.datastax.spark.connector.toRDDFunctions
-import org.apache.spark.sql.cassandra.DataFrameWriterWrapper
+import datastax.com.cam_analytics.DataElements.AccountBalanceResults
+import datastax.com.cam_analytics.DataElements.DataHelpers.writeDataFrame
 import org.apache.spark.sql.functions.{col, concat, lit}
-import org.apache.spark.sql.{Column, DataFrame, SaveMode, SparkSession}
-
-case class AccountBalanceResults(accountID: String, accountBalance:Float)
+import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 
 object DataCreator {
 
@@ -15,14 +14,16 @@ object DataCreator {
   final val EXT_TABLE = "ks_out"
 
   val spark = SparkSession.builder.getOrCreate()
+
   import spark.implicits._
 
-  def createSchema(keyspace:String): Unit = {
+  def createSchema(keyspace: String): Unit = {
     // Create keyspace and table
     CassandraConnector(spark.sparkContext).withSessionDo { session =>
       session.execute(
-        """CREATE KEYSPACE IF NOT EXISTS """ + keyspace + """ WITH
-          | replication = {'class': 'SimpleStrategy', 'replication_factor': 1 }""".stripMargin)
+        """CREATE KEYSPACE IF NOT EXISTS """ + keyspace +
+          """ WITH
+            | replication = {'class': 'SimpleStrategy', 'replication_factor': 1 }""".stripMargin)
       session.execute("""CREATE TABLE IF NOT EXISTS """ + keyspace + "." + BASE_TABLE + """ (k int, v int, PRIMARY KEY (k))""")
     }
 
@@ -39,31 +40,21 @@ object DataCreator {
 
   def writeCoreData(keyspace: String, size: Int): Unit = {
     // Write some data
-    spark.range(1, (size+1))
+    spark.range(1, (size + 1))
       .map(x => (x, x))
       .rdd
       .saveToCassandra(keyspace, BASE_TABLE)
   }
 
-  def writeExtendedData(keyspace: String, df: DataFrame): Unit ={
+  def writeExtendedData(keyspace: String, df: DataFrame): Unit = {
     println("Creating extended table with new column")
-    writeDataFrame( df.withColumn("s", createExtColumn(col("k"))),
-                    keyspace,
-                    EXT_TABLE
-                  )
-//    df.withColumn("s", createExtColumn(col("k")))
-//      .write.cassandraFormat(EXT_TABLE, keyspace)
-//      .mode(SaveMode.Append)
-//      .save();
+    writeDataFrame(df.withColumn("s", createExtColumn(col("k"))),
+      keyspace,
+      EXT_TABLE
+    )
   }
 
-  def writeDataFrame(df: DataFrame, keyspace: String, table: String): Unit = {
-   df.write.cassandraFormat(table, keyspace)
-      .mode(SaveMode.Append)
-      .save();
-  }
-
-  def addAccountBalanceColumn(df: DataFrame): DataFrame ={
+  def addAccountBalanceColumn(df: DataFrame): DataFrame = {
     df.withColumn("s", createAccountBalanceCol(col("k")))
   }
 
@@ -71,34 +62,20 @@ object DataCreator {
     concat(lit("ExtVal-"), baseCol)
   }
 
-  def createAccountBalanceCol(accountID: Column): Column= {
-//    val urlAccountServiceBase = "http://localhost:8080/accountBalance?accountNum="
-//    val urlFull = urlAccountServiceBase
+  def createAccountBalanceCol(accountID: Column): Column = {
+    //    val urlAccountServiceBase = "http://localhost:8080/accountBalance?accountNum="
+    //    val urlFull = urlAccountServiceBase
 
     val received = scala.io.Source.fromURL("http://localhost:8080/accountBalance?accountNum=abc123").mkString
     println("Fetched from WebService:")
     println("\t" + received)
 
     //parse results as JSON
-    val serviceCallData  = JsonHelper.fromJSON[AccountBalanceResults](received)
+    val serviceCallData = JsonHelper.fromJSON[AccountBalanceResults](received)
     println("Returned data")
     println("\t" + serviceCallData.accountID)
     println("\t" + serviceCallData.accountBalance)
 
     lit(serviceCallData.accountBalance.toString)
   }
-//
-//  def altAddAccountBalanceColumn(df: DataFrame): DataFrame = {
-//    val dfExt = df.mapPartitions(part =>{
-//      part.map(item =>{
-//
-//        Row.fromSeq(item.toSeq + lit("What"))
-//      })
-//
-//    })
-//
-//    val newSchema = df.schema.add(StructField("s", StringType, true))
-//    df.sqlContext.createDataFrame(dfExt, newSchema)
-//  }
 }
-
