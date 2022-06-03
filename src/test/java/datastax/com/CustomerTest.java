@@ -97,7 +97,9 @@ public class CustomerTest {
             daoApplyDiscount = customerMapper.applyDiscountDao(ksConfig.getKeyspaceName(APPLY_DISCOUNT_KS));
             daoComment = customerMapper.commentDao(ksConfig.getKeyspaceName(COMMENT_KS));
             daoAuditHistory = customerMapper.auditHistoryDao(ksConfig.getKeyspaceName(AUDIT_HISTORY_KS));
+
             daoAccountContact = customerMapperEdge.accountContactDao(ksConfig.getKeyspaceName(ACCOUNT_CONTACT_KS));
+
             System.out.println("\tMapper and DAO creation complete");
         }
         catch(Exception e){

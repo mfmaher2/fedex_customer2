@@ -67,7 +67,8 @@ public class Environment {
         //create environment details based on parameters
         generateEnvironment(environmentParams);
 
-        String sessionConf = "src/test/resources/L1/application.conf";
+
+        String sessionConf = "src/main/resources/L1/application.conf";
         String confFilePath = Paths.get(sessionConf).toAbsolutePath().toString();
         CqlSession commonSession = CqlSession.builder()
                 .withConfigLoader(DriverConfigLoader.fromFile(new File(confFilePath)))
@@ -96,7 +97,7 @@ public class Environment {
         generateEnvironment(environmentParams);
 
         //L4 - core DC session
-        String coreSessionConf = "src/test/resources/L4/core-application.conf";
+        String coreSessionConf = "src/main/resources/L4/core-application.conf"; //todo move config details out of test paths
         String coreConfFilePath = Paths.get(coreSessionConf).toAbsolutePath().toString();
         CqlSession coreSession = CqlSession.builder()
                 .withConfigLoader(DriverConfigLoader.fromFile(new File(coreConfFilePath)))
@@ -104,7 +105,7 @@ public class Environment {
         sessionMap.put(DataCenter.CORE, coreSession);
 
         //L4 - edge DC session
-        String edgeSessionConf = "src/test/resources/L4/edge-application.conf";
+        String edgeSessionConf = "src/main/resources/L4/edge-application.conf";
         String edgeConfFilePath = Paths.get(edgeSessionConf).toAbsolutePath().toString();
         CqlSession edgeSession = CqlSession.builder()
                 .withConfigLoader(DriverConfigLoader.fromFile(new File(edgeConfFilePath)))
@@ -112,7 +113,7 @@ public class Environment {
         sessionMap.put(DataCenter.EDGE, edgeSession);
 
         //L4 - search DC session
-        String searchSessionConf = "src/test/resources/L4/search-application.conf";
+        String searchSessionConf = "src/main/resources/L4/search-application.conf";
         String searchConfFilePath = Paths.get(searchSessionConf).toAbsolutePath().toString();
         CqlSession searchSession = CqlSession.builder()
                 .withConfigLoader(DriverConfigLoader.fromFile(new File(searchConfFilePath)))
