@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS cam_sequence_<ENV_LEVEL_ID>_ks.sequence_num_tbl (
+CREATE TABLE IF NOT EXISTS cam_sequence_<ENV_LEVEL_ID>ks.sequence_num_tbl (
     domain text,
     sequence_name text,
     current_num int,
@@ -7,14 +7,14 @@ CREATE TABLE IF NOT EXISTS cam_sequence_<ENV_LEVEL_ID>_ks.sequence_num_tbl (
     is_wrapped boolean,
     PRIMARY KEY ((domain, sequence_name)));
 
-CREATE TABLE IF NOT EXISTS cam_sequence_<ENV_LEVEL_ID>_ks.id_available (
+CREATE TABLE IF NOT EXISTS cam_sequence_<ENV_LEVEL_ID>ks.id_available (
     domain text,
     identifier text,
     PRIMARY KEY (domain, identifier)
 ) WITH CLUSTERING ORDER BY(identifier ASC)
 ;
 
-CREATE TABLE IF NOT EXISTS cam_sequence_<ENV_LEVEL_ID>_ks.id_assignment (
+CREATE TABLE IF NOT EXISTS cam_sequence_<ENV_LEVEL_ID>ks.id_assignment (
     domain text,
     identifier text,
     assigned_by text,
@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS cam_sequence_<ENV_LEVEL_ID>_ks.id_assignment (
 ) WITH CLUSTERING ORDER BY(identifier ASC)
 ;
 
-CREATE TABLE IF NOT EXISTS cam_sequence_<ENV_LEVEL_ID>_ks.id_assignment_single (
+CREATE TABLE IF NOT EXISTS cam_sequence_<ENV_LEVEL_ID>ks.id_assignment_single (
     domain text,
     identifier text,
     assigned_by text,
@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS cam_sequence_<ENV_LEVEL_ID>_ks.id_assignment_single (
 ;
 
 -- example using composite partition key with bucket
-CREATE TABLE IF NOT EXISTS cam_sequence_<ENV_LEVEL_ID>_ks.id_assignment_single_bucket (
+CREATE TABLE IF NOT EXISTS cam_sequence_<ENV_LEVEL_ID>ks.id_assignment_single_bucket (
     domain text,
     bucket int,
     identifier text,
@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS cam_sequence_<ENV_LEVEL_ID>_ks.id_assignment_single_b
 ) WITH CLUSTERING ORDER BY(identifier ASC)
 ;
 
-CREATE TYPE IF NOT EXISTS cam_account_contact_<ENV_LEVEL_ID>_ks.telecom_details_type (
+CREATE TYPE IF NOT EXISTS cam_account_contact_<ENV_LEVEL_ID>ks.telecom_details_type (
     telecom_method text,
     numeric_country_code text,
     alpha_country_code text,
@@ -52,7 +52,7 @@ CREATE TYPE IF NOT EXISTS cam_account_contact_<ENV_LEVEL_ID>_ks.telecom_details_
     text_message_flag boolean
 );
 
-CREATE TYPE IF NOT EXISTS cam_account_contact_archive_<ENV_LEVEL_ID>_ks.telecom_details_type (
+CREATE TYPE IF NOT EXISTS cam_account_contact_archive_<ENV_LEVEL_ID>ks.telecom_details_type (
     telecom_method text,
     numeric_country_code text,
     alpha_country_code text,
@@ -65,7 +65,7 @@ CREATE TYPE IF NOT EXISTS cam_account_contact_archive_<ENV_LEVEL_ID>_ks.telecom_
 );
 
 
-CREATE TYPE IF NOT EXISTS cam_line_of_business_<ENV_LEVEL_ID>_ks.telecom_details_type (
+CREATE TYPE IF NOT EXISTS cam_line_of_business_<ENV_LEVEL_ID>ks.telecom_details_type (
     telecom_method text,
     numeric_country_code text,
     alpha_country_code text,
@@ -77,7 +77,7 @@ CREATE TYPE IF NOT EXISTS cam_line_of_business_<ENV_LEVEL_ID>_ks.telecom_details
     text_message_flag boolean
 );
 
-CREATE TYPE IF NOT EXISTS cam_line_of_business_archive_<ENV_LEVEL_ID>_ks.telecom_details_type (
+CREATE TYPE IF NOT EXISTS cam_line_of_business_archive_<ENV_LEVEL_ID>ks.telecom_details_type (
     telecom_method text,
     numeric_country_code text,
     alpha_country_code text,
@@ -89,81 +89,44 @@ CREATE TYPE IF NOT EXISTS cam_line_of_business_archive_<ENV_LEVEL_ID>_ks.telecom
     text_message_flag boolean
 );
 
-CREATE TYPE IF NOT EXISTS cam_search_<ENV_LEVEL_ID>_ks.telecom_details_type (
-    telecom_method text,
-    numeric_country_code text,
-    alpha_country_code text,
-    area_code text,
-    phone_number text,
-    extension text,
-    pin text,
-    ftc_ok_to_call_flag boolean,
-    text_message_flag boolean
-);
-
-CREATE TYPE IF NOT EXISTS cam_account_contact_<ENV_LEVEL_ID>_ks.social_media_type (
+CREATE TYPE IF NOT EXISTS cam_account_contact_<ENV_LEVEL_ID>ks.social_media_type (
     type_code text,
     value text
 );
 
-CREATE TYPE IF NOT EXISTS cam_account_contact_archive_<ENV_LEVEL_ID>_ks.social_media_type (
+CREATE TYPE IF NOT EXISTS cam_account_contact_archive_<ENV_LEVEL_ID>ks.social_media_type (
     type_code text,
     value text
 );
 
-CREATE TYPE IF NOT EXISTS cam_line_of_business_<ENV_LEVEL_ID>_ks.social_media_type (
+CREATE TYPE IF NOT EXISTS cam_line_of_business_<ENV_LEVEL_ID>ks.social_media_type (
     type_code text,
     value text
 );
 
-CREATE TYPE IF NOT EXISTS cam_line_of_business_archive_<ENV_LEVEL_ID>_ks.social_media_type (
+CREATE TYPE IF NOT EXISTS cam_line_of_business_archive_<ENV_LEVEL_ID>ks.social_media_type (
     type_code text,
     value text
 );
 
-CREATE TYPE IF NOT EXISTS cam_account_<ENV_LEVEL_ID>_ks.tax_data_type (
+CREATE TYPE IF NOT EXISTS cam_account_<ENV_LEVEL_ID>ks.tax_data_type (
     tax_id text,
     tax_id_desc text
 );
 
-CREATE TYPE IF NOT EXISTS cam_account_<ENV_LEVEL_ID>_ks.tax_exempt_data_type (
+CREATE TYPE IF NOT EXISTS cam_account_<ENV_LEVEL_ID>ks.tax_exempt_data_type (
     tax_exempt_id text,
     tax_exempt_id_desc text,
     tax_exempt_flag boolean
 );
 
-CREATE TYPE IF NOT EXISTS cam_account_archive_<ENV_LEVEL_ID>_ks.tax_exempt_data_type (
+CREATE TYPE IF NOT EXISTS cam_account_archive_<ENV_LEVEL_ID>ks.tax_exempt_data_type (
     tax_exempt_id text,
     tax_exempt_id_desc text,
     tax_exempt_flag boolean
 );
 
-
-CREATE TYPE IF NOT EXISTS cam_audit_history_<ENV_LEVEL_ID>_ks.history_additional_identifier_type (
-    type text,
-    value text
-);
-
-CREATE TYPE IF NOT EXISTS cam_audit_history_<ENV_LEVEL_ID>_ks.history_entity_type (
-    action text,
-    stanza_name text,
-    stanza text
-);
-
-CREATE TYPE IF NOT EXISTS cam_audit_history_<ENV_LEVEL_ID>_ks.history_field_type (
-    action text,
-    stanza_name text,
-    field_name text,
-    previous_value text,
-    new_value text
-);
-
-CREATE TYPE IF NOT EXISTS cam_time_event_<ENV_LEVEL_ID>_ks.time_event_additional_details_items(
-    name text,
-    value text
-);
-
-CREATE TYPE IF NOT EXISTS cam_account_<ENV_LEVEL_ID>_ks.potential_revenue_type (
+CREATE TYPE IF NOT EXISTS cam_account_<ENV_LEVEL_ID>ks.potential_revenue_type (
     shipping_revenue_type text,
     time_period text,
     shipping_package_quantity text,
@@ -175,7 +138,7 @@ CREATE TYPE IF NOT EXISTS cam_account_<ENV_LEVEL_ID>_ks.potential_revenue_type (
     shipping_package_percent text
 );
 
-CREATE TYPE IF NOT EXISTS cam_account_<ENV_LEVEL_ID>_ks.other_potential_info_type (
+CREATE TYPE IF NOT EXISTS cam_account_<ENV_LEVEL_ID>ks.other_potential_info_type (
     revenue_event_source text,
     revenue_comments text,
     comment_sequence_nbr int,
@@ -183,7 +146,7 @@ CREATE TYPE IF NOT EXISTS cam_account_<ENV_LEVEL_ID>_ks.other_potential_info_typ
     program text
 );
 
-CREATE TYPE IF NOT EXISTS cam_account_archive_<ENV_LEVEL_ID>_ks.potential_revenue_type (
+CREATE TYPE IF NOT EXISTS cam_account_archive_<ENV_LEVEL_ID>ks.potential_revenue_type (
     shipping_revenue_type text,
     time_period text,
     shipping_package_quantity text,
@@ -195,7 +158,7 @@ CREATE TYPE IF NOT EXISTS cam_account_archive_<ENV_LEVEL_ID>_ks.potential_revenu
     shipping_package_percent text
 );
 
-CREATE TYPE IF NOT EXISTS cam_account_archive_<ENV_LEVEL_ID>_ks.other_potential_info_type (
+CREATE TYPE IF NOT EXISTS cam_account_archive_<ENV_LEVEL_ID>ks.other_potential_info_type (
     revenue_event_source text,
     revenue_comments text,
     comment_sequence_nbr int,
@@ -203,7 +166,7 @@ CREATE TYPE IF NOT EXISTS cam_account_archive_<ENV_LEVEL_ID>_ks.other_potential_
     program text
 );
 
-CREATE TABLE IF NOT EXISTS cam_account_<ENV_LEVEL_ID>_ks.cust_acct_v1 (
+CREATE TABLE IF NOT EXISTS cam_account_<ENV_LEVEL_ID>ks.cust_acct_v1 (
     account_number text,
     opco text,
     last_update_tmstp timestamp,
@@ -610,8 +573,7 @@ WITH CLUSTERING ORDER BY (opco ASC)
     AND read_repair_chance = 0.0
     AND speculative_retry = '99PERCENTILE';
 
-
-CREATE TABLE IF NOT EXISTS cam_apply_discount_<ENV_LEVEL_ID>_ks.apply_discount_detail_v1 (
+CREATE TABLE IF NOT EXISTS cam_apply_discount_<ENV_LEVEL_ID>ks.apply_discount_detail_v1 (
     account_number text,
     opco text,
     last_update_tmstp timestamp,
@@ -635,7 +597,7 @@ WITH CLUSTERING ORDER BY(opco ASC, apply_discount__effective_date_time DESC)
     AND read_repair_chance = 0.0
     AND speculative_retry = '99PERCENTILE';
 
-CREATE TABLE IF NOT EXISTS cam_payment_info_<ENV_LEVEL_ID>_ks.payment_info_v1 (
+CREATE TABLE IF NOT EXISTS cam_payment_info_<ENV_LEVEL_ID>ks.payment_info_v1 (
     account_number text,
     opco text,
     last_update_tmstp timestamp,
@@ -807,7 +769,7 @@ WITH CLUSTERING ORDER BY(opco ASC, record_type_cd ASC, record_key ASC, record_se
     AND read_repair_chance = 0.0
     AND speculative_retry = '99PERCENTILE';
 
-CREATE TABLE IF NOT EXISTS cam_account_contact_<ENV_LEVEL_ID>_ks.account_contact (
+CREATE TABLE IF NOT EXISTS cam_account_contact_<ENV_LEVEL_ID>ks.account_contact (
     account_number text,
     opco text,
     last_update_tmstp timestamp,
@@ -888,7 +850,7 @@ WITH CLUSTERING ORDER BY(opco ASC, contact_type_code ASC, contact_business_id AS
     AND read_repair_chance = 0.0
     AND speculative_retry = '99PERCENTILE';
 
-CREATE TABLE IF NOT EXISTS cam_assoc_account_<ENV_LEVEL_ID>_ks.assoc_accounts_v1 (
+CREATE TABLE IF NOT EXISTS cam_assoc_account_<ENV_LEVEL_ID>ks.assoc_accounts_v1 (
     account_number text,
     associated_account__opco text,
     associated_account__number text,
@@ -910,7 +872,7 @@ WITH CLUSTERING ORDER BY(associated_account__opco ASC, associated_account__numbe
     AND read_repair_chance = 0.0
     AND speculative_retry = '99PERCENTILE';
 
-CREATE TABLE IF NOT EXISTS cam_account_<ENV_LEVEL_ID>_ks.national_account_v1  (
+CREATE TABLE IF NOT EXISTS cam_account_<ENV_LEVEL_ID>ks.national_account_v1  (
     account_number text,
     opco text,
     last_update_tmstp timestamp,
@@ -938,7 +900,7 @@ CREATE TABLE IF NOT EXISTS cam_account_<ENV_LEVEL_ID>_ks.national_account_v1  (
 
 --groupId
 --groupMembership
-CREATE TABLE IF NOT EXISTS cam_group_<ENV_LEVEL_ID>_ks.group_info_v1 (
+CREATE TABLE IF NOT EXISTS cam_group_<ENV_LEVEL_ID>ks.group_info_v1 (
      account_number text,
      opco text,
      last_update_tmstp timestamp,
@@ -967,7 +929,7 @@ CREATE TABLE IF NOT EXISTS cam_group_<ENV_LEVEL_ID>_ks.group_info_v1 (
      AND speculative_retry = '99PERCENTILE';
 
 --comments
-CREATE TABLE IF NOT EXISTS cam_comment_<ENV_LEVEL_ID>_ks.comment_v1 (
+CREATE TABLE IF NOT EXISTS cam_comment_<ENV_LEVEL_ID>ks.comment_v1 (
     account_number text,
     opco text,
     last_update_tmstp timestamp,
@@ -996,38 +958,7 @@ WITH CLUSTERING ORDER BY(opco ASC, comment__type ASC, comment__comment_date_time
     AND read_repair_chance = 0.0
     AND speculative_retry = '99PERCENTILE';
 
-CREATE TABLE IF NOT EXISTS cam_audit_history_<ENV_LEVEL_ID>_ks.audit_history_v1 (
-     account_number text,
-     opco text,                     --maps to history_detail__opco
-     last_update_tmstp timestamp,
-     request_action text,
-     history_detail__descriptive_identifier text,
-     history_detail__additional_identifier__key set<frozen<history_additional_identifier_type>>,
-     history_detail__entity set<frozen<history_entity_type>>,
-     history_detail__field set<frozen<history_field_type>>,
-     app_id text,
-     user_id text,
-     source text,
-     request_type text,
-     transaction_id text,
-    PRIMARY KEY(account_number, last_update_tmstp, opco))
- WITH CLUSTERING ORDER BY(last_update_tmstp DESC, opco ASC)
-     AND bloom_filter_fp_chance = 0.01
-     AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
-     AND comment = ''
-     AND compaction = {'class': 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy', 'enabled': 'true', 'sstable_size_in_mb': '160', 'tombstone_compaction_interval': '86400', 'tombstone_threshold': '0.2', 'unchecked_tombstone_compaction': 'false'}
-     AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
-     AND crc_check_chance = 1.0
-     AND dclocal_read_repair_chance = 0.0
-     AND default_time_to_live = 0
-     AND gc_grace_seconds = 864000
-     AND max_index_interval = 2048
-     AND memtable_flush_period_in_ms = 0
-     AND min_index_interval = 128
-     AND read_repair_chance = 0.0
-     AND speculative_retry = '99PERCENTILE';
-
-    CREATE TABLE IF NOT EXISTS cam_centralized_view_<ENV_LEVEL_ID>_ks.centralized_view_v1 (
+CREATE TABLE IF NOT EXISTS cam_centralized_view_<ENV_LEVEL_ID>ks.centralized_view_v1 (
     account_number text,
     last_update_tmstp timestamp,
     account_status__status_code text,
@@ -1049,7 +980,7 @@ WITH bloom_filter_fp_chance = 0.01
     AND read_repair_chance = 0.0
     AND speculative_retry = '99PERCENTILE';
 
-CREATE TABLE IF NOT EXISTS cam_line_of_business_<ENV_LEVEL_ID>_ks.line_of_business_v1 (
+CREATE TABLE IF NOT EXISTS cam_line_of_business_<ENV_LEVEL_ID>ks.line_of_business_v1 (
     account_number text,
     opco text,
     last_update_tmstp timestamp,
@@ -1076,7 +1007,7 @@ CREATE TABLE IF NOT EXISTS cam_line_of_business_<ENV_LEVEL_ID>_ks.line_of_busine
     expiration_date date,
     comment text,
 
-        --contact, same/similar to fields from account_contact
+    --contact, same/similar to fields from account_contact
     person__first_name text,
     person__last_name text,
     person__middle_name text,
@@ -1143,36 +1074,9 @@ CREATE TABLE IF NOT EXISTS cam_line_of_business_<ENV_LEVEL_ID>_ks.line_of_busine
      AND read_repair_chance = 0.0
      AND speculative_retry = '99PERCENTILE';
 
-CREATE TABLE IF NOT EXISTS cam_time_event_<ENV_LEVEL_ID>_ks.time_event_v1 (
-    account_number text,
-    type text,             -- possible values: MONTHLY_BILLING_INDICATOR,ACCOUNT_RESTORE
-    status text,           -- possible values: FAILED,IN_PROGRESS,NOT_STARTED,SUCCESS
-    create_time timestamp,
-    process_time timestamp,
-    event_processed_time timestamp,
-    additional_details_items set<frozen<time_event_additional_details_items>>,
-    last_update_tmstp timestamp,
-    PRIMARY KEY(account_number, process_time, type, status))
-WITH CLUSTERING ORDER BY (process_time DESC, type ASC, status ASC)
-    AND bloom_filter_fp_chance = 0.01
-    AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
-    AND comment = ''
-    AND compaction = {'class': 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy', 'enabled': 'true', 'sstable_size_in_mb': '160', 'tombstone_compaction_interval': '86400', 'tombstone_threshold': '0.2', 'unchecked_tombstone_compaction': 'false'}
-    AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
-    AND crc_check_chance = 1.0
-    AND dclocal_read_repair_chance = 0.0
-    AND default_time_to_live = 0
-    AND gc_grace_seconds = 864000
-    AND max_index_interval = 2048
-    AND memtable_flush_period_in_ms = 0
-    AND min_index_interval = 128
-    AND read_repair_chance = 0.0
-    AND speculative_retry = '99PERCENTILE';
-
-
 -- expressCustomerAccountDynamicProfile
 -- groundCustomerAccountDynamicProfile
-CREATE TABLE IF NOT EXISTS cam_dynamic_profile_<ENV_LEVEL_ID>_ks.account_dynamic_profile_v1 (
+CREATE TABLE IF NOT EXISTS cam_dynamic_profile_<ENV_LEVEL_ID>ks.account_dynamic_profile_v1 (
     account_number text,
     opco text,
     last_update_tmstp timestamp,
@@ -1208,7 +1112,7 @@ WITH CLUSTERING ORDER BY (opco ASC, payor_type ASC, shipment_type ASC)
 -- expressCustomerEntityDynamicProfile
 -- groundCustomerEntityDynamicProfile
 -- freightCustomerEntityDynamicProfile
-CREATE TABLE IF NOT EXISTS cam_dynamic_profile_<ENV_LEVEL_ID>_ks.entity_dynamic_profile_v1 (
+CREATE TABLE IF NOT EXISTS cam_dynamic_profile_<ENV_LEVEL_ID>ks.entity_dynamic_profile_v1 (
     entity_number text,
     opco text,
     last_update_tmstp timestamp,
@@ -1235,7 +1139,7 @@ CREATE TABLE IF NOT EXISTS cam_dynamic_profile_<ENV_LEVEL_ID>_ks.entity_dynamic_
 
 -- expressInvoicePaymentProfile
 -- need _v1 in table name?
-CREATE TABLE IF NOT EXISTS cam_dynamic_profile_<ENV_LEVEL_ID>_ks.invoice_payment_profile_v1 (
+CREATE TABLE IF NOT EXISTS cam_dynamic_profile_<ENV_LEVEL_ID>ks.invoice_payment_profile_v1 (
     account_number text,
     opco text,
     last_update_tmstp timestamp,
@@ -1262,59 +1166,11 @@ WITH CLUSTERING ORDER BY (opco ASC, payor_type ASC, shipment_type ASC)
     AND speculative_retry = '99PERCENTILE';
 
 
---Possible search use case specific table
-CREATE TABLE IF NOT EXISTS cam_search_<ENV_LEVEL_ID>_ks.cam_search_v1 (
-    account_number text,
-    opco text,
-    last_update_tmstp timestamp,
-    profile__archive_reason_code text,
-    profile__customer_account_status text,
-    profile__account_type text,
-    profile__airport_code text,
-    profile__synonym_name_1 text,
-    profile__synonym_name_2 text,
-    profile__interline_cd text,
-    invoice_preference__billing_restriction_indicator text,
-    credit_detail__cash_only_reason text,
-    credit_detail__credit_rating text,
-    contact_document_id bigint,
-    contact_type_code text,
-    contact_business_id text,
-    company_name text,
-    person__first_name text,
-    person__last_name text,
-    person__middle_name text,
-    address__street_line text,
-    address__additional_line1 text,
-    address__geo_political_subdivision1 text,
-    address__geo_political_subdivision2 text,
-    address__geo_political_subdivision3 text,
-    address__postal_code text,
-    address__country_code text,
-    share_id text,
-    email text,
-    tele_com set<frozen<telecom_details_type>>,
-    PRIMARY KEY(account_number, opco, contact_type_code, contact_business_id))
-WITH CLUSTERING ORDER BY(opco ASC, contact_type_code ASC, contact_business_id ASC)
-    AND bloom_filter_fp_chance = 0.01
-    AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
-    AND comment = ''
-    AND compaction = {'class': 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy', 'enabled': 'true', 'sstable_size_in_mb': '160', 'tombstone_compaction_interval': '86400', 'tombstone_threshold': '0.2', 'unchecked_tombstone_compaction': 'false'}
-    AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
-    AND crc_check_chance = 1.0
-    AND dclocal_read_repair_chance = 0.0
-    AND default_time_to_live = 0
-    AND gc_grace_seconds = 864000
-    AND max_index_interval = 2048
-    AND memtable_flush_period_in_ms = 0
-    AND min_index_interval = 128
-    AND read_repair_chance = 0.0
-    AND speculative_retry = '99PERCENTILE';
 
 --***
 -- Archive tables
 --***
-CREATE TABLE IF NOT EXISTS cam_account_archive_<ENV_LEVEL_ID>_ks.cust_acct_v1 (
+CREATE TABLE IF NOT EXISTS cam_account_archive_<ENV_LEVEL_ID>ks.cust_acct_v1 (
     account_number text,
     opco text,
     last_update_tmstp timestamp,
@@ -1725,7 +1581,7 @@ WITH CLUSTERING ORDER BY (opco ASC, archive_tmstp DESC)
     AND read_repair_chance = 0.0
     AND speculative_retry = '99PERCENTILE';
 
-CREATE TABLE IF NOT EXISTS cam_account_contact_archive_<ENV_LEVEL_ID>_ks.account_contact (
+CREATE TABLE IF NOT EXISTS cam_account_contact_archive_<ENV_LEVEL_ID>ks.account_contact (
     account_number text,
     opco text,
     last_update_tmstp timestamp,
@@ -1808,7 +1664,7 @@ WITH CLUSTERING ORDER BY(opco ASC, contact_type_code ASC, contact_business_id AS
     AND read_repair_chance = 0.0
     AND speculative_retry = '99PERCENTILE';
 
-CREATE TABLE IF NOT EXISTS cam_assoc_account_archive_<ENV_LEVEL_ID>_ks.assoc_accounts_v1 (
+CREATE TABLE IF NOT EXISTS cam_assoc_account_archive_<ENV_LEVEL_ID>ks.assoc_accounts_v1 (
     account_number text,
     associated_account__opco text,
     associated_account__number text,
@@ -1832,7 +1688,7 @@ WITH CLUSTERING ORDER BY(associated_account__opco ASC, associated_account__numbe
     AND read_repair_chance = 0.0
     AND speculative_retry = '99PERCENTILE';
 
-CREATE TABLE IF NOT EXISTS cam_apply_discount_archive_<ENV_LEVEL_ID>_ks.apply_discount_detail_v1 (
+CREATE TABLE IF NOT EXISTS cam_apply_discount_archive_<ENV_LEVEL_ID>ks.apply_discount_detail_v1 (
     account_number text,
     opco text,
     last_update_tmstp timestamp,
@@ -1858,7 +1714,7 @@ WITH CLUSTERING ORDER BY(opco ASC, apply_discount__effective_date_time DESC, arc
     AND read_repair_chance = 0.0
     AND speculative_retry = '99PERCENTILE';
 
-CREATE TABLE IF NOT EXISTS cam_line_of_business_archive_<ENV_LEVEL_ID>_ks.line_of_business_v1 (
+CREATE TABLE IF NOT EXISTS cam_line_of_business_archive_<ENV_LEVEL_ID>ks.line_of_business_v1 (
     account_number text,
     opco text,
     last_update_tmstp timestamp,
@@ -1885,7 +1741,7 @@ CREATE TABLE IF NOT EXISTS cam_line_of_business_archive_<ENV_LEVEL_ID>_ks.line_o
     expiration_date date,
     comment text,
 
-        --contact, same/similar to fields from account_contact
+    --contact, same/similar to fields from account_contact
     person__first_name text,
     person__last_name text,
     person__middle_name text,
@@ -1954,7 +1810,7 @@ CREATE TABLE IF NOT EXISTS cam_line_of_business_archive_<ENV_LEVEL_ID>_ks.line_o
      AND read_repair_chance = 0.0
      AND speculative_retry = '99PERCENTILE';
 
-CREATE TABLE IF NOT EXISTS cam_centralized_view_archive_<ENV_LEVEL_ID>_ks.centralized_view_v1 (
+CREATE TABLE IF NOT EXISTS cam_centralized_view_archive_<ENV_LEVEL_ID>ks.centralized_view_v1 (
     account_number text,
     last_update_tmstp timestamp,
     account_status__status_code text,
@@ -1979,7 +1835,7 @@ WITH CLUSTERING ORDER BY(archive_tmstp DESC)
     AND read_repair_chance = 0.0
     AND speculative_retry = '99PERCENTILE';
 
-CREATE TABLE IF NOT EXISTS cam_payment_info_<ENV_LEVEL_ID>_archive_ks.payment_info_v1 (
+CREATE TABLE IF NOT EXISTS cam_payment_info_<ENV_LEVEL_ID>archive_ks.payment_info_v1 (
     account_number text,
     opco text,
     last_update_tmstp timestamp,

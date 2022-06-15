@@ -16,29 +16,29 @@ public class KeyspaceConfigMultiDC extends KeyspaceConfig{
     }
     @Override
     protected void AssignKeyspaceNames(){
-        keyspaceNames.put(Keyspace.ACCOUNT_KS, "cam_account_l4_ks");
-        keyspaceNames.put(Keyspace.ACCOUNT_CONTACT_KS, "cam_account_contact_l4_ks");
-        keyspaceNames.put(Keyspace.ASSOC_ACCOUNT_KS, "cam_assoc_account_l4_ks");
-        keyspaceNames.put(Keyspace.APPLY_DISCOUNT_KS, "cam_apply_discount_l4_ks");
-        keyspaceNames.put(Keyspace.LINE_OF_BUSINESS_KS, "cam_line_of_business_l4_ks");
-        keyspaceNames.put(Keyspace.COMMENT_KS, "cam_comment_l4_ks");
-        keyspaceNames.put(Keyspace.GROUP_KS, "cam_group_l4_ks");
-        keyspaceNames.put(Keyspace.AUDIT_HISTORY_KS, "cam_audit_history_l4_ks");
-        keyspaceNames.put(Keyspace.TIME_EVENT_KS, "cam_time_event_l4_ks");
-        keyspaceNames.put(Keyspace.CENTRALIZED_VIEW_KS, "cam_centralized_view_l4_ks");
-        keyspaceNames.put(Keyspace.PAYMENT_INFO_KS, "cam_payment_info_l4_ks");
-        keyspaceNames.put(Keyspace.DYNAMIC_PROFILE_KS, "cam_dynamic_profile_l4_ks");
-        keyspaceNames.put(Keyspace.SEARCH_KS, "cam_search_l4_ks");
-        keyspaceNames.put(Keyspace.SEQUENCE_KS, "cam_sequence_l4_ks");
+        keyspaceNames.put(Keyspace.ACCOUNT_KS, "cam_account_ks");
+        keyspaceNames.put(Keyspace.ACCOUNT_CONTACT_KS, "cam_account_contact_ks");
+        keyspaceNames.put(Keyspace.ASSOC_ACCOUNT_KS, "cam_assoc_account_ks");
+        keyspaceNames.put(Keyspace.APPLY_DISCOUNT_KS, "cam_apply_discount_ks");
+        keyspaceNames.put(Keyspace.LINE_OF_BUSINESS_KS, "cam_line_of_business_ks");
+        keyspaceNames.put(Keyspace.COMMENT_KS, "cam_comment_ks");
+        keyspaceNames.put(Keyspace.GROUP_KS, "cam_group_ks");
+        keyspaceNames.put(Keyspace.AUDIT_HISTORY_KS, "cam_audit_history_ks");
+        keyspaceNames.put(Keyspace.TIME_EVENT_KS, "cam_time_event_ks");
+        keyspaceNames.put(Keyspace.CENTRALIZED_VIEW_KS, "cam_centralized_view_ks");
+        keyspaceNames.put(Keyspace.PAYMENT_INFO_KS, "cam_payment_info_ks");
+        keyspaceNames.put(Keyspace.DYNAMIC_PROFILE_KS, "cam_dynamic_profile_ks");
+        keyspaceNames.put(Keyspace.SEARCH_KS, "cam_search_ks");
+        keyspaceNames.put(Keyspace.SEQUENCE_KS, "cam_sequence_ks");
 
         //archive specific keyspace
-        keyspaceNames.put(Keyspace.ACCOUNT_ARCHIVE_KS, "cam_account_archive_l4_ks");
-        keyspaceNames.put(Keyspace.ACCOUNT_CONTACT_ARCHIVE_KS, "cam_account_contact_archive_l4_ks");
-        keyspaceNames.put(Keyspace.ASSOC_ACCOUNT_ARCHIVE_KS, "cam_assoc_account_archive_l4_ks");
-        keyspaceNames.put(Keyspace.APPLY_DISCOUNT_ARCHIVE_KS, "cam_apply_discount_archive_l4_ks");
-        keyspaceNames.put(Keyspace.LINE_OF_BUSINESS_ARCHIVE_KS, "cam_line_of_business_archive_l4_ks");
-        keyspaceNames.put(Keyspace.CENTRALIZED_VIEW_ARCHIVE_KS, "cam_centralized_view_archive_l4_ks");
-        keyspaceNames.put(Keyspace.PAYMENT_INFO_ARCHIVE_KS, "cam_payment_info_l4_archive_ks");
+        keyspaceNames.put(Keyspace.ACCOUNT_ARCHIVE_KS, "cam_account_archive_ks");
+        keyspaceNames.put(Keyspace.ACCOUNT_CONTACT_ARCHIVE_KS, "cam_account_contact_archive_ks");
+        keyspaceNames.put(Keyspace.ASSOC_ACCOUNT_ARCHIVE_KS, "cam_assoc_account_archive_ks");
+        keyspaceNames.put(Keyspace.APPLY_DISCOUNT_ARCHIVE_KS, "cam_apply_discount_archive_ks");
+        keyspaceNames.put(Keyspace.LINE_OF_BUSINESS_ARCHIVE_KS, "cam_line_of_business_archive_ks");
+        keyspaceNames.put(Keyspace.CENTRALIZED_VIEW_ARCHIVE_KS, "cam_centralized_view_archive_ks");
+        keyspaceNames.put(Keyspace.PAYMENT_INFO_ARCHIVE_KS, "cam_payment_info_archive_ks");
 
         //test only keyspace(s)
         keyspaceNames.put(Keyspace.CUSTOMER, "customer_test");

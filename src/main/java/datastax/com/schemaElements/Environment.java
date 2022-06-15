@@ -42,10 +42,7 @@ public class Environment {
         return customizedEnvironment;
     }
 
-    public void setupL1Environment() throws IOException {
-        //Setup for specific test environment - only one (L1 or L4) should be uncommented
-        //**********
-        //** Begin L1 environment config
+    private EnvironmentCustomizeParameters getIntializedEnvironmentParameters(){
         EnvironmentCustomizeParameters environmentParams = new EnvironmentCustomizeParameters();
 
         //common values
@@ -54,11 +51,20 @@ public class Environment {
         environmentParams.cqlshPath = "/Users/michaeldownie/dse/dse-5.1.14/bin/cqlsh";
         environmentParams.bulkLoadPath = "/Users/michaeldownie/DSE/dsbulk-1.8.0/bin/dsbulk";
 
+        return environmentParams;
+    }
+
+    public void setupL1Environment() throws IOException {
+        //Setup for specific test environment - only one (L1 or L4) should be uncommented
+        //**********
+        //** Begin L1 environment config
+        EnvironmentCustomizeParameters environmentParams = getIntializedEnvironmentParameters();
+
         //** End L1 environment config
         //**********
         ksConfig = new KeyspaceConfigSingleDC("SearchGraphAnalytics");
 
-        environmentParams.environmentID = "l1";
+        environmentParams.environmentID = "l1_";
         environmentParams.schemaCreateHost = "127.0.0.1";
         environmentParams.schemaCreatePort = "9042";
         environmentParams.searchIndexCreateHost = "127.0.0.1";
@@ -66,7 +72,6 @@ public class Environment {
 
         //create environment details based on parameters
         generateEnvironment(environmentParams);
-
 
         String sessionConf = "src/test/resources/L1/application.conf";
         String confFilePath = Paths.get(sessionConf).toAbsolutePath().toString();
@@ -82,12 +87,12 @@ public class Environment {
     }
 
     public void setupL4Environment() throws IOException {
-        EnvironmentCustomizeParameters environmentParams = new EnvironmentCustomizeParameters();
+        EnvironmentCustomizeParameters environmentParams = getIntializedEnvironmentParameters();
 
         //** Begin L4 environment config
         ksConfig = new KeyspaceConfigMultiDC("core", "edge", "search");
 
-        environmentParams.environmentID = "l4";
+        environmentParams.environmentID = "";
         environmentParams.schemaCreateHost = "127.0.0.1";
         environmentParams.schemaCreatePort = "9042";
         environmentParams.searchIndexCreateHost = "127.0.0.1";

@@ -22,6 +22,7 @@ public class EnvironmentCustomize
     protected final String CAM_DDL_FILE = "cam_ddl.cql";
     protected final String CAM_SAI_FILE = "cam_sai_ddl.cql";
     protected final String CAM_SEARCH_FILE = "cam_search_ddl.cql";
+    protected final String CAM_SEARCH_SOLR_FILE = "cam_search_solr_ddl.cql";
     protected final String TEST_SCHEMA_FILE = "test_only_schema.cql";
     protected final String TEST_SEQ_NUM_FILE = "test_seq_num.cql";
 
@@ -42,6 +43,7 @@ public class EnvironmentCustomize
         mapSourceToDestFiles.put("cam_ddl_cql.sql", CAM_DDL_FILE);
         mapSourceToDestFiles.put("cam_sai_ddl_cql.sql", CAM_SAI_FILE);
         mapSourceToDestFiles.put("cam_search_ddl_cql.sql", CAM_SEARCH_FILE);
+        mapSourceToDestFiles.put("cam_search_solr_ddl_cql.sql", CAM_SEARCH_SOLR_FILE);
         mapSourceToDestFiles.put("test_only_schema_cql.sql", TEST_SCHEMA_FILE);
         mapSourceToDestFiles.put("test_seq_num_cql.sql", TEST_SEQ_NUM_FILE);
 

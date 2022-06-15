@@ -72,7 +72,7 @@ public class CustomerTest {
             environment = new Environment(Environment.AvailableEnviroments.L1);
 
             //L4
-            //environment = new Environment(Environment.AvailableEnviroments.L4);
+//            environment = new Environment(Environment.AvailableEnviroments.L4);
             //**********
 
             //set local convenience variables based on environment
