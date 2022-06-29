@@ -1486,10 +1486,6 @@
       <scope>test</scope>
       <exclusions>
         <exclusion>
-          <artifactId>lz4</artifactId>
-          <groupId>net.jpountz.lz4</groupId>
-        </exclusion>
-        <exclusion>
           <artifactId>concurrentlinkedhashmap-lru</artifactId>
           <groupId>com.googlecode.concurrentlinkedhashmap</groupId>
         </exclusion>

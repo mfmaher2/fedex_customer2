@@ -14,6 +14,7 @@ import static datastax.com.schemaElements.Keyspace.*;
 
 import datastax.com.dataObjects.*;
 import datastax.com.DAOs.*;
+import datastax.com.multiThreadTest.AccountWriter;
 import datastax.com.schemaElements.*;
 import datastax.com.schemaElements.Keyspace;
 import org.json.JSONException;
@@ -52,9 +53,9 @@ public class CustomerTest {
     static AuditHistoryDao daoAuditHistory = null;
     static AccountContactDao daoAccountContact = null;
 
-    private static boolean skipSchemaCreation = false;
-    private static boolean skipDataLoad = false;
-    private static boolean skipKeyspaceDrop = false;
+    private static boolean skipSchemaCreation = true;
+    private static boolean skipDataLoad = true;
+    private static boolean skipKeyspaceDrop = true;
     private static boolean skipIndividualTableDrop = false;
     private static String productName = "Customer" ;
     private static Environment environment = null;
@@ -133,6 +134,36 @@ public class CustomerTest {
         System.out.println("Running " + productName + " close");
         dropTestKeyspace();
         sessionMap.values().forEach(s -> s.close());
+    }
+
+    @Test
+    public void multiThreadWrite(){
+
+        CqlSession coreSession = sessionMap.get(DataCenter.CORE);
+        String opco = "opcoThreadProcessingTest"; //common value with account runnable class
+
+        //clear any previoulsy created records
+        ResultSet rsTestRows = coreSession.execute(
+                    selectFrom(ksConfig.getKeyspaceName(ACCOUNT_KS), "cust_acct_v1")
+                        .column("account_number")
+                        .whereColumn("opco").isEqualTo(literal(opco))
+                        .build()
+                    );
+        for(Row row : rsTestRows){
+            String accountToDelete = row.getString("account_number");
+            coreSession.execute(
+                        deleteFrom(ksConfig.getKeyspaceName(ACCOUNT_KS), "cust_acct_v1")
+                                .whereColumn("account_number").isEqualTo(literal(accountToDelete))
+                        .build()
+                    );
+        }
+
+        AccountWriter accountWriter = new AccountWriter(
+                coreSession, ksConfig, customerMapper, 4);
+
+        accountWriter.runAccountWrite();
+
+        assert(true);
     }
 
     @Ignore
