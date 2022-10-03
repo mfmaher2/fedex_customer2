@@ -63,6 +63,7 @@ public class EnvironmentCustomize
         mapReplaceContent.put("DDL_FILE", CAM_DDL_FILE);
         mapReplaceContent.put("SAI_DDL_FILE", CAM_SAI_FILE);
         mapReplaceContent.put("SEARCH_DDL_FILE", CAM_SEARCH_FILE);
+        mapReplaceContent.put("SEARCH_INDEX_FILE", CAM_SEARCH_SOLR_FILE);
         mapReplaceContent.put("TEST_SCHEMA", TEST_SCHEMA_FILE);
         mapReplaceContent.put("SEQ_NUM_SCHEMA", TEST_SEQ_NUM_FILE);
 
