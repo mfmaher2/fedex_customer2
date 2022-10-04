@@ -39,47 +39,21 @@ CREATE TYPE IF NOT EXISTS cam_audit_history_<ENV_LEVEL_ID>ks.audit_history_entry
      history_detail__additional_identifier__key set<frozen<history_additional_identifier_type>>,
      history_detail__entity set<frozen<history_entity_type>>,
      history_detail__field set<frozen<history_field_type>>,
- )
-
-CREATE TABLE IF NOT EXISTS cam_audit_history_<ENV_LEVEL_ID>ks.audit_history_v1_alt_call (
-     account_number text,
-     opco text,                     --maps to history_detail__opco
-     last_update_tmstp timestamp,
-     audit_entries set<frozen<audit_history_entry>>,
-     request_action text,
-     transaction_id text,
-     app_id text,
-     user_id text,
-     source text,
-     request_type text
-    PRIMARY KEY(account_number, last_update_tmstp, opco, transaction_id))
-)
-
-CREATE TABLE IF NOT EXISTS cam_audit_history_<ENV_LEVEL_ID>ks.audit_history_v1_alt (
-     account_number text,
-     opco text,                     --maps to history_detail__opco
-     last_update_tmstp timestamp,
-     audit_entries set<frozen<audit_history_entry>>,
-     transaction_id text,
-    PRIMARY KEY(account_number, last_update_tmstp, opco, transaction_id))
-)
+);
 
 CREATE TABLE IF NOT EXISTS cam_audit_history_<ENV_LEVEL_ID>ks.audit_history_v1 (
      account_number text,
      opco text,                     --maps to history_detail__opco
      last_update_tmstp timestamp,
+     audit_details set<frozen<audit_history_entry>>,
      request_action text,
-     history_detail__descriptive_identifier text,
-     history_detail__additional_identifier__key set<frozen<history_additional_identifier_type>>,
-     history_detail__entity set<frozen<history_entity_type>>,
-     history_detail__field set<frozen<history_field_type>>,
+     transaction_id text,
      app_id text,
      user_id text,
      source text,
      request_type text,
-     transaction_id text,
-    PRIMARY KEY(account_number, last_update_tmstp, opco))
- WITH CLUSTERING ORDER BY(last_update_tmstp DESC, opco ASC)
+    PRIMARY KEY(account_number, last_update_tmstp, opco, transaction_id))
+ WITH CLUSTERING ORDER BY(last_update_tmstp DESC, opco ASC, transaction_id ASC)
      AND bloom_filter_fp_chance = 0.01
      AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
      AND comment = ''

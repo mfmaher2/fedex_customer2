@@ -14,13 +14,13 @@ public class AuditHistory {
     private String accountNumber;
     @ClusteringColumn(1) private String opco;
     @ClusteringColumn(0) @CqlName("last_update_tmstp") private Instant lastUpdated;
+    @ClusteringColumn(2) @CqlName("transaction_id") private String transactionID;
     @CqlName("request_action") private String requestAction;
-    @CqlName("history_detail__descriptive_identifier") private String histDetailDescID;
+//    @CqlName("history_detail__descriptive_identifier") private String histDetailDescID;
     @CqlName("app_id") private String appID;
     @CqlName("user_id") private String userID;
     @CqlName("source") private String source;
     @CqlName("request_type") private String requestType;
-    @CqlName("transaction_id") private String transactionID;
 
     public String getAccountNumber() { return accountNumber; }
     public void setAccountNumber(String val) {accountNumber = val; }
@@ -34,8 +34,8 @@ public class AuditHistory {
     public String getRequestAction() { return requestAction; }
     public void setRequestAction(String val) {requestAction = val; }
 
-    public String getHistDetailDescID() { return histDetailDescID; }
-    public void setHistDetailDescID(String val) {histDetailDescID = val; }
+//    public String getHistDetailDescID() { return histDetailDescID; }
+//    public void setHistDetailDescID(String val) {histDetailDescID = val; }
 
     public String getAppID() { return appID; }
     public void setAppID(String val) {appID = val; }

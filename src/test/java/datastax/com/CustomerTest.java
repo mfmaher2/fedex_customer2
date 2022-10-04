@@ -39,7 +39,6 @@ import java.util.function.Function;
 
 
 public class CustomerTest {
-
     private static CustomerMapper customerMapper = null;
     private static CustomerMapperEdge customerMapperEdge = null;
     static AccountDao daoAccount = null;
@@ -53,9 +52,9 @@ public class CustomerTest {
     static AuditHistoryDao daoAuditHistory = null;
     static AccountContactDao daoAccountContact = null;
 
-    private static boolean skipSchemaCreation = true;
-    private static boolean skipDataLoad = true;
-    private static boolean skipKeyspaceDrop = true;
+    private static boolean skipSchemaCreation = false;
+    private static boolean skipDataLoad = false;
+    private static boolean skipKeyspaceDrop = false;
     private static boolean skipIndividualTableDrop = false;
     private static String productName = "Customer" ;
     private static Environment environment = null;
@@ -294,6 +293,8 @@ public class CustomerTest {
         PagingIterable<Account> verifyAccountCreated = daoAccount.findAllByAccountNumber(acctNum);
         assert(verifyAccountCreated.all().size() == 1);
 
+//        daoAccount
+//        daoAccountContact.batchSave(acctCont1).getPreparedStatement()
         //example using one delete and one save command
         BatchStatement batch = BatchStatement.builder(BatchType.LOGGED).build();
         batch = batch.add(daoAccountContact.batchSave(acctCont1));
