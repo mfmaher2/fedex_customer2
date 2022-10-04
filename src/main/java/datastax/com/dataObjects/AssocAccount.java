@@ -13,7 +13,7 @@ public class AssocAccount {
     @ClusteringColumn(0) @CqlName("associated_account__opco") String opco;
     @ClusteringColumn(1) @CqlName("associated_account__number") String associatedAccountNumber;
 
-    AssocAccount() {};
+    public AssocAccount() {};
 
     public String getAccountNumber() { return accountNumber; }
     public void setAccountNumber(String val) {accountNumber = val; }

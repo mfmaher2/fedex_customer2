@@ -1,11 +1,15 @@
 package datastax.com.multiThreadTest;
 
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.cql.BatchStatement;
+import com.datastax.oss.driver.api.core.cql.BatchType;
+import com.datastax.oss.driver.api.core.cql.BatchableStatement;
 import datastax.com.CustomerMapper;
 import datastax.com.DAOs.AccountDao;
 import datastax.com.DAOs.AssocAccountDao;
 import datastax.com.DAOs.PaymentInfoDao;
 import datastax.com.dataObjects.Account;
+import datastax.com.dataObjects.AssocAccount;
 import datastax.com.schemaElements.Keyspace;
 import datastax.com.schemaElements.KeyspaceConfig;
 
@@ -26,6 +30,8 @@ public class AccountRunnable implements Runnable{
         this.keyspaceConfig = keyspaces;
 
         daoAccount = mapper.accountDao(keyspaceConfig.getKeyspaceName(Keyspace.ACCOUNT_KS));
+        daoAssocAccount = mapper.assocAccountDao(keyspaceConfig.getKeyspaceName(Keyspace.ASSOC_ACCOUNT_KS));
+        daoPayment = mapper.paymentInfoDao(keyspaceConfig.getKeyspaceName(Keyspace.PAYMENT_INFO_KS));
 
         this.session = session;
     }
@@ -35,8 +41,11 @@ public class AccountRunnable implements Runnable{
         String opco = "opcoThreadProcessingTest";
         String customerType = "testCustType";
         String accountType = "testAcctType";
+        String assocAcctNum = "assocNum";
 
         for(int i=0; i<numWriteActions; i++){
+            BatchStatement batch = BatchStatement.builder(BatchType.LOGGED).build();
+
             String acctNum = acctBase + String.valueOf(threadID) + "_" + String.valueOf(i);
 
             Account newAcct = new Account();
@@ -44,8 +53,17 @@ public class AccountRunnable implements Runnable{
             newAcct.setOpco(opco);
             newAcct.setProfileCustomerType(customerType);
             newAcct.setProfileAccountType(accountType);
+            batch = batch.add(daoAccount.batchSave(newAcct));
 
-            daoAccount.save(newAcct);
+            AssocAccount assocAccount = new AssocAccount();
+            assocAccount.setAccountNumber(acctNum);
+            assocAccount.setOpco(opco);
+            assocAccount.setAssociatedAccountNumber(assocAcctNum);
+
+
+            session.execute(batch);
+
+
         }
     }
 }
