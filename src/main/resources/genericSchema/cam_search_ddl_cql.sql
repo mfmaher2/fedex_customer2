@@ -29,16 +29,16 @@ CREATE TYPE IF NOT EXISTS cam_audit_history_<ENV_LEVEL_ID>ks.history_field_type 
     new_value text
 );
 
-CREATE TYPE IF NOT EXISTS cam_time_event_<ENV_LEVEL_ID>ks.time_event_additional_details_items(
-    name text,
-    value text
-);
-
 CREATE TYPE IF NOT EXISTS cam_audit_history_<ENV_LEVEL_ID>ks.audit_history_entry (
      history_detail__descriptive_identifier text,
      history_detail__additional_identifier__key set<frozen<history_additional_identifier_type>>,
      history_detail__entity set<frozen<history_entity_type>>,
      history_detail__field set<frozen<history_field_type>>,
+);
+
+CREATE TYPE IF NOT EXISTS cam_time_event_<ENV_LEVEL_ID>ks.time_event_additional_details_items(
+    name text,
+    value text
 );
 
 CREATE TABLE IF NOT EXISTS cam_audit_history_<ENV_LEVEL_ID>ks.audit_history_v1 (
