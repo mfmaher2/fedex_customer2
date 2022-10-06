@@ -732,9 +732,15 @@ public class CustomerTest {
         daoAuditHistory.save(hist2);
 
         String auditKS = ksConfig.getKeyspaceName(AUDIT_HISTORY_KS);
+//        String query = "select * from " + auditKS + ".audit_history_v1\n" +
+//                "where\n" +
+//                "    solr_query = '{\"q\": \"{!tuple}audit_details.history_detail__entity.stanza:stz1\" }'";
+
         String query = "select * from " + auditKS + ".audit_history_v1\n" +
                 "where\n" +
-                "    solr_query = '{\"q\": \"{!tuple}audit_details.history_detail__entity.stanza:stz1\" }'";
+                "    solr_query = '" + construcAuditEntryEntityStanzaSolrQuery("stz1") + "'";
+
+
 
         ResultSet rs = sessionMap.get(DataCenter.SEARCH).execute(
                 SimpleStatement.builder(query).setExecutionProfileName("search").build()
@@ -742,6 +748,29 @@ public class CustomerTest {
         Row resultRow = rs.one();
         assert(resultRow.getString("opco").equals(opco1));
         assert(rs.isFullyFetched());
+
+
+//        PagingIterable<AuditHistory> mappedRS = daoAuditHistory.findByEntryEntityStanza("stz1");
+//        PagingIterable<AuditHistory> mappedRS = daoAuditHistory.findByEntryEntityStanza("{\"q\": \"{!tuple}audit_details.history_detail__entity.stanza:stz1\" }"); //working
+
+        String construtSolrQuery = construcAuditEntryEntityStanzaSolrQuery("stz1");
+        PagingIterable<AuditHistory> mappedRS = daoAuditHistory.findByEntryEntityStanza(construcAuditEntryEntityStanzaSolrQuery("stz1"));
+
+        //options tred below = error
+//        PagingIterable<AuditHistory> mappedRS = daoAuditHistory.findByEntryEntityStanza(construcAuditEntryEntityStanzaSolrQuery("{\"q\": \"{!tuple}audit_details.history_detail__entity.stanza:stz1\" }"));
+//        PagingIterable<AuditHistory> mappedRS = daoAuditHistory.findByEntryEntityStanza(construcAuditEntryEntityStanzaSolrQuery("'{\"q\": \"{!tuple}audit_details.history_detail__entity.stanza:stz1\" }'"));
+//        PagingIterable<AuditHistory> mappedRS = daoAuditHistory.findByEntryEntityStanza(construcAuditEntryEntityStanzaSolrQuery("stz1"));
+//        "'{\"q\": \"{!tuple}audit_details.history_detail__entity.stanza:stz1\" }'"
+
+        AuditHistory returnHist = mappedRS.one();
+        assert(returnHist.getOpco().equals(opco1));
+        assert(mappedRS.isFullyFetched());
+
+    }
+
+    private String construcAuditEntryEntityStanzaSolrQuery(String stanza){
+//        return "'{\"q\": \"{!tuple}audit_details.history_detail__entity.stanza:" + stanza + "\" }'"; //initial version -> error
+        return "{\"q\": \"{!tuple}audit_details.history_detail__entity.stanza:" + stanza + "\" }";
     }
 
     @Test
