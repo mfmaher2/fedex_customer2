@@ -664,6 +664,85 @@ public class CustomerTest {
         PagingIterable<AccountContact> cleanVerifyAfterResults = daoAccountContact.findAllByAccountNumber(acctNum);
         assert(cleanVerifyAfterResults.all().size() == 0);
     }
+    @Test
+    public void auditHistoryNextedEntityWriteReadTest(){
+        //Audit history row ->
+        //                  set(AuditHistoryEntry) ->
+        //                            set(AuditHistoryAdditionalIdentifier)
+        //                            set(AuditHistoryEntityType)
+        //                            set(AuditHistoryFieldType)
+
+        //operations for all 'sub nested' types wil work similarly, using AuditHistoryEntityType for examples
+
+        AuditHistoryEntityType entityType1_1 = new AuditHistoryEntityType();
+        entityType1_1.setAction("act1_1");
+        entityType1_1.setStanzaName("stzNm1");
+        entityType1_1.setStanza("stz1");
+
+        AuditHistoryEntityType entityType1_2 = new AuditHistoryEntityType();
+        entityType1_2.setAction("act1_2");
+        entityType1_2.setStanzaName("stzNm1");
+        entityType1_2.setStanza("stz1");
+
+        AuditHistoryEntityType entityType2_1 = new AuditHistoryEntityType();
+        entityType2_1.setAction("act2_1");
+        entityType2_1.setStanzaName("stzNm2");
+        entityType2_1.setStanza("stz2");
+
+        Set<AuditHistoryEntityType> entities1 = new HashSet<>();
+        entities1.add(entityType1_1);
+        entities1.add(entityType1_2);
+
+        Set<AuditHistoryEntityType> entities2 = new HashSet<>();
+        entities2.add(entityType2_1);
+
+        AuditHistoryEntry historyEntry1 = new AuditHistoryEntry();
+        historyEntry1.setDescriptiveIdentifier("histEntry1");
+        historyEntry1.setEntity(entities1);
+        Set<AuditHistoryEntry> histEntries1 = new HashSet<>();
+        histEntries1.add(historyEntry1);
+
+        AuditHistoryEntry historyEntry2 = new AuditHistoryEntry();
+        historyEntry2.setDescriptiveIdentifier("histEntry2");
+        historyEntry2.setEntity(entities2);
+        Set<AuditHistoryEntry> histEntries2 = new HashSet<>();
+        histEntries2.add(historyEntry2);
+
+        Instant lastUpdate1 = Instant.parse("2022-04-01T00:00:00.001Z");
+        Instant lastUpdate2 = Instant.parse("2022-05-05T00:00:00.001Z");
+
+        String acctNum = "acct_testNestedAuditEntities";
+        String opco1 = "auditOpco_1";
+        String opco2 = "auditOpco_2";
+
+        AuditHistory hist1 = new AuditHistory();
+        hist1.setAccountNumber(acctNum);
+        hist1.setOpco(opco1);
+        hist1.setLastUpdated(lastUpdate1);
+        hist1.setTransactionID("transID1");
+        hist1.setAuditDetails(histEntries1);
+        daoAuditHistory.save(hist1);
+
+        AuditHistory hist2 = new AuditHistory();
+        hist2.setAccountNumber(acctNum);
+        hist2.setOpco(opco2);
+        hist2.setLastUpdated(lastUpdate2);
+        hist2.setTransactionID("transID2");
+        hist2.setAuditDetails(histEntries2);
+        daoAuditHistory.save(hist2);
+
+        String auditKS = ksConfig.getKeyspaceName(AUDIT_HISTORY_KS);
+        String query = "select * from " + auditKS + ".audit_history_v1\n" +
+                "where\n" +
+                "    solr_query = '{\"q\": \"{!tuple}audit_details.history_detail__entity.stanza:stz1\" }'";
+
+        ResultSet rs = sessionMap.get(DataCenter.SEARCH).execute(
+                SimpleStatement.builder(query).setExecutionProfileName("search").build()
+            );
+        Row resultRow = rs.one();
+        assert(resultRow.getString("opco").equals(opco1));
+        assert(rs.isFullyFetched());
+    }
 
     @Test
     public void auditHistorySAITest(){

@@ -35,9 +35,6 @@ public class AuditHistory {
     public String getRequestAction() { return requestAction; }
     public void setRequestAction(String val) {requestAction = val; }
 
-//    public String getHistDetailDescID() { return histDetailDescID; }
-//    public void setHistDetailDescID(String val) {histDetailDescID = val; }
-
     public Set<AuditHistoryEntry> getAuditDetails() { return  auditDetails ;}
     public void setAuditDetails(Set<AuditHistoryEntry> val) {auditDetails = val;}
 
