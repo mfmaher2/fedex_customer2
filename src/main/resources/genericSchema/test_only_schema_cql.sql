@@ -1,4 +1,5 @@
-CREATE KEYSPACE If NOT EXISTS customer_test WITH replication = {'class': 'NetworkTopologyStrategy', 'SearchGraphAnalytics': '1'}  AND durable_writes = true;
+--CREATE KEYSPACE If NOT EXISTS customer_test WITH replication = {'class': 'NetworkTopologyStrategy', 'SearchGraphAnalytics': '1'}  AND durable_writes = true;
+CREATE KEYSPACE If NOT EXISTS customer_test WITH replication = {'class': 'NetworkTopologyStrategy', 'core': '1'}  AND durable_writes = true;
 USE customer_test;
 
 CREATE TYPE IF NOT EXISTS customer_test.telecom_details_type (

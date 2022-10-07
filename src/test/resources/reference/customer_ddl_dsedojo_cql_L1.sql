@@ -1,4 +1,46 @@
-CREATE TYPE IF NOT EXISTS account_contact_ks.telecom_details_type (
+CREATE TABLE IF NOT EXISTS cam_sequence_l1_ks.sequence_num_tbl (
+    domain text,
+    sequence_name text,
+    current_num int,
+    end_num int,
+    start_num int,
+    is_wrapped boolean,
+    PRIMARY KEY ((domain, sequence_name)));
+
+CREATE TABLE IF NOT EXISTS cam_sequence_l1_ks.id_available (
+    domain text,
+    identifier text,
+    PRIMARY KEY (domain, identifier)
+) WITH CLUSTERING ORDER BY(identifier ASC)
+;
+
+CREATE TABLE IF NOT EXISTS cam_sequence_l1_ks.id_assignment (
+    domain text,
+    identifier text,
+    assigned_by text,
+    PRIMARY KEY (domain, identifier)
+) WITH CLUSTERING ORDER BY(identifier ASC)
+;
+
+CREATE TABLE IF NOT EXISTS cam_sequence_l1_ks.id_assignment_single (
+    domain text,
+    identifier text,
+    assigned_by text,
+    PRIMARY KEY (domain, identifier)
+) WITH CLUSTERING ORDER BY(identifier ASC)
+;
+
+-- example using composite partition key with bucket
+CREATE TABLE IF NOT EXISTS cam_sequence_l1_ks.id_assignment_single_bucket (
+    domain text,
+    bucket int,
+    identifier text,
+    assigned_by text,
+    PRIMARY KEY ((domain, bucket), identifier)
+) WITH CLUSTERING ORDER BY(identifier ASC)
+;    
+
+CREATE TYPE IF NOT EXISTS cam_account_contact_l1_ks.telecom_details_type (
     telecom_method text,
     numeric_country_code text,
     alpha_country_code text,
@@ -10,7 +52,7 @@ CREATE TYPE IF NOT EXISTS account_contact_ks.telecom_details_type (
     text_message_flag boolean
 );
 
-CREATE TYPE IF NOT EXISTS line_of_business_ks.telecom_details_type (
+CREATE TYPE IF NOT EXISTS cam_line_of_business_l1_ks.telecom_details_type (
     telecom_method text,
     numeric_country_code text,
     alpha_country_code text,
@@ -22,7 +64,7 @@ CREATE TYPE IF NOT EXISTS line_of_business_ks.telecom_details_type (
     text_message_flag boolean
 );
 
-CREATE TYPE IF NOT EXISTS search_ks.telecom_details_type (
+CREATE TYPE IF NOT EXISTS cam_search_l1_ks.telecom_details_type (
     telecom_method text,
     numeric_country_code text,
     alpha_country_code text,
@@ -34,51 +76,51 @@ CREATE TYPE IF NOT EXISTS search_ks.telecom_details_type (
     text_message_flag boolean
 );
 
-CREATE TYPE IF NOT EXISTS account_contact_ks.social_media_type (
+CREATE TYPE IF NOT EXISTS cam_account_contact_l1_ks.social_media_type (
     type_code text,
     value text
 );
 
-CREATE TYPE IF NOT EXISTS line_of_business_ks.social_media_type (
+CREATE TYPE IF NOT EXISTS cam_line_of_business_l1_ks.social_media_type (
     type_code text,
     value text
 );
 
-CREATE TYPE IF NOT EXISTS account_ks.tax_data_type (
+CREATE TYPE IF NOT EXISTS cam_account_l1_ks.tax_data_type (
     tax_id text,
     tax_id_desc text
 );
 
-CREATE TYPE IF NOT EXISTS account_ks.tax_exempt_data_type (
+CREATE TYPE IF NOT EXISTS cam_account_l1_ks.tax_exempt_data_type (
     tax_exempt_id text,
     tax_exempt_id_desc text,
     tax_exempt_flag boolean
 );
 
-CREATE TYPE IF NOT EXISTS audit_history_ks.history_additional_identifier_type (
+CREATE TYPE IF NOT EXISTS cam_audit_history_l1_ks.history_additional_identifier_type (
     type text,
     value text
 );
 
-CREATE TYPE IF NOT EXISTS audit_history_ks.history_entity_type (
+CREATE TYPE IF NOT EXISTS cam_audit_history_l1_ks.history_entity_type (
     action text,
     stanza_name text,
     stanza text
 );
 
-CREATE TYPE IF NOT EXISTS audit_history_ks.history_field_type (
+CREATE TYPE IF NOT EXISTS cam_audit_history_l1_ks.history_field_type (
     action text,
     stanza_name text,
     previous_value text,
     new_value text
 );
 
-CREATE TYPE IF NOT EXISTS time_event_ks.time_event_additional_details_items(
+CREATE TYPE IF NOT EXISTS cam_time_event_l1_ks.time_event_additional_details_items(
     name text,
     value text
 );
 
-CREATE TYPE IF NOT EXISTS account_ks.potential_revenue_type (
+CREATE TYPE IF NOT EXISTS cam_account_l1_ks.potential_revenue_type (
     shipping_revenue_type text,
     time_period text,
     shipping_package_quantity text,
@@ -90,7 +132,7 @@ CREATE TYPE IF NOT EXISTS account_ks.potential_revenue_type (
     shipping_package_percent text
 );
 
-CREATE TYPE IF NOT EXISTS account_ks.other_potential_info_type (
+CREATE TYPE IF NOT EXISTS cam_account_l1_ks.other_potential_info_type (
     revenue_event_source text,
     revenue_comments text,
     comment_sequence_nbr int,
@@ -98,7 +140,7 @@ CREATE TYPE IF NOT EXISTS account_ks.other_potential_info_type (
     program text
 );
 
-CREATE TABLE IF NOT EXISTS account_ks.cust_acct_v1 (
+CREATE TABLE IF NOT EXISTS cam_account_l1_ks.cust_acct_v1 (
     account_number text,
     opco text,
     last_update_timestamp timestamp,
@@ -504,7 +546,7 @@ WITH CLUSTERING ORDER BY (opco ASC)
     AND speculative_retry = '99PERCENTILE';
 
 
-CREATE TABLE IF NOT EXISTS apply_discount_ks.apply_discount_detail_v1 (
+CREATE TABLE IF NOT EXISTS cam_apply_discount_l1_ks.apply_discount_detail_v1 (
     account_number text,
     opco text,
     last_update_tmstp timestamp,
@@ -528,9 +570,10 @@ WITH CLUSTERING ORDER BY(opco ASC, apply_discount__effective_date_time DESC)
     AND read_repair_chance = 0.0
     AND speculative_retry = '99PERCENTILE';
 
-CREATE TABLE IF NOT EXISTS payment_info_ks.payment_info_v1 (
+CREATE TABLE IF NOT EXISTS cam_payment_info_l1_ks.payment_info_v1 (
     account_number text,
     opco text,
+    last_update_tmstp timestamp,
     record_type_cd text,  -- expressCreditCard, expressDirectDebit, expressElectronic pay etc. i.e. stanza names
     record_key text,   -- creditCard,eftBankInfo,addlBankInfo,amexCheckout,altPayment i.e. sub fields
     record_seq int,
@@ -634,6 +677,8 @@ CREATE TABLE IF NOT EXISTS payment_info_ks.payment_info_v1 (
     bank__address__country_code text,
 
     --expressDirectDebit specific fields
+    direct_debit_detail__person_firstName text,
+    direct_debit_detail__person_lastName text,
     direct_debit_detail__bank_name text,
     direct_debit_detail__bankAccountHolderName text,
     direct_debit_detail__iban__swift_code text,
@@ -698,7 +743,7 @@ WITH CLUSTERING ORDER BY(opco ASC, record_type_cd ASC, record_key ASC, record_se
     AND read_repair_chance = 0.0
     AND speculative_retry = '99PERCENTILE';
 
-CREATE TABLE IF NOT EXISTS account_contact_ks.account_contact (
+CREATE TABLE IF NOT EXISTS cam_account_contact_l1_ks.account_contact (
     account_number text,
     opco text,
     last_update_tmstp timestamp,
@@ -779,10 +824,11 @@ WITH CLUSTERING ORDER BY(opco ASC, contact_type_code ASC, contact_business_id AS
     AND read_repair_chance = 0.0
     AND speculative_retry = '99PERCENTILE';
 
-CREATE TABLE IF NOT EXISTS assoc_account_ks.assoc_accounts_v1 (
+CREATE TABLE IF NOT EXISTS cam_assoc_account_l1_ks.assoc_accounts_v1 (
     account_number text,
     associated_account__opco text,
     associated_account__number text,
+    last_update_tmstp timestamp,
     PRIMARY KEY(account_number, associated_account__opco, associated_account__number))
 WITH CLUSTERING ORDER BY(associated_account__opco ASC, associated_account__number ASC)
     AND bloom_filter_fp_chance = 0.01
@@ -800,7 +846,7 @@ WITH CLUSTERING ORDER BY(associated_account__opco ASC, associated_account__numbe
     AND read_repair_chance = 0.0
     AND speculative_retry = '99PERCENTILE';
 
-CREATE TABLE IF NOT EXISTS account_ks.national_account_v1  (
+CREATE TABLE IF NOT EXISTS cam_account_l1_ks.national_account_v1  (
     account_number text,
     opco text,
     last_update_tmstp timestamp,
@@ -828,7 +874,7 @@ CREATE TABLE IF NOT EXISTS account_ks.national_account_v1  (
 
 --groupId
 --groupMembership
-CREATE TABLE IF NOT EXISTS group_ks.group_info_v1 (
+CREATE TABLE IF NOT EXISTS cam_group_l1_ks.group_info_v1 (
      account_number text,
      opco text,
      last_update_tmstp timestamp,
@@ -857,7 +903,7 @@ CREATE TABLE IF NOT EXISTS group_ks.group_info_v1 (
      AND speculative_retry = '99PERCENTILE';
 
 --comments
-CREATE TABLE IF NOT EXISTS comment_ks.comment_v1 (
+CREATE TABLE IF NOT EXISTS cam_comment_l1_ks.comment_v1 (
      account_number text,
      opco text,
      last_update_tmstp timestamp,
@@ -886,7 +932,7 @@ CREATE TABLE IF NOT EXISTS comment_ks.comment_v1 (
      AND read_repair_chance = 0.0
      AND speculative_retry = '99PERCENTILE';
 
-CREATE TABLE IF NOT EXISTS audit_history_ks.audit_history_v1 (
+CREATE TABLE IF NOT EXISTS cam_audit_history_l1_ks.audit_history_v1 (
      account_number text,
      opco text,                     --maps to history_detail__opco
      last_update_tmstp timestamp,
@@ -917,11 +963,12 @@ CREATE TABLE IF NOT EXISTS audit_history_ks.audit_history_v1 (
      AND read_repair_chance = 0.0
      AND speculative_retry = '99PERCENTILE';
 
-CREATE TABLE IF NOT EXISTS centralized_view_ks.centralized_view_v1 (
+CREATE TABLE IF NOT EXISTS cam_centralized_view_l1_ks.centralized_view_v1 (
      account_number text,
      account_status__status_code text,
      account_status__status_date date,
      opco_description map<text, text>,
+     last_update_tmstp timestamp,
 
     PRIMARY KEY(account_number))
      WITH bloom_filter_fp_chance = 0.01
@@ -939,7 +986,7 @@ CREATE TABLE IF NOT EXISTS centralized_view_ks.centralized_view_v1 (
      AND read_repair_chance = 0.0
      AND speculative_retry = '99PERCENTILE';
 
-CREATE TABLE IF NOT EXISTS line_of_business_ks.line_of_business_v1 (
+CREATE TABLE IF NOT EXISTS cam_line_of_business_l1_ks.line_of_business_v1 (
     account_number text,
     opco text,
     line_of_business__preference__direct_debit_day_of_month int,
@@ -1033,7 +1080,7 @@ CREATE TABLE IF NOT EXISTS line_of_business_ks.line_of_business_v1 (
      AND read_repair_chance = 0.0
      AND speculative_retry = '99PERCENTILE';
 
-CREATE TABLE IF NOT EXISTS time_event_ks.time_event_v1 (
+CREATE TABLE IF NOT EXISTS cam_time_event_l1_ks.time_event_v1 (
     account_number text,
     type text,
     status text,
@@ -1062,7 +1109,7 @@ WITH CLUSTERING ORDER BY (process_time DESC, type ASC, status ASC)
 
 -- expressCustomerAccountDynamicProfile
 -- groundCustomerAccountDynamicProfile
-CREATE TABLE IF NOT EXISTS dynamic_profile_ks.account_dynamic_profile_v1 (  //need _v1 in table name?
+CREATE TABLE IF NOT EXISTS cam_dynamic_profile_l1_ks.account_dynamic_profile_v1 (  //need _v1 in table name?
     account_number text,
     opco text,
     last_update_timestamp timestamp,
@@ -1098,7 +1145,7 @@ WITH CLUSTERING ORDER BY (opco ASC, payor_type ASC, shipment_type ASC)
 -- expressCustomerEntityDynamicProfile
 -- groundCustomerEntityDynamicProfile
 -- freightCustomerEntityDynamicProfile
-CREATE TABLE IF NOT EXISTS dynamic_profile_ks.entity_dynamic_profile_v1 ( //need _v1 in table name?
+CREATE TABLE IF NOT EXISTS cam_dynamic_profile_l1_ks.entity_dynamic_profile_v1 ( //need _v1 in table name?
     entity_number text,
     opco text,
     last_update_timestamp timestamp,
@@ -1125,7 +1172,7 @@ CREATE TABLE IF NOT EXISTS dynamic_profile_ks.entity_dynamic_profile_v1 ( //need
 
 -- expressInvoicePaymentProfile
 -- need _v1 in table name?
-CREATE TABLE IF NOT EXISTS payment_info_ks.invoice_payment_profile_v1 (
+CREATE TABLE IF NOT EXISTS cam_dynamic_profile_l1_ks.invoice_payment_profile_v1 (
     account_number text,
     opco text,
     last_update_timestamp timestamp,
@@ -1153,7 +1200,7 @@ WITH CLUSTERING ORDER BY (opco ASC, payor_type ASC, shipment_type ASC)
 
 
 --Possible search use case specific table
-CREATE TABLE IF NOT EXISTS search_ks.cam_search_v1 (
+CREATE TABLE IF NOT EXISTS cam_search_l1_ks.cam_search_v1 (
        account_number text,
        opco text,
        profile__archive_reason_code text,
@@ -1198,3 +1245,204 @@ WITH CLUSTERING ORDER BY(opco ASC, contact_type_code ASC, contact_business_id AS
     AND min_index_interval = 128
     AND read_repair_chance = 0.0
     AND speculative_retry = '99PERCENTILE';
+
+
+CREATE TABLE IF NOT EXISTS cam_archive_l1_ks.payment_info_v1 (
+    account_number text,
+    opco text,
+    record_type_cd text,  -- expressCreditCard, expressDirectDebit, expressElectronic pay etc. i.e. stanza names
+    record_key text,   -- creditCard,eftBankInfo,addlBankInfo,amexCheckout,altPayment i.e. sub fields
+    record_seq int,
+    archive_date_time timestamp,
+
+    --express_credit_card
+    --freightCreditCard
+    --officeCreditCard
+    --recipientServicesCreditCard
+    --ukDomesticCreditCard
+    type text,
+    credit_card_id text,
+    exp_date_month int,
+    exp_date_year int,
+    order_of_usage int,
+    additional_credit_card_info__address__street_line text,
+    additional_credit_card_info__address__additional_line1 text,
+    additional_credit_card_info__address__additional_line2 text,
+    additional_credit_card_info__address__geo_political_subdivision1 text,
+    additional_credit_card_info__address__geo_political_subdivision2 text,
+    additional_credit_card_info__address__geo_political_subdivision3 text,
+    additional_credit_card_info__address__postal_code text,
+    additional_credit_card_info__address__country_code text,
+    additional_credit_card_info__holder_company text,
+    additional_credit_card_info__holder_person__first_name text,
+    additional_credit_card_info__holder_person__last_name text,
+    additional_credit_card_info__holder_person__middle_name text,
+    additional_credit_card_info__holder_person__prefix text,
+    additional_credit_card_info__holder_person__suffix text,
+    additional_credit_card_info__holder_person__title text,
+    additional_credit_card_info__holder_person__gender text,
+    additional_credit_card_info__holder_email text,
+    additional_credit_card_info__holder_phone__numeric_country_code text,
+    additional_credit_card_info__holder_phone__alpha_country_code text,
+    additional_credit_card_info__holder_phone__area_code text,
+    additional_credit_card_info__holder_phone__phone_number text,
+    additional_credit_card_info__holder_phone__extension text,
+    additional_credit_card_info__holder_phone__ftc_ok_to_call_flag boolean,
+    last_authentication_date date,
+
+    -- COMMON TO CC FIELDS credit card profile, amex checkout etc
+    profile_type text,
+    profile_name text,
+    cc_seq text,
+    auto_sched_thresh_amt text,
+    auto_sched_term text,
+
+    --Authorization
+    --expressElectronicPay
+    authorization__person__first_name text,
+    authorization__person__last_name text,
+    authorization__person__middle_name text,
+    authorization__person__prefix text,
+    authorization__person__suffix text,
+    authorization__person__title text,
+    authorization__company_name text,
+    authorization__address__street_line text,
+    authorization__address__additional_line1 text,
+    authorization__address__additional_line2 text,
+    authorization__address__secondary__unit1 text,
+    authorization__address__secondary__value1 text,
+    authorization__address__secondary__unit2 text,
+    authorization__address__secondary__value2 text,
+    authorization__address__secondary__unit3 text,
+    authorization__address__secondary__value3 text,
+    authorization__address__secondary__unit4 text,
+    authorization__address__secondary__value4 text,
+    authorization__address__geo_political_subdivision1 text,
+    authorization__address__geo_political_subdivision2 text,
+    authorization__address__geo_political_subdivision3 text,
+    authorization__address__postal_code text,
+    authorization__address__country_code text,
+    authorization__phone__tele_com_method text,
+    authorization__phone__numeric_country_code text,
+    authorization__phone__alpha_country_code text,
+    authorization__phone__area_code text,
+    authorization__phone__extension text,
+    authorization__phone__pin text,
+    authorization__phone__ftc_ok_to_call_flag boolean,
+    authorization__phone__text_message_flag boolean,
+
+    -- Bank
+    -- expressElectronicPay
+    bank__account text,
+    bank__bank_name text,
+    bank__routing_number text,
+    bank__address__street_line text,
+    bank__address__additional_line1 text,
+    bank__address__additional_line2 text,
+    bank__address__secondary__unit1 text,
+    bank__address__secondary__value1 text,
+    bank__address__secondary__unit2 text,
+    bank__address__secondary__value2 text,
+    bank__address__secondary__unit3 text,
+    bank__address__secondary__value3 text,
+    bank__address__secondary__unit4 text,
+    bank__address__secondary__value4 text,
+    bank__address__geo_political_subdivision1 text,
+    bank__address__geo_political_subdivision2 text,
+    bank__address__geo_political_subdivision3 text,
+    bank__address__postal_code text,
+    bank__address__country_code text,
+
+    --expressDirectDebit specific fields
+    direct_debit_detail__person_firstName text,
+    direct_debit_detail__person_lastName text,
+    direct_debit_detail__bank_name text,
+    direct_debit_detail__bankAccountHolderName text,
+    direct_debit_detail__iban__swift_code text,
+    direct_debit_detail__iban_iban text,
+    direct_debit_detail__non_iban__bank_code text,
+    direct_debit_detail__non_iban__branch_code text,
+    direct_debit_detail__non_iban__account_number text,
+    direct_debit_detail__non_iban__sort_code text,
+    direct_debit_detail__directDebitTypeCode text,
+    direct_debit_detail__mandate_id text,
+    direct_debit_detail__mandate_start_date date,
+    direct_debit_detail__legal_entity text,
+
+    -- Additional Info
+    -- expressElectronicPay
+    addl_bank_info__abi_code text,
+    addl_bank_info__addl_bank_id text,
+    addl_bank_info__bank_number text,
+    addl_bank_info__cab_code text,
+    addl_bank_info__giro_account text,
+    addl_bank_info__domicile_number text,
+
+    -- EFTBank Info
+    -- expressElectronicPay
+    days_to_debit int,
+    eft_alias_name text,
+    eft_seq int,
+    eft_type text,
+    name_on_account text,
+    threshhold_amount text,
+
+    -- altPayment
+    alt_payment__alt_payment_type text,
+    alt_payment__billing_agreement_id text,
+    alt_payment__billing_agreement_date date,
+    alt_payment__client_id text,
+    alt_payment__profileName text,
+    alt_payment__auto_sched_term text,
+    alt_payment__auto_sched_thresh_amt text,
+
+    --amexCheckout
+    fpan__first_six_digits text,
+    fpan__last_four_digits text,
+    fpan__exp_date_month int,
+    fpan__exp_date_year int,
+
+
+    PRIMARY KEY(account_number, opco, record_type_cd, record_key, record_seq, archive_date_time))
+WITH CLUSTERING ORDER BY(opco ASC, record_type_cd ASC, record_key ASC, record_seq ASC, archive_date_time DESC)
+    AND bloom_filter_fp_chance = 0.01
+    AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+    AND comment = ''
+    AND compaction = {'class': 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy', 'enabled': 'true', 'sstable_size_in_mb': '160', 'tombstone_compaction_interval': '86400', 'tombstone_threshold': '0.2', 'unchecked_tombstone_compaction': 'false'}
+    AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+    AND crc_check_chance = 1.0
+    AND dclocal_read_repair_chance = 0.0
+    AND default_time_to_live = 0
+    AND gc_grace_seconds = 864000
+    AND max_index_interval = 2048
+    AND memtable_flush_period_in_ms = 0
+    AND min_index_interval = 128
+    AND read_repair_chance = 0.0
+    AND speculative_retry = '99PERCENTILE';
+
+
+CREATE TABLE IF NOT EXISTS cam_archive_l1_ks.apply_discount_detail_v1 (
+    account_number text,
+    opco text,
+    archive_date_time timestamp,
+    last_update_tmstp timestamp,
+    apply_discount__discount_flag boolean,
+    apply_discount__effective_date_time timestamp,
+    apply_discount__expiration_date_time timestamp,
+    PRIMARY KEY(account_number, opco, apply_discount__effective_date_time, archive_date_time))
+WITH CLUSTERING ORDER BY(opco ASC, apply_discount__effective_date_time DESC, archive_date_time DESC)
+    AND bloom_filter_fp_chance = 0.01
+    AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+    AND comment = ''
+    AND compaction = {'class': 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy', 'enabled': 'true', 'sstable_size_in_mb': '160', 'tombstone_compaction_interval': '86400', 'tombstone_threshold': '0.2', 'unchecked_tombstone_compaction': 'false'}
+    AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+    AND crc_check_chance = 1.0
+    AND dclocal_read_repair_chance = 0.0
+    AND default_time_to_live = 0
+    AND gc_grace_seconds = 864000
+    AND max_index_interval = 2048
+    AND memtable_flush_period_in_ms = 0
+    AND min_index_interval = 128
+    AND read_repair_chance = 0.0
+    AND speculative_retry = '99PERCENTILE';
+

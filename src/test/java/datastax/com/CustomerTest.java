@@ -1,30 +1,30 @@
 package datastax.com;
 
-import com.datastax.oss.driver.api.core.ConsistencyLevel;
-import com.datastax.oss.driver.api.core.CqlSession;
-import com.datastax.oss.driver.api.core.MappedAsyncPagingIterable;
-import com.datastax.oss.driver.api.core.PagingIterable;
+import com.datastax.oss.driver.api.core.*;
 import com.datastax.oss.driver.api.core.cql.*;
 import com.datastax.oss.driver.api.core.data.UdtValue;
 import com.datastax.oss.driver.api.querybuilder.delete.Delete;
-import com.datastax.oss.driver.api.querybuilder.schema.CreateKeyspace;
+import com.datastax.oss.driver.api.querybuilder.insert.Insert;
 import com.datastax.oss.driver.api.querybuilder.select.Select;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.protocol.internal.util.Bytes;
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.*;
-import static com.datastax.oss.driver.api.querybuilder.SchemaBuilder.*;
+import static datastax.com.dataObjects.AuditHistory.construcAuditEntryEntityStanzaSolrQuery;
+import static datastax.com.schemaElements.Keyspace.*;
 
 import datastax.com.dataObjects.*;
 import datastax.com.DAOs.*;
-import datastax.com.schemaElements.Keyspaces;
+import datastax.com.multiThreadTest.AccountWriter;
+import datastax.com.schemaElements.*;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
-import java.io.BufferedInputStream;
-import java.io.IOException;
+import java.io.*;
+import java.net.*;
 import java.nio.ByteBuffer;
-import java.nio.file.Paths;
 import java.text.ParseException;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -33,10 +33,10 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 
-public class CustomerTest {
 
-    private static CqlSession session = null;
+public class CustomerTest {
     private static CustomerMapper customerMapper = null;
+    private static CustomerMapperEdge customerMapperEdge = null;
     static AccountDao daoAccount = null;
     static PaymentInfoDao daoPayment = null;
     static AssocAccountDao daoAssoc = null;
@@ -51,140 +51,205 @@ public class CustomerTest {
     private static boolean skipSchemaCreation = false;
     private static boolean skipDataLoad = false;
     private static boolean skipKeyspaceDrop = false;
-    private static boolean skipIndividualTableDrop = true;
+    private static boolean skipIndividualTableDrop = false;
     private static String productName = "Customer" ;
-
-    private static String SCHEMA_SCRIPT_PATH = "src/test/resources/create_customer_schema.sh" ;
-    private static String DATA_SCRIPT_PATH = "src/test/resources/load_customer_data.sh" ;
+    private static Environment environment = null;
+    private static Map<DataCenter, CqlSession> sessionMap = null;
+    private static KeyspaceConfig ksConfig = null;
 
     @BeforeClass
     public static void init() {
         System.out.println(productName + " - before init() method called");
 
         try{
-            session = CqlSession.builder()
-//                    .addContactPoints("127.0.0.1") //should have multiple (2+) contactpoints listed
-//                    .withQueryOptions(new QueryOptions().setConsistencyLevel(ConsistencyLevel.LOCAL_QUORUM))
-//                    .withLoadBalancingPolicy(
-//                            new TokenAwarePolicy(
-//                                    LatencyAwarePolicy.builder(
-//                                            DCAwareRoundRobinPolicy.builder()
-//                                                    .withLocalDc("dc1")
-//                                                    .build()
-//                                    )
-//                            )
-//                        .withExclusionThreshold(2.0)
-//                        .build()
-//                    )
-//                    .withCompression(ProtocolOptions.Compression.LZ4) //LZ4 jar needs to be in class path
-                    //auth information may also be needed
-                    .build();
+            //**********
+            //setup environment to match current test setup
+            //L1
+            environment = new Environment(Environment.AvailableEnviroments.L1);
 
+            //L4
+//            environment = new Environment(Environment.AvailableEnviroments.L4);
+            //**********
+
+            //set local convenience variables based on environment
+            sessionMap = environment.getSessionMap();
+            ksConfig = environment.getKeyspaceConfig();
+
+            //setup schema and data
             dropTestKeyspace();
             loadSchema();
             loadData();
 
-            customerMapper = new CustomerMapperBuilder(session).build();
-            daoAccount = customerMapper.accountDao(Keyspaces.ACCOUNT_KS.keyspaceName());
-            daoPayment = customerMapper.paymentInfoDao(Keyspaces.PAYMENT_INFO_KS.keyspaceName());
-            daoAssoc = customerMapper.assocAccountDao(Keyspaces.ASSOC_ACCOUNT_KS.keyspaceName());
-            daoContact  =  customerMapper.contactDao(Keyspaces.CUSTOMER.keyspaceName());
-            daoNational = customerMapper.nationalAccountDao(Keyspaces.ACCOUNT_KS.keyspaceName());
-            daoIndexCollect = customerMapper.indexCollectionDao(Keyspaces.CUSTOMER.keyspaceName());
-            daoApplyDiscount = customerMapper.applyDiscountDao(Keyspaces.APPLY_DISCOUNT_KS.keyspaceName());
-            daoComment = customerMapper.commentDao(Keyspaces.COMMENT_KS.keyspaceName());
-            daoAuditHistory = customerMapper.auditHistoryDao(Keyspaces.AUDIT_HISTORY_KS.keyspaceName());
-            daoAccountContact = customerMapper.accountContactDao(Keyspaces.ACCOUNT_CONTACT_KS.keyspaceName());
+            System.out.println("\tBeginning Mapper and DAO creation");
+            customerMapper = new CustomerMapperBuilder(sessionMap.get(DataCenter.CORE)).build();
+            customerMapperEdge = new CustomerMapperEdgeBuilder(sessionMap.get(DataCenter.EDGE)).build();
+
+            daoAccount = customerMapper.accountDao(ksConfig.getKeyspaceName(ACCOUNT_KS));
+            daoPayment = customerMapper.paymentInfoDao(ksConfig.getKeyspaceName(PAYMENT_INFO_KS));
+            daoAssoc = customerMapper.assocAccountDao(ksConfig.getKeyspaceName(ASSOC_ACCOUNT_KS));
+            daoContact  =  customerMapper.contactDao(ksConfig.getKeyspaceName(CUSTOMER));
+            daoNational = customerMapper.nationalAccountDao(ksConfig.getKeyspaceName(ACCOUNT_KS));
+            daoIndexCollect = customerMapper.indexCollectionDao(ksConfig.getKeyspaceName(CUSTOMER));
+            daoApplyDiscount = customerMapper.applyDiscountDao(ksConfig.getKeyspaceName(APPLY_DISCOUNT_KS));
+            daoComment = customerMapper.commentDao(ksConfig.getKeyspaceName(COMMENT_KS));
+            daoAuditHistory = customerMapper.auditHistoryDao(ksConfig.getKeyspaceName(AUDIT_HISTORY_KS));
+
+            daoAccountContact = customerMapperEdge.accountContactDao(ksConfig.getKeyspaceName(ACCOUNT_CONTACT_KS));
+
+            System.out.println("\tMapper and DAO creation complete");
         }
         catch(Exception e){
             System.out.println(e.getMessage());
         }
     }
 
-    static void dropTestKeyspace(){
+    static void dropTestKeyspace() throws InterruptedException {
         if(!skipKeyspaceDrop) {
-            for(Keyspaces ks : Keyspaces.values()) {
-                String ksName = ks.keyspaceName();
-
-                if (!skipIndividualTableDrop) {
-                    System.out.println("Dropping tables from keyspace - " + ksName);
-                    long startTables = System.currentTimeMillis();
-
-                    Select select = selectFrom("system_schema", "tables")
-                            .column("table_name")
-                            .whereColumn("keyspace_name").isEqualTo(bindMarker());
-
-                    ResultSet resultSet = session.execute(select.build(ksName));
-                    List<Row> foundRows = resultSet.all();
-                    for (Row curRow : foundRows) {
-                        String curTable = curRow.getString("table_name");
-                        session.execute(dropTable(ksName, curTable).ifExists().build());
-                        System.out.println("\tdrop table - " + curTable);
-                    }
-                    long stopTables = System.currentTimeMillis();
-                    System.out.println("Time for dropping all tables from keyspace " + ksName + "- " + ((stopTables - startTables) / 1000.0) + "s");
-                }
-
-                long startKeySpace = System.currentTimeMillis();
-                System.out.println("Dropping keyspace - " + ksName);
-                session.execute(dropKeyspace(ksName).ifExists().build());
-                long stopKeyspace = System.currentTimeMillis();
-                System.out.println("Time for dropping keyspace - " + ((stopKeyspace - startKeySpace) / 1000.0) + "s");
-            }
+            EnvironmentHelpers.dropEnvironmentKeyspaces(environment, !skipIndividualTableDrop);
         }
     }
 
     static void loadSchema() throws IOException, InterruptedException {
         if (!skipSchemaCreation) {
             System.out.println("Running " + productName + " loadSchema");
-
-            for(Keyspaces ks : Keyspaces.values()) {
-                String ksName = ks.keyspaceName();
-                System.out.println("Creating keyspace - " + ksName);
-                CreateKeyspace create = createKeyspace(ksName).ifNotExists()
-                        .withNetworkTopologyStrategy(ImmutableMap.of("SearchGraphAnalytics", 1))
-                        .withDurableWrites(true);
-
-                //System.out.println(create.asCql()); //optional output of complete keyspace creation CQL statement
-                session.execute(create.build());
-            }
-
-            runScript(SCHEMA_SCRIPT_PATH);
-        }
-    }
-
-    static void runScript(String scriptPath) throws InterruptedException, IOException {
-        ProcessBuilder processBuild = new ProcessBuilder(Paths.get(scriptPath).toAbsolutePath().toString());
-        Process process = processBuild.start();
-
-        int exitValue = process.waitFor();
-        if (exitValue != 0) {
-            // check for errors
-            new BufferedInputStream(process.getErrorStream());
-            throw new RuntimeException("execution of script failed!");
+            EnvironmentHelpers.loadEnvironmentSchema(environment);
         }
     }
 
     static void loadData() throws Exception {
         if(!skipDataLoad){
             System.out.println("Running " + productName + " data load");
-
-            runScript(DATA_SCRIPT_PATH);
-
-            //sleep for a time to allow Solr indexes to update completely
-            System.out.println("Completed " + productName + " data load.  Pausing to allow indexes to update...");
-            Thread.sleep(11000);
-
-            System.out.println("Index update complete, starting tests...");
+            EnvironmentHelpers.loadEnvironmentData(environment);
+            System.out.println("Data load and index update complete, starting tests...");
         }
     }
 
     @AfterClass
-    public static void close(){
+    public static void close() throws InterruptedException {
         System.out.println("Running " + productName + " close");
-
         dropTestKeyspace();
-        if (session != null) session.close();
+        sessionMap.values().forEach(s -> s.close());
+    }
+
+    @Test
+    public void multiThreadWrite(){
+
+        CqlSession coreSession = sessionMap.get(DataCenter.CORE);
+        String opco = "opcoThreadProcessingTest"; //common value with account runnable class
+
+        //clear any previoulsy created records
+        ResultSet rsTestRows = coreSession.execute(
+                    selectFrom(ksConfig.getKeyspaceName(ACCOUNT_KS), "cust_acct_v1")
+                        .column("account_number")
+                        .whereColumn("opco").isEqualTo(literal(opco))
+                        .build()
+                    );
+        for(Row row : rsTestRows){
+            String accountToDelete = row.getString("account_number");
+            coreSession.execute(
+                        deleteFrom(ksConfig.getKeyspaceName(ACCOUNT_KS), "cust_acct_v1")
+                                .whereColumn("account_number").isEqualTo(literal(accountToDelete))
+                        .build()
+                    );
+        }
+
+        AccountWriter accountWriter = new AccountWriter(
+                coreSession, ksConfig, customerMapper, 4);
+
+        accountWriter.runAccountWrite();
+
+        assert(true);
+    }
+
+    @Ignore
+    @Test
+    public void multiSessionBatchTest(){
+
+        final String acctNum = "batchTest123";
+        final String opco = "opBatchTest";
+        final String contactType = "type1";
+        final String businessID = "bID1";
+
+        CqlSession localSession = CqlSession.builder().build();
+        CqlSession sharedSession = sessionMap.get(DataCenter.EDGE);
+
+        assert(localSession != sharedSession);
+
+        Insert acctInsert =  insertInto(ksConfig.getKeyspaceName(ACCOUNT_KS), "cust_acct_v1")
+                                .value("account_number", literal(acctNum))
+                                .value("opco", literal(opco));
+//        localSession.execute(acctInsert.build());
+
+        Insert acctContactInsert =  insertInto(ksConfig.getKeyspaceName(ACCOUNT_CONTACT_KS), "account_contact")
+                .value("account_number", literal(acctNum))
+                .value("opco", literal(opco))
+                .value("contact_type_code", literal(contactType))
+                .value("contact_business_id", literal(businessID));
+//        localSession.execute(acctContactInsert.build());
+
+        BatchStatement batch = BatchStatement.builder(BatchType.LOGGED).build();
+        batch = batch.add(acctInsert.build());
+        batch = batch.add(acctContactInsert.build());
+//        batch = batch.add(daoAccount.batchDelete(custAcct));
+        sessionMap.get(DataCenter.CORE).execute(batch);
+
+    }
+
+    @Ignore
+    @Test
+    public void outsideWebServiceCall() throws IOException, JSONException {
+
+        String acctNum = "987xyz";
+        String urlWithParameter = "http://localhost:8080/accountBalance?accountNum=" + acctNum;
+
+        URL urlAccountBal = new URL(urlWithParameter);
+        HttpURLConnection connectAcctBal = (HttpURLConnection) urlAccountBal.openConnection();
+        connectAcctBal.setRequestMethod("GET");
+
+        BufferedReader response = new BufferedReader(new InputStreamReader(connectAcctBal.getInputStream()));
+        String responseLine;
+        StringBuffer fullResponse = new StringBuffer();
+
+        while((responseLine = response.readLine()) != null){
+            fullResponse.append(responseLine);
+        }
+        response.close();
+
+        System.out.println(fullResponse.toString());
+
+        JSONObject jsonReponse = new JSONObject(fullResponse.toString());
+        String retrievedAcctID = jsonReponse.getString("accountID");
+        Float retrievedBalance = (float) jsonReponse.getDouble("accountBalance");
+
+        System.out.println("Retrieved information, account: " + retrievedAcctID + "    balance:" + retrievedBalance);
+
+        //verify sent parameter matches retreived parameter for account ID
+        assert(retrievedAcctID.equals(acctNum));
+    }
+
+   @Ignore
+    @Test
+    public void outputKeyspaceCreation() throws IOException {
+        String outputFilePath = "/Users/michaeldownie/Downloads/camKeyspaceCreate.cql";
+        KeyspaceCreator.outputKeyspacesCreationCQL(ksConfig, outputFilePath);
+    }
+
+    @Test
+    public void prepareTimout(){
+        CqlSession localSession = sessionMap.get(DataCenter.CORE);
+
+        Select select1 = selectFrom(ksConfig.getKeyspaceName(ACCOUNT_KS), "cust_acct_v1")
+                                .all()
+                                .whereColumn("account_number").in(bindMarker());
+        PreparedStatement prep = localSession.prepare(select1.asCql());
+
+        Select select2 = selectFrom(ksConfig.getKeyspaceName(ACCOUNT_KS), "cust_acct_v1")
+                            .columns("account_number", "opco", "last_update_tmstp", "profile__customer_type", "profile__account_type", "profile__account_service_level", "profile__account_status__status_code", "profile__account_status__status_date", "profile__account_status__reason_code", "profile__fdx_ok_to_call_flag", "profile__enterprise_source", "profile__nasa_id", "profile__nasa_key", "profile__creation_date", "profile__origin_source", "profile__account_linkage_flag", "profile__welcome_kit__welcome_kit_flag", "profile__welcome_kit__welcome_kit_promo_code", "profile_service_restrictions", "profile_view_restrictions", "profile_tax_exempt", "eligibility__ground", "eligibility__express", "eligibility__freight", "eligibility__office", "profile__customer_requester_name", "profile__employee_requester__opco", "profile__employee_requester__number", "profile__source_group", "profile__source_dept", "profile__source_system", "profile__employee_creator_opco", "profile__employee_creator_number", "profile__account_sub_type", "profile__customer_account_status", "profile__duplicate_account_flag", "profile__archive_date", "profile__archive_reason_code", "profile__archive_options", "profile__cargo_ind", "profile__pref_cust_flag", "profile__sales_rep__opco", "profile__sales_rep__number", "profile__service_level", "profile__scac_code", "profile_special_instructions", "account_receivables__coll_zone_desc", "account_receivables__gsp_write_off", "account_receivables__online_eligibility", "account_receivables__partial_pay_letter_flag", "account_receivables__payment_type", "account_receivables__payment_method_code", "account_receivables__payor_type", "account_receivables__arrow_customer_flag_cd", "account_receivables__international___ar_preference", "account_receivables__international___ar_date", "account_receivables__no_refund_flag", "account_receivables__debut_company_code", "account_receivables__credit_note_flag", "account_receivables__credit_note_exception_flag", "account_receivables__fifo_eligibility_code", "aggregations__ed_aggr_code", "aggregations__geo_acct_number", "aggregations__global_account_number", "aggregations__global_subgroup", "aggregations__ss_account_number", "aggregations__bill_to_number", "aggregations__edi_number", "aggregations__copy_master_address", "claims_preference", "credit_detail__credit_status", "credit_detail__credit_status_reason_code", "credit_detail__denied_flag", "credit_detail__bankruptcy_date", "credit_detail__cash_only_flag", "credit_detail__cash_only_date", "credit_detail__cash_only_reason", "credit_detail__credit_alert_detail", "credit_detail__credit_alert_account_number", "credit_detail__credit_alert_parent_type", "credit_detail__credit_limit", "credit_detail__credit_limit_tolerance_pct", "credit_detail__credit_override_date", "credit_detail__credit_rating", "credit_detail__receivership_account_number", "credit_detail__receivership_date", "credit_detail__rev_auth_id", "edi__cust_inv_rept_flag", "edi__dom_data_frmt", "edi__dom_frmt_ver", "edi__dom_inv_print_until_date", "edi__intl_data_frmt", "edi__intl_inv_frmt_ver", "edi__intl_inv_print_until_date", "edi__mm_bill_3rd_party", "edi__mm_bill_recip", "edi__mm_bill_ship", "edi__mm_bill_pwr_ship", "edi__past_due_medium", "edi__past_due_send_to", "remit_frmt_vers", "sep_exp_grnd_file", "invoice_preference__additional_invoice_copy_flag_cd", "invoice_preference__audit_firm_exp_year_month", "invoice_preference__audit_firm_number", "invoice_preference__billing_closing_day", "invoice_preference__billing_cycle", "invoice_preference__billing_medium", "invoice_preference__billing_payment_day", "invoice_preference__billing_payment_month", "invoice_preference__billing_restriction_indicator", "invoice_preference__billing_type", "invoice_preference__combine_option", "invoice_preference__consolidated_invoicing_flag_cd", "invoice_preference__consolidated_refund_flag", "invoice_preference__cost_center_number", "invoice_preference__currency_code", "invoice_preference__customer_reference_information", "invoice_preference__daysto_credit", "invoice_preference__daysto_pay", "invoice_preference__document_exception_indicator", "invoice_preference__duty_tax_daysto_pay", "invoice_preference__duty_tax_billing_cycle", "invoice_preference__electronic_bill_payment_plan_flag_cd", "invoice_preference__electronic_data_record_proof_of_delivery", "invoice_preference__fax_flag", "invoice_preference__fec_discount_card_flag_cd", "invoice_preference__ground_auto___pod", "invoice_preference__ground_duty_tax_billing_cycle", "invoice_preference__ground_print_weight_indicator", "invoice_preference__international_billing_cycle", "invoice_preference__international_billing_medium", "invoice_preference__international_invoice_bypass", "invoice_preference__international_invoice_program_override_flag", "invoice_preference__international_parent_child_flag", "invoice_preference__international_duty_tax_invoice_bypass", "invoice_preference__invoice__detail_level", "invoice_preference__invoice__level_discount_eff_date", "invoice_preference__invoice__level_discount_exp_date", "invoice_preference__invoice__level_discount_flag_cd", "invoice_preference__invoice__minimum_override_flag", "invoice_preference__invoice__option_flag_cd", "invoice_preference__invoice__page_layout_indicator", "invoice_preference__invoice__transaction_breakup_type", "invoice_preference__invoice__wait_days", "invoice_preference__manage_my_account_at_fed_ex_flag_cd", "invoice_preference__master_account_invoice_summary_flag_cd", "invoice_preference__monthly_billing_indicator", "invoice_preference__past_due_detail_level", "invoice_preference__past_due_flag_cd", "invoice_preference__pod_wait_days", "invoice_preference__primary_sort_option", "invoice_preference__print_summary_page_flag", "invoice_preference__print_weight_indicator", "invoice_preference__reference_append", "invoice_preference__return_envelope_indicator", "invoice_preference__single_invoice_option", "invoice_preference__sort_field_length", "invoice_preference__split_bill_duty_tax", "invoice_preference__statement_of_account__billing_cycle", "invoice_preference__statement_of_account__layout_indicator", "invoice_preference__statement_of_account__receipt_flag_cd", "invoice_preference__statement_type", "invoice_preference__statement_type_date", "invoice_preference__viewed_statement_type", "invoice_preference__direct_link_flag", "invoice_preference__no___pod_flag_cd", "invoice_preference__settlement_level_indicator", "invoice_preference__direct_debit_indicator", "invoice_preference__fbo_eft_flag", "invoice_preference__balance_forward_code", "invoice_preference__late_fee_enterprise_waiver", "mma_stats__last_cancel_code", "mma_stats__last_cancel_date", "mma_stats__last_deactivation_date", "mma_stats__last_registration_date", "mma_stats__last_reject_code", "mma_stats__last_reject_date", "mma_stats__last_update_date_time", "mma_stats__last_update_user", "swipe__cc_eligibility_flag", "swipe__decline_count", "swipe__swipe_lockout_date_time", "duty_tax_info", "tax_info__tax_exempt_code", "tax_info__codice_fiscale", "tax_info__mdb_eff_date", "tax_info__mdb_exp_date", "tax_info__tax_exempt_number", "tax_info__vat__type", "tax_info__vat__number", "tax_info__vat__exemption_code", "tax_info__vat__eff_date", "tax_info__vat__exp_date", "tax_info__vat__response_code", "tax_info__vat__category_code", "tax_info__vat__threshold_amount", "profile__distribution_id", "profile__mailer_id", "profile__pickup_carrier", "profile__return_eligibility_flag", "profile__return_svc_flag", "profile__hub_id", "profile__usps_bound_printed_matter_flag", "profile__usps_media_mail_flag", "profile__usps_parcel_select_flag", "profile__usps_standard_mail_flag", "profile__smartpost_enabled_flag", "profile__delivery_confirmation", "profile__zone_indicator", "profile__multiplier_ref_exp", "profile__mulitiplier_ref_grnd", "profile__agent_flag", "profile__alcohol_flag", "profile__cut_flowers_flag", "profile__declared_value_exception", "profile__derived_station", "profile__drop_ship_flag", "profile__emerge_flag", "profile__doc_prep_service_flag", "profile__ftbd_flag", "profile__ftbd_svc", "profile__hazardous_shipper_flag", "profile__high_value_accept_cd", "profile__interline_cd", "profile__idf_elig_flag", "profile__ifs_flag", "profile__ipd_flag", "profile__money_back_guarantee", "profile__notify_ship_delay_cd", "profile__overnight_frgt_ship_flag", "profile__pak_isrt_flag", "profile__power_of_attorney_date", "profile__power_of_attorney_flag", "profile__regular_stop_flag", "profile__reroutes_allowed_flag", "profile__signature_on_file", "profile__signature_required", "profile__tpc_flag", "profile__emp_ship_emp_number", "profile__supply_no_cut_flag", "profile__starter_kit", "profile__starter_kit_quantity", "profile__exception_flag", "profile__international_shipper", "profile__special_dist_flag", "profile__transmart_flag", "profile__special_comment_cd", "profile__contact_flag", "geographic_info__alpha_id", "geographic_info__station_number", "profile__source_name", "profile__tnt_customer_number", "profile__migration_date", "profile__deactivation_date", "profile__grnd_barcode_type", "profile__grnd_hazmat_flag", "profile__grnd_pickup_type", "profile__grnd_collect_flag", "profile__national_account_number", "profile__grnd_lbl_hazmat_flag", "profile__grnd_lbl_p_r_pflag", "profile__grnd_lbl_univ_waste_flag", "profile__svc_center_code", "profile__airport_code", "profile__business_mode", "profile__coding_instructions", "profile__synonym_name_1", "profile__synonym_name_2", "automation_info__insight_flag", "automation_info__meter_zone_flag", "automation_info__device_type_code", "account_regulatory__fdc_broker_nbr", "account_regulatory__fdc_broker_type_cd", "customer_id__iata_number", "customer_id__custom_importer_id", "customer_id__customer_id_doc_nbr", "account_regulatory__regulated_agentregimeeffyearmonth", "account_regulatory__regulated_agentregimeexpyearmonth", "account_regulatory__bus_registration_id", "account_regulatory__broker_date", "account_regulatory__canadian_broker_id", "account_regulatory__employer_id", "account_regulatory__employer_id_type", "account_regulatory__forwd_brkr_cd", "account_regulatory__gaa_flag", "account_regulatory__import_declaration_cd", "account_regulatory__nri_cd", "account_regulatory__shipper_export_declaration_flag", "profile__spot_rate_ind", "profile__express_plan_flag", "profile__express_plan_activity_date", "profile__catalog_remail_service_cd", "profile__middle_man_cd", "profile__gratuity_flag", "profile__bonus_weight_envelope_flag", "profile__priority_alert_flag", "profile__domestic_max_declared_value_flag", "profile__international_max_declared_value_flag", "profile__linehaul_charge_flag", "profile__pricing_flag", "profile__blind_shipper_flag", "profile__pricing_code", "profile__geo_terr", "profile__marketing_cd", "profile__correspondencecd", "potential_revenue_detail__opening_acct_reason", "potential_revenue_detail__opening_acct_comment", "potential_revenue_detail__lead_employee_opco", "potential_revenue_detail__lead_employee_number", "potential_revenue_detail__revenue_source_system", "potential_revenue_detail__potential_revenue_account_type", "tax_info__tax_data", "tax_info__tax_exempt_detail", "potential_revenue_detail__potential_revenue", "potential_revenue_detail__other_potential_info")
+                            .whereColumn("account_number").isEqualTo(bindMarker())
+                            .whereColumn("opco").isEqualTo(bindMarker());
+        PreparedStatement prep2 = localSession.prepare(select2.asCql());
+
+        assert(true); //no timeout exception
     }
 
     @Test
@@ -224,11 +289,13 @@ public class CustomerTest {
         PagingIterable<Account> verifyAccountCreated = daoAccount.findAllByAccountNumber(acctNum);
         assert(verifyAccountCreated.all().size() == 1);
 
+//        daoAccount
+//        daoAccountContact.batchSave(acctCont1).getPreparedStatement()
         //example using one delete and one save command
         BatchStatement batch = BatchStatement.builder(BatchType.LOGGED).build();
         batch = batch.add(daoAccountContact.batchSave(acctCont1));
         batch = batch.add(daoAccount.batchDelete(custAcct));
-        session.execute(batch);
+        sessionMap.get(DataCenter.CORE).execute(batch);
 
         //verify new account record is created
         PagingIterable<Account> verifyAccountDeleted = daoAccount.findAllByAccountNumber(acctNum);
@@ -239,7 +306,6 @@ public class CustomerTest {
         assert(verifyContactCreated.all().size() == 1);
 
         //cleanup tests records
-        //cleanup any existing records and verify
         daoAccountContact.deleteAllByAccountNumber(acctNum);
         PagingIterable<AccountContact> cleanVerifyResults = daoAccountContact.findAllByAccountNumber(acctNum);
         assert(cleanVerifyResults.all().size() == 0);
@@ -256,7 +322,12 @@ public class CustomerTest {
         String domainName  = "customer";
         String sequenceName = "CAM_TEST_1";
 
-        SequenceNumberGenerator generator = new SequenceNumberGenerator(session, Keyspaces.CUSTOMER.keyspaceName(), seqNumTableName, "localHost");
+        SequenceNumberGenerator generator = new SequenceNumberGenerator(
+                    sessionMap.get(DataCenter.CORE),
+                    ksConfig.getKeyspaceName(CUSTOMER),
+                    seqNumTableName,
+                    "localHost"); //todo - handle hostname based on environment
+
         generator.initDomainSequence(domainName, sequenceName, 100, 0, 5000);
         Boolean results =  generator.getSequenceNumbers(3, 10, 4, domainName, sequenceName);
 
@@ -375,7 +446,7 @@ public class CustomerTest {
         batch = batch.add(daoAccountContact.batchSave(acctCont1));
         batch = batch.add(daoAccount.batchSave(custAcct));
 
-        session.execute(batch);
+        sessionMap.get(DataCenter.CORE).execute(batch);
 
         //verify records/values written to database as expected with batch
         AccountContact foundAcctContact = daoAccountContact.findByAccountNumber(acctNum);
@@ -436,7 +507,7 @@ public class CustomerTest {
                 .addStatement(daoAccountContact.batchSave(acctCont1))
                 .addStatement(daoAccount.batchSave(custAcct))
                 .build();
-        session.execute(batch);
+        sessionMap.get(DataCenter.CORE).execute(batch);
 
         //verify records/values written to database as expected with batch
         AccountContact foundAcctContact = daoAccountContact.findByAccountNumber(acctNum);
@@ -589,6 +660,109 @@ public class CustomerTest {
         PagingIterable<AccountContact> cleanVerifyAfterResults = daoAccountContact.findAllByAccountNumber(acctNum);
         assert(cleanVerifyAfterResults.all().size() == 0);
     }
+    @Test
+    public void auditHistoryNextedEntityWriteReadTest() throws InterruptedException {
+
+        String acctNum = "acct_testNestedAuditEntities";
+
+        //cleanup any existing records
+        daoAuditHistory.deleteAllByAccountNumber(acctNum);
+        PagingIterable<AuditHistory> verifyRS = daoAuditHistory.findAllByAccountNumber(acctNum);
+        assert(verifyRS.all().isEmpty());
+
+        //Audit history row ->
+        //                  set(AuditHistoryEntry) ->
+        //                            set(AuditHistoryAdditionalIdentifier)
+        //                            set(AuditHistoryEntityType)
+        //                            set(AuditHistoryFieldType)
+
+        //operations for all 'sub nested' types wil work similarly, using AuditHistoryEntityType for examples
+
+        AuditHistoryEntityType entityType1_1 = new AuditHistoryEntityType();
+        entityType1_1.setAction("act1_1");
+        entityType1_1.setStanzaName("stzNm1");
+        entityType1_1.setStanza("stz1");
+
+        AuditHistoryEntityType entityType1_2 = new AuditHistoryEntityType();
+        entityType1_2.setAction("act1_2");
+        entityType1_2.setStanzaName("stzNm1");
+        entityType1_2.setStanza("stz1");
+
+        AuditHistoryEntityType entityType2_1 = new AuditHistoryEntityType();
+        entityType2_1.setAction("act2_1");
+        entityType2_1.setStanzaName("stzNm2");
+        entityType2_1.setStanza("stz2");
+
+        Set<AuditHistoryEntityType> entities1 = new HashSet<>();
+        entities1.add(entityType1_1);
+        entities1.add(entityType1_2);
+
+        Set<AuditHistoryEntityType> entities2 = new HashSet<>();
+        entities2.add(entityType2_1);
+
+        AuditHistoryEntry historyEntry1 = new AuditHistoryEntry();
+        historyEntry1.setDescriptiveIdentifier("histEntry1");
+        historyEntry1.setEntity(entities1);
+        Set<AuditHistoryEntry> histEntries1 = new HashSet<>();
+        histEntries1.add(historyEntry1);
+
+        AuditHistoryEntry historyEntry2 = new AuditHistoryEntry();
+        historyEntry2.setDescriptiveIdentifier("histEntry2");
+        historyEntry2.setEntity(entities2);
+        Set<AuditHistoryEntry> histEntries2 = new HashSet<>();
+        histEntries2.add(historyEntry2);
+
+        Instant lastUpdate1 = Instant.parse("2022-04-01T00:00:00.001Z");
+        Instant lastUpdate2 = Instant.parse("2022-05-05T00:00:00.001Z");
+
+        String opco1 = "auditOpco_1";
+        String opco2 = "auditOpco_2";
+
+        AuditHistory hist1 = new AuditHistory();
+        hist1.setAccountNumber(acctNum);
+        hist1.setOpco(opco1);
+        hist1.setLastUpdated(lastUpdate1);
+        hist1.setTransactionID("transID1");
+        hist1.setAuditDetails(histEntries1);
+        daoAuditHistory.save(hist1);
+
+        AuditHistory hist2 = new AuditHistory();
+        hist2.setAccountNumber(acctNum);
+        hist2.setOpco(opco2);
+        hist2.setLastUpdated(lastUpdate2);
+        hist2.setTransactionID("transID2");
+        hist2.setAuditDetails(histEntries2);
+        daoAuditHistory.save(hist2);
+
+        //pause to allow Search index to update
+        Thread.sleep(11000);
+
+        //test through direct Solr query
+        String auditKS = ksConfig.getKeyspaceName(AUDIT_HISTORY_KS);
+        String query = "select * from " + auditKS + ".audit_history_v1\n" +
+                "where\n" +
+                "    solr_query = '" + construcAuditEntryEntityStanzaSolrQuery("stz1") + "'";
+
+        ResultSet rs = sessionMap.get(DataCenter.SEARCH).execute(
+                SimpleStatement.builder(query).setExecutionProfileName("search").build()
+            );
+        Row resultRow = rs.one();
+        assert(resultRow.getString("opco").equals(opco1));
+        assert(rs.isFullyFetched());
+
+        //test using Solr query via DAO/Mapper
+        PagingIterable<AuditHistory> mappedRS = daoAuditHistory.findBySearchQuery(
+                construcAuditEntryEntityStanzaSolrQuery("stz1")
+            );
+        AuditHistory returnHist = mappedRS.one();
+        assert(returnHist.getOpco().equals(opco1));
+        assert(mappedRS.isFullyFetched());
+
+        //cleanup any records created during test
+        daoAuditHistory.deleteAllByAccountNumber(acctNum);
+        PagingIterable<AuditHistory> verifyCleanRS = daoAuditHistory.findAllByAccountNumber(acctNum);
+        assert(verifyCleanRS.all().isEmpty());
+    }
 
     @Test
     public void auditHistorySAITest(){
@@ -654,13 +828,12 @@ public class CustomerTest {
     }
 
     @Test
-    public void commentSAITest(){
-        String acctNum = "890123";
+    public void commentDeleteTest() throws InterruptedException {
+        String acctNum = "commentDel-Acct1";
         String opco = "op1";
 
-        Instant commentDT1 = Instant.parse("2020-08-01T00:00:00.001Z");
-        Instant commentDT2 = Instant.parse("2020-08-02T00:00:00.001Z");
-        Instant commentDT3 = Instant.parse("2020-08-03T00:00:00.001Z");
+        Instant commentDT1 = Instant.parse("2022-04-01T00:00:00.001Z");
+        Instant commentDT2 = Instant.parse("2022-04-02T00:00:00.001Z");
         Instant maxDT = Instant.parse("9999-12-31T00:00:00.000Z");
 
         String commentID1 = "cID_1";
@@ -691,34 +864,115 @@ public class CustomerTest {
         comment2.setCommentID(commentID2);
         daoComment.save(comment2);
 
+        //pause to allow SAI to update
+        Thread.sleep(150);
+
+        PagingIterable<Comment> addedVerifyComments = daoComment.findAllByAccountNumber(acctNum);
+        assert(addedVerifyComments.all().size() == 2);
+
+        //can only delete by providing record key(s)
+        //two step process to delete comment by non-key column
+        //  1) find record using index on non-key column
+        //  2) Use keys of found record to execute delete
+
+        //find comment record for delete
+        PagingIterable<Comment> foundComments = daoComment.findByCommentID(commentID2);
+        Comment deletComment = foundComments.one();
+        assert (foundComments.isFullyFetched());
+
+        //delete record using full primary key
+        daoComment.deleteByKeys(deletComment.getAccountNumber(),
+                                deletComment.getOpco(),
+                                deletComment.getCommentType(),
+                                deletComment.getCommentDateTime()
+                                );
+
+        PagingIterable<Comment> deletedVerifyComments = daoComment.findAllByAccountNumber(acctNum);
+        assert(deletedVerifyComments.all().size() == 1);
+
+        Comment foundOtherComment = daoComment.findByAcctOpcoCommentId(acctNum, opco, commentID1);
+
+        //delete other record using full primary key
+        daoComment.deleteByKeys(foundOtherComment.getAccountNumber(),
+                foundOtherComment.getOpco(),
+                foundOtherComment.getCommentType(),
+                foundOtherComment.getCommentDateTime()
+        );
+
+        PagingIterable<Comment> deletedVerifyOtherComments = daoComment.findAllByAccountNumber(acctNum);
+        assert(deletedVerifyOtherComments.all().size() == 0);
+    }
+
+    @Test
+    public void commentSAITest(){
+        String acctNum = "890123";
+        String opco = "op1";
+
+        Instant commentDT1 = Instant.parse("2020-08-01T00:00:00.001Z");
+        Instant commentDT2 = Instant.parse("2020-08-02T00:00:00.001Z");
+        Instant commentDT3 = Instant.parse("2020-08-03T00:00:00.001Z");
+        Instant maxDT = Instant.parse("9999-12-31T00:00:00.000Z");
+
+        String commentID1 = "cID_1";
+        String commentID2 = "cID_2";
+        String commentID3 = "cID_3";
+
+        String type1 = "COMTYP1";
+        String type2 = "COMTYP1";
+        String type3 = "COMTYP1";
+
+        //cleanup any existing records and verify
+        daoComment.deleteAllByAccountNumber(acctNum);
+        PagingIterable<Comment> cleanVerifyComments = daoComment.findAllByAccountNumber(acctNum);
+        assert(cleanVerifyComments.all().size() == 0);
+
+        //create test records
+        Comment comment1 = new Comment();
+        comment1.setAccountNumber(acctNum);
+        comment1.setOpco(opco);
+        comment1.setCommentDateTime(commentDT1);
+        comment1.setCommentType(type1);
+        comment1.setCommentID(commentID1);
+        daoComment.save(comment1);
+
+        Comment comment2 = new Comment();
+        comment2.setAccountNumber(acctNum);
+        comment2.setOpco(opco);
+        comment2.setCommentDateTime(commentDT2);
+        comment2.setCommentType(type2);
+        comment2.setCommentID(commentID2);
+        daoComment.save(comment2);
+
         Comment comment3 = new Comment();
         comment3.setAccountNumber(acctNum);
         comment3.setOpco(opco);
         comment3.setCommentDateTime(commentDT3);
-        comment3.setCommentType("typ3");
-        comment3.setCommentID("cID_3");
+        comment3.setCommentType(type3);
+        comment3.setCommentID(commentID3);
         daoComment.save(comment3);
 
         //test query patterns
         //find all comments starting with date/time of first test comment record
+
+        //todo - update to match latest schema/index changes
         PagingIterable<Comment> foundComments =
                 daoComment.findByAccountNumOpcoDateTimeRange(acctNum, opco, commentDT1, maxDT);
         assert(foundComments.all().size() == 3);
+//
+//        //find all comments starting with date/time between first test comment data and second test comment date
+//        PagingIterable<Comment> foundComments2 =
+//                daoComment.findByAccountNumOpcoDateTimeRange(acctNum, opco, commentDT1, commentDT2);
+//        assert(foundComments2.one().getCommentID().equals(commentID2));  //should be second comment due to default cluster column ordering
+//        assert(foundComments2.getAvailableWithoutFetching() == 1);  //should be two total records found so only one left
+//        assert(foundComments2.one().getCommentID().equals(commentID1));  //last record found should be first comment
 
-        //find all comments starting with date/time between first test comment data and second test comment date
-        PagingIterable<Comment> foundComments2 =
-                daoComment.findByAccountNumOpcoDateTimeRange(acctNum, opco, commentDT1, commentDT2);
-        assert(foundComments2.one().getCommentID().equals(commentID2));  //should be second comment due to default cluster column ordering
-        assert(foundComments2.getAvailableWithoutFetching() == 1);  //should be two total records found so only one left
-        assert(foundComments2.one().getCommentID().equals(commentID1));  //last record found should be first comment
-
-        PagingIterable<Comment> foundAcctType = daoComment.findByAccountNumType(acctNum, type2);
-        assert(foundAcctType.one().getCommentID().equals(commentID2));
-        assert(foundAcctType.isFullyFetched() == true);
-
-        PagingIterable<Comment> foundype = daoComment.findByCommentType(type1);
-        assert(foundype.one().getCommentID().equals(commentID1));
-        assert(foundype.isFullyFetched() == true);
+//        PagingIterable<Comment> foundAcctType = daoComment.findByAccountNumType(acctNum, type2);
+//        assert(foundAcctType.one().getCommentID().equals(commentID2));
+//        assert(foundAcctType.isFullyFetched() == true);
+//
+//        PagingIterable<Comment> foundype = daoComment.findByCommentType(type1);
+//        assert(foundype.one().getCommentID().equals(commentID1));
+//        assert(foundype.isFullyFetched() == true);
 
         //cleanup after tests and verify
         daoComment.deleteAllByAccountNumber(acctNum);
@@ -946,14 +1200,14 @@ public class CustomerTest {
         //CQL map entry example
         String dutyTaxAddElement =
                 "UPDATE \n" +
-                "    " + Keyspaces.ACCOUNT_KS.keyspaceName() + ".cust_acct_v1 \n" +
+                "    " + ksConfig.getKeyspaceName(ACCOUNT_KS) + ".cust_acct_v1 \n" +
                 "SET \n" +
                 "    duty_tax_info = duty_tax_info + {'" + keyC +"' : '" + valC + "'} \n" +
                 "WHERE \n" +
                 "    account_number = '" + acctNum + "' AND \n" +
                 "    opco = '" + opco + "';";
 
-        session.execute(dutyTaxAddElement);
+        sessionMap.get(DataCenter.CORE).execute(dutyTaxAddElement);
         Account foundAcct2 = daoAccount.findByAccountNumber(acctNum);
         Map<String, String> foundDutyTax2 = foundAcct2.getDutyTaxInfo();
         assert(foundDutyTax2.get(keyC).equals(valC));
@@ -1209,7 +1463,7 @@ public class CustomerTest {
         String acctID = "00112770";
         int expectedTotalSize = 5;
         int pageSize = 3;
-        Select select = selectFrom(Keyspaces.ACCOUNT_KS.keyspaceName(), "national_account_v1")
+        Select select = selectFrom(ksConfig.getKeyspaceName(ACCOUNT_KS), "national_account_v1")
                 .all()
                 .whereColumn("account_number").isEqualTo(bindMarker());
         SimpleStatement selectStmt = select.build(acctID);
@@ -1217,7 +1471,7 @@ public class CustomerTest {
         System.out.println(select.asCql());
         SimpleStatement stmt = selectStmt.setPageSize(pageSize);
 
-        ResultSet rs =  session.execute(stmt);
+        ResultSet rs =  sessionMap.get(DataCenter.CORE).execute(stmt);
         ByteBuffer pagingState = rs.getExecutionInfo().getPagingState();
         System.out.println("Initial paging state - " + pagingState);
 
@@ -1230,7 +1484,7 @@ public class CustomerTest {
         }
 
         SimpleStatement stmt2 = selectStmt.setPagingState(pagingState);
-        ResultSet rs2 = session.execute(stmt2);
+        ResultSet rs2 = sessionMap.get(DataCenter.CORE).execute(stmt2);
 
         assert(rs2.isFullyFetched() == true );
         assert(rs2.getAvailableWithoutFetching() == (expectedTotalSize - pageSize));
@@ -1247,7 +1501,7 @@ public class CustomerTest {
         int expectedTotalSize = 5;
         int pageSize = 3;
         Select select =
-                selectFrom(Keyspaces.ACCOUNT_KS.keyspaceName(), "national_account_v1")
+                selectFrom(ksConfig.getKeyspaceName(ACCOUNT_KS), "national_account_v1")
                 .all()
                 .whereColumn("account_number").isEqualTo(literal(acctID));
         SimpleStatement selectStmt = select.build();
@@ -1255,7 +1509,7 @@ public class CustomerTest {
         System.out.println(select.asCql());
         SimpleStatement stmt = selectStmt.setPageSize(pageSize);
 
-        ResultSet rs =  session.execute(stmt);
+        ResultSet rs =  sessionMap.get(DataCenter.CORE).execute(stmt);
         ByteBuffer pagingState = rs.getExecutionInfo().getPagingState();
         System.out.println("Initial paging state - " + pagingState);
 
@@ -1273,7 +1527,7 @@ public class CustomerTest {
         }
 
         SimpleStatement stmt2 = selectStmt.setPagingState(pagingState);
-        ResultSet rs2 = session.execute(stmt2);
+        ResultSet rs2 = sessionMap.get(DataCenter.CORE).execute(stmt2);
 
         assert(rs2.isFullyFetched() == true );
         assert(rs2.getAvailableWithoutFetching() == (expectedTotalSize - pageSize));
@@ -1294,7 +1548,7 @@ public class CustomerTest {
     public void sampleTest(){
         String acctID = "00112770";
         SimpleStatement selectStmt =
-                selectFrom(Keyspaces.ACCOUNT_KS.keyspaceName(), "national_account_v1")
+                selectFrom(ksConfig.getKeyspaceName(ACCOUNT_KS), "national_account_v1")
                 .all()
                 .whereColumn("account_number").isEqualTo(literal(acctID))
                 .build();
@@ -1302,7 +1556,7 @@ public class CustomerTest {
         int expectedTotalSize = 5;
         int pageSize = 3;
         SimpleStatement stmt = selectStmt.setPageSize(pageSize);
-        ResultSet rs =  session.execute(stmt);
+        ResultSet rs =  sessionMap.get(DataCenter.CORE).execute(stmt);
 
         ByteBuffer pagingState = rs.getExecutionInfo().getPagingState();
         System.out.println("Initial paging state - " + pagingState);
@@ -1315,7 +1569,7 @@ public class CustomerTest {
         }
 
         SimpleStatement stmt2 = selectStmt.setPagingState(pagingState);
-        ResultSet rs2 = session.execute(stmt2);
+        ResultSet rs2 = sessionMap.get(DataCenter.CORE).execute(stmt2);
 
         assert(rs2.isFullyFetched() == true );
         assert(rs2.getAvailableWithoutFetching() == (expectedTotalSize - pageSize));
@@ -1331,7 +1585,7 @@ public class CustomerTest {
     public void sampleTestSearch(){
         String acctID = "00112770";
         Select select =
-                selectFrom(Keyspaces.ACCOUNT_KS.keyspaceName(), "national_account_v1")
+                selectFrom(ksConfig.getKeyspaceName(ACCOUNT_KS), "national_account_v1")
                 .all()
                 .whereColumn("account_number").isEqualTo(literal(acctID));
         System.out.println(select.asCql());
@@ -1340,7 +1594,7 @@ public class CustomerTest {
         int expectedTotalSize = 5;
         int pageSize = 3;
         SimpleStatement stmt = selectStmt.setPageSize(pageSize).setConsistencyLevel(ConsistencyLevel.LOCAL_ONE);
-        ResultSet rs =  session.execute(stmt);
+        ResultSet rs =  sessionMap.get(DataCenter.CORE).execute(stmt);
 
         ByteBuffer pagingState = rs.getExecutionInfo().getPagingState();
         System.out.println("Initial paging state - " + pagingState);
@@ -1353,7 +1607,7 @@ public class CustomerTest {
         }
 
         SimpleStatement stmt2 = selectStmt.setPagingState(pagingState);
-        ResultSet rs2 = session.execute(stmt2);
+        ResultSet rs2 = sessionMap.get(DataCenter.CORE).execute(stmt2);
 
         assert(rs2.isFullyFetched() == true );
         assert(rs2.getAvailableWithoutFetching() == (expectedTotalSize - pageSize));
@@ -1369,7 +1623,7 @@ public class CustomerTest {
     @Test
     public void sampleTestSearchMultiPage(){
         String acctID = "00112770";
-        Select select = selectFrom(Keyspaces.ACCOUNT_KS.keyspaceName(), "national_account_v1")
+        Select select = selectFrom(ksConfig.getKeyspaceName(ACCOUNT_KS), "national_account_v1")
                             .all()
                             .whereColumn("account_number").isEqualTo(bindMarker());
 
@@ -1380,7 +1634,7 @@ public class CustomerTest {
         SimpleStatement stmt = select.build(acctID)
                                     .setPageSize(pageSize)
                                     .setConsistencyLevel(ConsistencyLevel.LOCAL_ONE);
-        ResultSet rs =  session.execute(stmt);
+        ResultSet rs =  sessionMap.get(DataCenter.CORE).execute(stmt);
 
         ByteBuffer pagingState = rs.getExecutionInfo().getPagingState();
         System.out.println("Initial paging state - " + pagingState);
@@ -1398,7 +1652,7 @@ public class CustomerTest {
         SimpleStatement stmt2 = select.build(acctID)
                                     .setPageSize(pageSize)
                                     .setPagingState(pagingState);
-        ResultSet rs2 = session.execute(stmt2);
+        ResultSet rs2 = sessionMap.get(DataCenter.CORE).execute(stmt2);
 
         ByteBuffer pagingState2 = rs2.getExecutionInfo().getPagingState();
         System.out.println("Second paging state - " + pagingState2);
@@ -1415,7 +1669,7 @@ public class CustomerTest {
         SimpleStatement stmt3 = select.build(acctID)
                                     .setPageSize(pageSize)
                                     .setPagingState(pagingState2);
-        ResultSet rs3 = session.execute(stmt2);
+        ResultSet rs3 = sessionMap.get(DataCenter.CORE).execute(stmt2);   //todo - investigate possible bug, should be stmt3?
 
 //        ByteBuffer pagingState3 = rs3.getExecutionInfo().getPagingState();
 //        System.out.println("Third paging state - " + pagingState2);
@@ -1470,12 +1724,12 @@ public class CustomerTest {
 
         //test delete single poperty
         String deleteProp = "profile__account_type";
-        Delete deleteSingleProp =  deleteFrom(Keyspaces.ACCOUNT_KS.keyspaceName(), "cust_acct_v1")
+        Delete deleteSingleProp =  deleteFrom(ksConfig.getKeyspaceName(ACCOUNT_KS), "cust_acct_v1")
                 .column(deleteProp)
                 .whereColumn("account_number").isEqualTo(literal(acctID))
                 .whereColumn("opco").isEqualTo(literal(opco));
 
-        session.execute(deleteSingleProp.build());
+        sessionMap.get(DataCenter.CORE).execute(deleteSingleProp.build());
         Account foundCustDelProp = daoAccount.findByAccountNumber(acctID);
         //check that deleted property is no longer in record
         assert(foundCustDelProp.getProfileAccountType() == null);
@@ -1487,12 +1741,12 @@ public class CustomerTest {
         assert(foundCustDelProp.getProfileEnterpriseSource().equals(entSource));
 
         //test delete multiple poperties
-        Delete deleteMultiProps =  deleteFrom(Keyspaces.ACCOUNT_KS.keyspaceName(), "cust_acct_v1")
+        Delete deleteMultiProps =  deleteFrom(ksConfig.getKeyspaceName(ACCOUNT_KS), "cust_acct_v1")
                 .column("profile__customer_type").column("profile__account_status__status_code").column("profile__account_status__reason_code")
                 .whereColumn("account_number").isEqualTo(literal(acctID))
                 .whereColumn("opco").isEqualTo(literal(opco));
 
-        session.execute(deleteMultiProps.build());
+        sessionMap.get(DataCenter.CORE).execute(deleteMultiProps.build());
         Account foundCustDelMultiProps = daoAccount.findByAccountNumber(acctID);
         //check that deleted properties are no longer in record
         assert(foundCustDelMultiProps.getProfileCustomerType() == null);
@@ -1541,7 +1795,7 @@ public class CustomerTest {
         assert(foundPayment.getOpco().equals(expectedPaymentOpco));
         assert(foundPayment.getRecordType().equals(expectedType));
         assert(foundPayment.getRecordKey().equals(expectedKey));
-        assert(foundPayment.getCreditCardID().equals(expectedCCId));
+        assert(foundPayment.getPaymentID().equals(expectedCCId));
 
 
         //** check associated account details
@@ -1601,7 +1855,7 @@ public class CustomerTest {
 //        String foundSeq = foundPayment.getRecordSeq();
         System.out.println("Found record_seq - " + foundSeq);
 //        assert(foundPayment.getRecordSeq() == expectedSeq);
-        assert(foundPayment.getCreditCardID().equals(expectedCCId));
+        assert(foundPayment.getPaymentID().equals(expectedCCId));
     }
 
     @Test
@@ -1621,7 +1875,7 @@ public class CustomerTest {
         assert(foundPayment.getRecordType().equals(expectedType));
         assert(foundPayment.getRecordKey().equals(expectedKey));
 //        assert(foundPayment.getRecordSeq() == expectedSeq);
-        assert(foundPayment.getCreditCardID().equals(expectedCCId));
+        assert(foundPayment.getPaymentID().equals(expectedCCId));
     }
 
     @Test
@@ -1806,11 +2060,11 @@ public class CustomerTest {
     @Test
     public void verifyContactUDTsKeyQuery(){
 
-        Select select = selectFrom(Keyspaces.CUSTOMER.keyspaceName(), "contact")
+        Select select = selectFrom(ksConfig.getKeyspaceName(CUSTOMER), "contact")
                             .all()
                             .whereColumn("contact_document_id").isEqualTo(literal(83));
 
-        ResultSet resCheck = session.execute(select.build());
+        ResultSet resCheck = sessionMap.get(DataCenter.CORE).execute(select.build());
 
         if(null != resCheck) {
             Row rowVal = resCheck.one();
@@ -1829,13 +2083,16 @@ public class CustomerTest {
 
     @Test
     public void verifyContactUDTsSolrQuery() {
-        String solrQuery = "select * from "+ Keyspaces.CUSTOMER.keyspaceName() + ".contact\n" +
+        String solrQuery = "select * from "+ ksConfig.getKeyspaceName(CUSTOMER) + ".contact\n" +
                 "where\n" +
                 "    solr_query = '" +
                 "{\"q\": \"{!tuple}tele_com.area_code:123\"," +
                 "\"sort\": \"contact_document_id asc\"}'";
+        ;
 
-        ResultSet resCheck = session.execute(solrQuery);
+        ResultSet resCheck = sessionMap.get(DataCenter.SEARCH).execute(
+                SimpleStatement.builder(solrQuery).setExecutionProfileName("search").build()
+        );
 
         //call common verification method
         verifyExpectedUdtValues(resCheck);
@@ -1978,23 +2235,25 @@ public class CustomerTest {
 
     @Test
     public void verifyContactUDTInsertUpdate(){
+        CqlSession localSession = sessionMap.get(DataCenter.CORE);
+
         //cleanup any existing records and verify
         SimpleStatement cleanupStmt =
-                deleteFrom(Keyspaces.CUSTOMER.keyspaceName(), "contact")
+                deleteFrom(ksConfig.getKeyspaceName(CUSTOMER), "contact")
                 .whereColumn("contact_document_id").isEqualTo(literal(2001))
                 .build();
-        session.execute(cleanupStmt);
+        localSession.execute(cleanupStmt);
 
         SimpleStatement checkStmt =
-                selectFrom(Keyspaces.CUSTOMER.keyspaceName(), "contact")
+                selectFrom(ksConfig.getKeyspaceName(CUSTOMER), "contact")
                 .all()
                 .whereColumn("contact_document_id").isEqualTo(literal(2001))
                 .build();
-        ResultSet rsInitialCheck = session.execute(checkStmt);
+        ResultSet rsInitialCheck = localSession.execute(checkStmt);
 
         assert(rsInitialCheck != null && rsInitialCheck.all().size() == 0);
 
-        String insertStmt = "insert into " + Keyspaces.CUSTOMER.keyspaceName()+ ".contact\n" +
+        String insertStmt = "insert into " + ksConfig.getKeyspaceName(CUSTOMER)+ ".contact\n" +
                 "(\n" +
                 "    contact_document_id,\n" +
                 "    tele_com\n" +
@@ -2010,10 +2269,10 @@ public class CustomerTest {
                 ";";
 
         //add new record
-        session.execute(insertStmt);
+        localSession.execute(insertStmt);
 
         //verify record exists
-        ResultSet rsDataCheck = session.execute(checkStmt);
+        ResultSet rsDataCheck = localSession.execute(checkStmt);
 
         Row dataRow = rsDataCheck.one();
         assert(dataRow.getLong("contact_document_id") == (long)2001);
@@ -2023,7 +2282,7 @@ public class CustomerTest {
         //check only one result
         assert(setCheckTelecom.size() == 2);
 
-        String updateStmt = "update " + Keyspaces.CUSTOMER.keyspaceName()+ ".contact\n" +
+        String updateStmt = "update " + ksConfig.getKeyspaceName(CUSTOMER)+ ".contact\n" +
                 "set \n" +
                 "    tele_com = tele_com + {{telecom_method:'MB', area_code:'333', phone_number:'333-2001'}}\n" +
                 "where\n" +
@@ -2031,10 +2290,10 @@ public class CustomerTest {
                 "    ;";
 
         //update set of UDTs
-        session.execute(updateStmt);
+        localSession.execute(updateStmt);
 
         //verify record updated
-        ResultSet rsDataCheckUpdate = session.execute(checkStmt);
+        ResultSet rsDataCheckUpdate = localSession.execute(checkStmt);
 
         Row dataRowUpdated = rsDataCheckUpdate.one();
         assert(dataRowUpdated.getLong("contact_document_id") == (long)2001);
@@ -2049,7 +2308,7 @@ public class CustomerTest {
 
         for(TestQuery curQuery : queries){
             if(curQuery.queryType == TestQuery.QueryType.READ_PROP){
-                String checkQuery = "select * from " + Keyspaces.CUSTOMER.keyspaceName() + "." +
+                String checkQuery = "select * from " + ksConfig.getKeyspaceName(CUSTOMER) + "." +
                         curQuery.table + " where " +
                         curQuery.recordIDProp + " = ";
                 if(curQuery.numericKey){
@@ -2059,7 +2318,7 @@ public class CustomerTest {
                     checkQuery += "'" + curQuery.recordIDval + "'";
                 }
 
-                ResultSet resCheck = session.execute(checkQuery);
+                ResultSet resCheck = sessionMap.get(DataCenter.CORE).execute(checkQuery);
 
                 if(null != resCheck){
                     Row rowVal = resCheck.one();

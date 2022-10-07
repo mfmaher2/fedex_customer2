@@ -14,7 +14,7 @@ public class PaymentInfo {
     @ClusteringColumn(1) @CqlName("record_type_cd") private String recordType;
     @ClusteringColumn(2) private String recordKey;
     @ClusteringColumn(3) @CqlName("record_seq") private int recordSeq;
-    @CqlName("credit_card_id") private String creditCardID;
+    @CqlName("payment_id") private String paymentID;
 
     PaymentInfo() {};
 
@@ -33,6 +33,6 @@ public class PaymentInfo {
     public int getRecordSeq() { return recordSeq; }
     public void setRecodSeq(int val) { recordSeq = val; }
 
-    public String getCreditCardID() { return creditCardID; }
-    public void setCreditCardID(String val) { creditCardID = val; }
+    public String getPaymentID() { return paymentID; }
+    public void setPaymentID(String val) { paymentID = val; }
 }
