@@ -1,7 +1,6 @@
 package datastax.com;
 
 import com.datastax.oss.driver.api.core.*;
-import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.cql.*;
 import com.datastax.oss.driver.api.core.data.UdtValue;
 import com.datastax.oss.driver.api.querybuilder.delete.Delete;
@@ -9,26 +8,23 @@ import com.datastax.oss.driver.api.querybuilder.insert.Insert;
 import com.datastax.oss.driver.api.querybuilder.select.Select;
 import com.datastax.oss.protocol.internal.util.Bytes;
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.*;
-import static com.datastax.oss.driver.api.querybuilder.SchemaBuilder.*;
+import static datastax.com.dataObjects.AuditHistory.construcAuditEntryEntityStanzaSolrQuery;
 import static datastax.com.schemaElements.Keyspace.*;
 
 import datastax.com.dataObjects.*;
 import datastax.com.DAOs.*;
 import datastax.com.multiThreadTest.AccountWriter;
 import datastax.com.schemaElements.*;
-import datastax.com.schemaElements.Keyspace;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
-import sun.net.www.http.HttpClient;
 
 import java.io.*;
 import java.net.*;
 import java.nio.ByteBuffer;
-import java.nio.file.Paths;
 import java.text.ParseException;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -52,9 +48,9 @@ public class CustomerTest {
     static AuditHistoryDao daoAuditHistory = null;
     static AccountContactDao daoAccountContact = null;
 
-    private static boolean skipSchemaCreation = true;
-    private static boolean skipDataLoad = true;
-    private static boolean skipKeyspaceDrop = true;
+    private static boolean skipSchemaCreation = false;
+    private static boolean skipDataLoad = false;
+    private static boolean skipKeyspaceDrop = false;
     private static boolean skipIndividualTableDrop = false;
     private static String productName = "Customer" ;
     private static Environment environment = null;
@@ -665,7 +661,15 @@ public class CustomerTest {
         assert(cleanVerifyAfterResults.all().size() == 0);
     }
     @Test
-    public void auditHistoryNextedEntityWriteReadTest(){
+    public void auditHistoryNextedEntityWriteReadTest() throws InterruptedException {
+
+        String acctNum = "acct_testNestedAuditEntities";
+
+        //cleanup any existing records
+        daoAuditHistory.deleteAllByAccountNumber(acctNum);
+        PagingIterable<AuditHistory> verifyRS = daoAuditHistory.findAllByAccountNumber(acctNum);
+        assert(verifyRS.all().isEmpty());
+
         //Audit history row ->
         //                  set(AuditHistoryEntry) ->
         //                            set(AuditHistoryAdditionalIdentifier)
@@ -711,7 +715,6 @@ public class CustomerTest {
         Instant lastUpdate1 = Instant.parse("2022-04-01T00:00:00.001Z");
         Instant lastUpdate2 = Instant.parse("2022-05-05T00:00:00.001Z");
 
-        String acctNum = "acct_testNestedAuditEntities";
         String opco1 = "auditOpco_1";
         String opco2 = "auditOpco_2";
 
@@ -731,16 +734,14 @@ public class CustomerTest {
         hist2.setAuditDetails(histEntries2);
         daoAuditHistory.save(hist2);
 
-        String auditKS = ksConfig.getKeyspaceName(AUDIT_HISTORY_KS);
-//        String query = "select * from " + auditKS + ".audit_history_v1\n" +
-//                "where\n" +
-//                "    solr_query = '{\"q\": \"{!tuple}audit_details.history_detail__entity.stanza:stz1\" }'";
+        //pause to allow Search index to update
+        Thread.sleep(11000);
 
+        //test through direct Solr query
+        String auditKS = ksConfig.getKeyspaceName(AUDIT_HISTORY_KS);
         String query = "select * from " + auditKS + ".audit_history_v1\n" +
                 "where\n" +
                 "    solr_query = '" + construcAuditEntryEntityStanzaSolrQuery("stz1") + "'";
-
-
 
         ResultSet rs = sessionMap.get(DataCenter.SEARCH).execute(
                 SimpleStatement.builder(query).setExecutionProfileName("search").build()
@@ -749,28 +750,18 @@ public class CustomerTest {
         assert(resultRow.getString("opco").equals(opco1));
         assert(rs.isFullyFetched());
 
-
-//        PagingIterable<AuditHistory> mappedRS = daoAuditHistory.findByEntryEntityStanza("stz1");
-//        PagingIterable<AuditHistory> mappedRS = daoAuditHistory.findByEntryEntityStanza("{\"q\": \"{!tuple}audit_details.history_detail__entity.stanza:stz1\" }"); //working
-
-        String construtSolrQuery = construcAuditEntryEntityStanzaSolrQuery("stz1");
-        PagingIterable<AuditHistory> mappedRS = daoAuditHistory.findByEntryEntityStanza(construcAuditEntryEntityStanzaSolrQuery("stz1"));
-
-        //options tred below = error
-//        PagingIterable<AuditHistory> mappedRS = daoAuditHistory.findByEntryEntityStanza(construcAuditEntryEntityStanzaSolrQuery("{\"q\": \"{!tuple}audit_details.history_detail__entity.stanza:stz1\" }"));
-//        PagingIterable<AuditHistory> mappedRS = daoAuditHistory.findByEntryEntityStanza(construcAuditEntryEntityStanzaSolrQuery("'{\"q\": \"{!tuple}audit_details.history_detail__entity.stanza:stz1\" }'"));
-//        PagingIterable<AuditHistory> mappedRS = daoAuditHistory.findByEntryEntityStanza(construcAuditEntryEntityStanzaSolrQuery("stz1"));
-//        "'{\"q\": \"{!tuple}audit_details.history_detail__entity.stanza:stz1\" }'"
-
+        //test using Solr query via DAO/Mapper
+        PagingIterable<AuditHistory> mappedRS = daoAuditHistory.findBySearchQuery(
+                construcAuditEntryEntityStanzaSolrQuery("stz1")
+            );
         AuditHistory returnHist = mappedRS.one();
         assert(returnHist.getOpco().equals(opco1));
         assert(mappedRS.isFullyFetched());
 
-    }
-
-    private String construcAuditEntryEntityStanzaSolrQuery(String stanza){
-//        return "'{\"q\": \"{!tuple}audit_details.history_detail__entity.stanza:" + stanza + "\" }'"; //initial version -> error
-        return "{\"q\": \"{!tuple}audit_details.history_detail__entity.stanza:" + stanza + "\" }";
+        //cleanup any records created during test
+        daoAuditHistory.deleteAllByAccountNumber(acctNum);
+        PagingIterable<AuditHistory> verifyCleanRS = daoAuditHistory.findAllByAccountNumber(acctNum);
+        assert(verifyCleanRS.all().isEmpty());
     }
 
     @Test

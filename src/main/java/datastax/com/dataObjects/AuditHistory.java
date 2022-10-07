@@ -23,6 +23,13 @@ public class AuditHistory {
     @CqlName("source") private String source;
     @CqlName("request_type") private String requestType;
 
+    //example helper function for constructing solr queries
+    //this example shows how to query for nested collection value
+    public static String construcAuditEntryEntityStanzaSolrQuery(String stanza){
+        return "{\"q\": \"{!tuple}audit_details.history_detail__entity.stanza:" + stanza + "\" }";
+    }
+
+
     public String getAccountNumber() { return accountNumber; }
     public void setAccountNumber(String val) {accountNumber = val; }
 

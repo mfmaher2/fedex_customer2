@@ -15,16 +15,12 @@ public interface AuditHistoryDao {
     @Select
     PagingIterable<AuditHistory> findAllByAccountNumber(String accountNum);
 
-    @Query("SELECT * FROM ${keyspaceId}.audit_history_v1 WHERE account_number = :accountNum AND last_update_tmstp >= :startDateTime AND last_update_tmstp <= :endDateTime")
+    @Query("SELECT * FROM ${qualifiedTableId} WHERE account_number = :accountNum AND last_update_tmstp >= :startDateTime AND last_update_tmstp <= :endDateTime")
     PagingIterable<AuditHistory> findByAccountNumDateTimeRange(String accountNum, Instant startDateTime, Instant endDateTime);
 
-//    @Query("SELECT * FROM ${keyspaceId}.audit_history_v1 WHERE solr_query = '{\"q\": \"{!tuple}audit_details.history_detail__entity.stanza: :stanzaParam \" }'")
-//    PagingIterable<AuditHistory> findByEntryEntityStanza(String stanzaParam);
-
-//    @Query("SELECT * FROM ${keyspaceId}.audit_history_v1 WHERE solr_query = :stanzaSolrQuery")
-    @Select(customWhereClause = "solr_query = :stanzaSolrQuery")
+    @Select(customWhereClause = "solr_query = :solrQuery")
     @StatementAttributes(executionProfileName = "search")
-    PagingIterable<AuditHistory> findByEntryEntityStanza(String stanzaSolrQuery);
+    PagingIterable<AuditHistory> findBySearchQuery(String solrQuery);
     @Insert
     void save(AuditHistory account);
 
