@@ -1,9 +1,6 @@
 package datastax.com.dataObjects;
 
-import com.datastax.oss.driver.api.mapper.annotations.ClusteringColumn;
-import com.datastax.oss.driver.api.mapper.annotations.CqlName;
-import com.datastax.oss.driver.api.mapper.annotations.Entity;
-import com.datastax.oss.driver.api.mapper.annotations.PartitionKey;
+import com.datastax.oss.driver.api.mapper.annotations.*;
 
 import java.time.LocalDate;
 import java.util.Date;
@@ -23,9 +20,19 @@ public class Account {
     @CqlName("profile__hazardous_shipper_flag") private String hazardousShipperFlag;
     @CqlName("duty_tax_info") private Map<String, String> dutyTaxInfo;
     @CqlName("profile__archive_date") private LocalDate profileArchiveDate;
+    @Computed("writetime(profile__customer_type)")  private long profileCustomerType_wrtm;
 //    @CqlName("account_regulatory__regulated_agentRegimeEffYearMonth") private LocalDate acctRegRegimeEffYearMon;
 
     public Account() {};
+
+
+    public long getProfileCustomerType_wrtm() {
+        return profileCustomerType_wrtm;
+    }
+
+    public void setProfileCustomerType_wrtm(long profileCustomerType_wrtm) {
+        this.profileCustomerType_wrtm = profileCustomerType_wrtm;
+    }
 
     public String getAccountNumber() { return accountNumber;}
     public void setAccountNumber(String val) { accountNumber = val;}

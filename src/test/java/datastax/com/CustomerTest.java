@@ -48,8 +48,8 @@ public class CustomerTest {
     static AuditHistoryDao daoAuditHistory = null;
     static AccountContactDao daoAccountContact = null;
 
-    private static boolean skipSchemaCreation = false;
-    private static boolean skipDataLoad = false;
+    private static boolean skipSchemaCreation = true;
+    private static boolean skipDataLoad = true;
     private static boolean skipKeyspaceDrop = true;
     private static boolean skipIndividualTableDrop = false;
     private static String productName = "Customer" ;
@@ -335,6 +335,28 @@ public class CustomerTest {
     }
 
     @Test
+    public void writeTimeMapped(){
+        String acctNum = "acct_wrtmMapped";
+        String opco = "op1";
+        String custType = "cType1";
+
+        Account acct = new Account();
+        acct.setAccountNumber(acctNum);
+        acct.setOpco(opco);
+        acct.setProfileCustomerType(custType);
+        daoAccount.save(acct);
+
+        Account foundAcct = daoAccount.findByAccountNumber(acctNum);
+        System.out.println("acct write time - " + foundAcct.getProfileCustomerType_wrtm());
+
+        acct.setProfileCustomerType_wrtm(1665424166134000L);
+        daoAccount.save(acct);
+
+        Account foundAcct2 = daoAccount.findByAccountNumber(acctNum);
+        System.out.println("acct write time - " + foundAcct2.getProfileCustomerType_wrtm());
+    }
+
+    @Test
     public void archiveDateTest() {
         String acctNum = "70987125";
         String opco = "op1";
@@ -375,6 +397,7 @@ public class CustomerTest {
         acct.setAccountNumber(acctNum);
         acct.setOpco(opco);
         acct.setProfileArchiveDate(date);
+        acct.setProfileCustomerType("custType1");
         daoAccount.save(acct);
 
         Account foundAcct = daoAccount.findByAccountNumber(acctNum);
