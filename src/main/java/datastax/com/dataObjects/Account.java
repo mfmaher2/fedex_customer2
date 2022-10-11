@@ -2,13 +2,14 @@ package datastax.com.dataObjects;
 
 import com.datastax.oss.driver.api.mapper.annotations.*;
 
+import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.Date;
 import java.util.Map;
 
 @Entity
 @CqlName("cust_acct_v1")
-public class Account {
+public class Account implements Serializable {
 
     @PartitionKey private String accountNumber;
     @ClusteringColumn private String opco;
@@ -20,6 +21,7 @@ public class Account {
     @CqlName("profile__hazardous_shipper_flag") private String hazardousShipperFlag;
     @CqlName("duty_tax_info") private Map<String, String> dutyTaxInfo;
     @CqlName("profile__archive_date") private LocalDate profileArchiveDate;
+
     @Computed("writetime(profile__customer_type)")  private long profileCustomerType_wrtm;
 //    @CqlName("account_regulatory__regulated_agentRegimeEffYearMonth") private LocalDate acctRegRegimeEffYearMon;
 

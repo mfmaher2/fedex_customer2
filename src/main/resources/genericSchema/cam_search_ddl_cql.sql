@@ -172,6 +172,7 @@ WITH CLUSTERING ORDER BY(table_name ASC, table_primary_key_values ASC, property_
 
 CREATE TABLE IF NOT EXISTS cam_operations_<ENV_LEVEL_ID>ks.processing_cache_object (
     transaction_id text, --todo change to UUID
+    service_name text,
     table_name text,
     table_primary_key_properties text,
     table_primary_key_values text,

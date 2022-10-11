@@ -11,8 +11,7 @@ import java.util.Set;
 @Entity
 @CqlName("audit_history_v1")
 public class AuditHistory {
-    @PartitionKey
-    private String accountNumber;
+    @PartitionKey private String accountNumber;
     @ClusteringColumn(1) private String opco;
     @ClusteringColumn(0) @CqlName("last_update_tmstp") private Instant lastUpdated;
     @ClusteringColumn(2) @CqlName("transaction_id") private String transactionID;

@@ -2,6 +2,7 @@ package datastax.com;
 
 import com.datastax.oss.driver.api.core.*;
 import com.datastax.oss.driver.api.core.cql.*;
+import com.datastax.oss.driver.api.core.data.ByteUtils;
 import com.datastax.oss.driver.api.core.data.UdtValue;
 import com.datastax.oss.driver.api.querybuilder.delete.Delete;
 import com.datastax.oss.driver.api.querybuilder.insert.Insert;
@@ -10,11 +11,13 @@ import com.datastax.oss.protocol.internal.util.Bytes;
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.*;
 import static datastax.com.dataObjects.AuditHistory.construcAuditEntryEntityStanzaSolrQuery;
 import static datastax.com.schemaElements.Keyspace.*;
+import static org.apache.commons.lang3.SerializationUtils.serialize;
 
 import datastax.com.dataObjects.*;
 import datastax.com.DAOs.*;
 import datastax.com.multiThreadTest.AccountWriter;
 import datastax.com.schemaElements.*;
+import org.apache.commons.lang3.SerializationUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.AfterClass;
@@ -47,6 +50,7 @@ public class CustomerTest {
     static CommentDao daoComment = null;
     static AuditHistoryDao daoAuditHistory = null;
     static AccountContactDao daoAccountContact = null;
+    static ServiceProcessCacheDao daoServiceProcess = null;
 
     private static boolean skipSchemaCreation = true;
     private static boolean skipDataLoad = true;
@@ -93,6 +97,7 @@ public class CustomerTest {
             daoApplyDiscount = customerMapper.applyDiscountDao(ksConfig.getKeyspaceName(APPLY_DISCOUNT_KS));
             daoComment = customerMapper.commentDao(ksConfig.getKeyspaceName(COMMENT_KS));
             daoAuditHistory = customerMapper.auditHistoryDao(ksConfig.getKeyspaceName(AUDIT_HISTORY_KS));
+            daoServiceProcess = customerMapper.serviceProcessCacheDao(ksConfig.getKeyspaceName(CAM_OPERATIONS_KS));
 
             daoAccountContact = customerMapperEdge.accountContactDao(ksConfig.getKeyspaceName(ACCOUNT_CONTACT_KS));
 
@@ -354,6 +359,33 @@ public class CustomerTest {
 
         Account foundAcct2 = daoAccount.findByAccountNumber(acctNum);
         System.out.println("acct write time - " + foundAcct2.getProfileCustomerType_wrtm());
+
+        String transID = "testTxID_1";
+        String serviceName = "srvc_1";
+        String tableName = "tbl_1";
+        String delimiter = "|";
+        String keyValues = acctNum + delimiter + opco;
+        byte[] acctObj = SerializationUtils.serialize(acct);
+
+//        Insert cacheInsert = insertInto(ksConfig.getKeyspaceName(CAM_OPERATIONS_KS), "processing_cache_object")
+//                .value("transaction_id", literal(transID))
+////                .value("service_name", literal(serviceName))  --todo, property not yet created
+//                .value("table_name", literal(tableName))
+//                .value("table_primary_key_values", literal(keyValues))
+//                .value("prevous_entry", literal(ByteUtils.toHexString(acctObj)));
+//        sessionMap.get(DataCenter.SEARCH).execute(cacheInsert.build());
+
+        ServiceProcessCache cacheEntry = new ServiceProcessCache();
+        cacheEntry.setTransactionID(transID);
+        cacheEntry.setTableName(tableName);
+        cacheEntry.setTableKeyValues(keyValues);
+//        cacheEntry.setPreviousEntry(acctObj);
+        cacheEntry.setPreviousEntry(ByteBuffer.wrap(acctObj, 0, acctObj.length));
+        daoServiceProcess.save(cacheEntry);
+
+
+
+
     }
 
     @Test
