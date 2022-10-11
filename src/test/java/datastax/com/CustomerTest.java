@@ -367,21 +367,22 @@ public class CustomerTest {
         String keyValues = acctNum + delimiter + opco;
         byte[] acctObj = SerializationUtils.serialize(acct);
 
-//        Insert cacheInsert = insertInto(ksConfig.getKeyspaceName(CAM_OPERATIONS_KS), "processing_cache_object")
-//                .value("transaction_id", literal(transID))
-////                .value("service_name", literal(serviceName))  --todo, property not yet created
-//                .value("table_name", literal(tableName))
-//                .value("table_primary_key_values", literal(keyValues))
+        Insert cacheInsert = insertInto(ksConfig.getKeyspaceName(CAM_OPERATIONS_KS), "processing_cache_object")
+                .value("transaction_id", literal(transID))
+//                .value("service_name", literal(serviceName))  --todo, property not yet created
+                .value("table_name", literal(tableName))
+                .value("table_primary_key_values", literal(keyValues))
 //                .value("prevous_entry", literal(ByteUtils.toHexString(acctObj)));
-//        sessionMap.get(DataCenter.SEARCH).execute(cacheInsert.build());
+                .value("prevous_entry", literal(ByteBuffer.wrap(acctObj, 0, acctObj.length)));
+        sessionMap.get(DataCenter.SEARCH).execute(cacheInsert.build());
 
-        ServiceProcessCache cacheEntry = new ServiceProcessCache();
-        cacheEntry.setTransactionID(transID);
-        cacheEntry.setTableName(tableName);
-        cacheEntry.setTableKeyValues(keyValues);
-//        cacheEntry.setPreviousEntry(acctObj);
-        cacheEntry.setPreviousEntry(ByteBuffer.wrap(acctObj, 0, acctObj.length));
-        daoServiceProcess.save(cacheEntry);
+//        ServiceProcessCache cacheEntry = new ServiceProcessCache();
+//        cacheEntry.setTransactionID(transID);
+//        cacheEntry.setTableName(tableName);
+//        cacheEntry.setTableKeyValues(keyValues);
+////        cacheEntry.setPreviousEntry(acctObj);
+//        cacheEntry.setPreviousEntry(ByteBuffer.wrap(acctObj, 0, acctObj.length));
+//        daoServiceProcess.save(cacheEntry);
 
 
 
