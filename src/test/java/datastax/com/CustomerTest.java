@@ -385,8 +385,11 @@ public class CustomerTest {
 //        daoServiceProcess.save(cacheEntry);
 
 
+        ServiceProcessCache foundCache = daoServiceProcess.findByTransactionId(transID);
+        byte[] foundAcctObj = ByteUtils.getArray(foundCache.getPreviousEntry());
+        Account recreatedAcct = (Account) SerializationUtils.deserialize(foundAcctObj);
 
-
+        assert(recreatedAcct.getProfileCustomerType().equals(custType));
     }
 
     @Test
