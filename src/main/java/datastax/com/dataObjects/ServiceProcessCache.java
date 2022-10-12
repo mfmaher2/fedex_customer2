@@ -1,9 +1,6 @@
 package datastax.com.dataObjects;
 
-import com.datastax.oss.driver.api.mapper.annotations.ClusteringColumn;
-import com.datastax.oss.driver.api.mapper.annotations.CqlName;
-import com.datastax.oss.driver.api.mapper.annotations.Entity;
-import com.datastax.oss.driver.api.mapper.annotations.PartitionKey;
+import com.datastax.oss.driver.api.mapper.annotations.*;
 
 import java.nio.ByteBuffer;
 
@@ -15,6 +12,7 @@ public class ServiceProcessCache {
     @ClusteringColumn(0) @CqlName("table_name") private String tableName;
     @ClusteringColumn(1) @CqlName("table_primary_key_values") private String tableKeyValues;
     @CqlName("prevous_entry") private ByteBuffer previousEntry;
+    @Computed("writetime(prevous_entry)") private long previousEntry_wrtm;
 
     public ServiceProcessCache() {};
 
@@ -29,4 +27,10 @@ public class ServiceProcessCache {
 
     public ByteBuffer getPreviousEntry() { return previousEntry; }
     public void setPreviousEntry(ByteBuffer val) { previousEntry = val; }
+
+    public long getPreviousEntry_wrtm() {return previousEntry_wrtm;}
+
+    public void setPreviousEntry_wrtm(long previousEntry_wrtm) {
+        this.previousEntry_wrtm = previousEntry_wrtm;
+    }
 }

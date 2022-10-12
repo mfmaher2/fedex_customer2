@@ -9,6 +9,7 @@ import com.datastax.oss.driver.api.querybuilder.insert.Insert;
 import com.datastax.oss.driver.api.querybuilder.select.Select;
 import com.datastax.oss.protocol.internal.util.Bytes;
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.*;
+import static com.datastax.oss.protocol.internal.ProtocolConstants.BatchType.LOGGED;
 import static datastax.com.dataObjects.AuditHistory.construcAuditEntryEntityStanzaSolrQuery;
 import static datastax.com.schemaElements.Keyspace.*;
 import static org.apache.commons.lang3.SerializationUtils.serialize;
@@ -31,6 +32,8 @@ import java.nio.ByteBuffer;
 import java.text.ParseException;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -340,6 +343,182 @@ public class CustomerTest {
     }
 
     @Test
+    public void simulateAccountRollbackWithCache(){
+        String acctNum = "acct_RollBk";
+        String opco = "op1";
+
+        //create initial state of record
+        String initCustType = "custTypeA";
+        String initStatusCode = "statusCodeA";
+        Account acctInit = new Account();
+        acctInit.setAccountNumber(acctNum);
+        acctInit.setOpco(opco);
+        acctInit.setProfileCustomerType(initCustType);
+        acctInit.setProfileAccountStatusCode(initStatusCode);
+        daoAccount.save(acctInit);
+
+        //verify init values set as expected
+        Account foundInitAcct = daoAccount.findByAccountNumber(acctNum);
+        assert(foundInitAcct.getProfileCustomerType().equals(initCustType));
+        assert(foundInitAcct.getProfileAccountStatusCode().equals(initStatusCode));
+        System.out.println(("Initial State"));
+        System.out.println(("\tCustomerType - " + foundInitAcct.getProfileCustomerType() + ",   writetime - " + foundInitAcct.getProfileCustomerType_wrtm()));
+        System.out.println(("\tStatusCode   - " + foundInitAcct.getProfileAccountStatusCode() + ", writetime - " + foundInitAcct.getProfileStatusCode_wrtm()));
+
+        //Update account record as part of an 'attempted' operation
+        //Below will simulate if this operation needs to be rolledback
+        //store current 'writetime' value to be used later during rollback
+//        Instant instantRollback = Instant.now();
+//        long attemptRollbackMicros = instantRollback.toEpochMilli() * 1000;
+
+
+        //create 'attempted' account record
+        String attemptCustType = "custTypeB";
+        String attemptStatusCode = "statusCodeB";
+        Account acctAttempt = new Account();
+        acctAttempt.setAccountNumber(acctNum);
+        acctAttempt.setOpco(opco);
+        acctAttempt.setProfileCustomerType(attemptCustType);
+        acctAttempt.setProfileAccountStatusCode(attemptStatusCode);
+
+        //create cache entr for attempted update
+        String transID = "acctRollbackCache";
+        String tblName = "account";
+        String keyValues = acctNum + "|" + opco;
+        ServiceProcessCache cacheAcct = new ServiceProcessCache();
+        cacheAcct.setTransactionID(transID);
+        cacheAcct.setTableName(tblName);
+        cacheAcct.setTableKeyValues(keyValues);
+        byte[] attemptAcctObj = SerializationUtils.serialize(acctAttempt);
+        cacheAcct.setPreviousEntry(ByteBuffer.wrap(attemptAcctObj, 0, attemptAcctObj.length));
+
+        BatchStatement batch = new BatchStatementBuilder(BatchType.LOGGED)
+                .addStatement(daoAccount.batchSave(acctAttempt))
+                .addStatement(daoServiceProcess.batchSave(cacheAcct))
+                .build();
+        sessionMap.get(DataCenter.SEARCH).execute(batch);
+
+        //verify attempted values set as expected
+        Account foundAttemptAcct = daoAccount.findByAccountNumber(acctNum);
+        assert(foundAttemptAcct.getProfileCustomerType().equals(attemptCustType));
+        assert(foundAttemptAcct.getProfileAccountStatusCode().equals(attemptStatusCode));
+        System.out.println(("Attempted State"));
+        System.out.println(("\tCustomerType - " + foundAttemptAcct.getProfileCustomerType() + ",   writetime - " + foundAttemptAcct.getProfileCustomerType_wrtm()));
+        System.out.println(("\tStatusCode   - " + foundAttemptAcct.getProfileAccountStatusCode() + ", writetime - " + foundAttemptAcct.getProfileStatusCode_wrtm()));
+
+        //create external or separate update to  account record
+        String extStatusCode = "statusCodeC";
+        Account acctExt = new Account();
+        acctExt.setAccountNumber(acctNum);
+        acctExt.setOpco(opco);
+        acctExt.setProfileAccountStatusCode(extStatusCode);
+        daoAccount.save(acctExt);
+
+        //verify attempted values set as expected
+        Account foundExtAcct = daoAccount.findByAccountNumber(acctNum);
+        assert(foundExtAcct.getProfileCustomerType().equals(attemptCustType));
+        assert(foundExtAcct.getProfileAccountStatusCode().equals(extStatusCode));
+        System.out.println(("External State"));
+        System.out.println(("\tCustomerType - " + foundExtAcct.getProfileCustomerType() + ",   writetime - " + foundExtAcct.getProfileCustomerType_wrtm()));
+        System.out.println(("\tStatusCode   - " + foundExtAcct.getProfileAccountStatusCode() + ", writetime - " + foundExtAcct.getProfileStatusCode_wrtm()));
+
+
+        //simulate rollback to initial state values, prior to 'attempted' operation
+        //create 'rollback' account record
+        ServiceProcessCache prevCache = daoServiceProcess.findByTransactionId(transID);
+        long prev_wrtm = prevCache.getPreviousEntry_wrtm();
+
+        Account acctRollback = new Account();
+        acctRollback.setAccountNumber(acctNum);
+        acctRollback.setOpco(opco);
+        acctRollback.setProfileCustomerType(initCustType);
+        acctRollback.setProfileAccountStatusCode(initStatusCode);
+        BoundStatement stmtRollback =  daoAccount.batchSave(acctRollback);
+//        sessionMap.get(DataCenter.SEARCH).execute(stmtRollback.setQueryTimestamp(attemptRollbackMicros));
+        sessionMap.get(DataCenter.SEARCH).execute(stmtRollback.setQueryTimestamp(prev_wrtm+1L));
+
+        //verify attempted values set as expected
+        Account foundRollbackAcct = daoAccount.findByAccountNumber(acctNum);
+        System.out.println(("Rollback State"));
+        System.out.println("\tPrevious entry writetime - " + prev_wrtm);
+        System.out.println(("\tCustomerType - " + foundRollbackAcct.getProfileCustomerType() + ",   writetime - " + foundRollbackAcct.getProfileCustomerType_wrtm()));
+        System.out.println(("\tStatusCode   - " + foundRollbackAcct.getProfileAccountStatusCode() + ", writetime - " + foundRollbackAcct.getProfileStatusCode_wrtm()));
+        assert(foundRollbackAcct.getProfileCustomerType().equals(initCustType));
+        assert(foundRollbackAcct.getProfileAccountStatusCode().equals(extStatusCode));
+    }
+
+    @Test
+    public void simulateAccountRollback(){
+        String acctNum = "acct_RollBk";
+        String opco = "op1";
+
+        //create initial state of record
+        String initCustType = "custTypeA";
+        String initStatusCode = "statusCodeA";
+        Account acctInit = new Account();
+        acctInit.setAccountNumber(acctNum);
+        acctInit.setOpco(opco);
+        acctInit.setProfileCustomerType(initCustType);
+        acctInit.setProfileAccountStatusCode(initStatusCode);
+        daoAccount.save(acctInit);
+
+        //verify init values set as expected
+        Account foundInitAcct = daoAccount.findByAccountNumber(acctNum);
+        assert(foundInitAcct.getProfileCustomerType().equals(initCustType));
+        assert(foundInitAcct.getProfileAccountStatusCode().equals(initStatusCode));
+
+        //Update account record as part of an 'attempted' operation
+        //Below will simulate if this operation needs to be rolledback  --todo - store and rollback values from cache table
+        //store current 'writetime' value to be used later during rollback
+        Instant instantRollback = Instant.now();
+        long attemptRollbackMicros = instantRollback.toEpochMilli() * 1000;
+
+        //create 'attempted' account record
+        String attemptCustType = "custTypeB";
+        String attemptStatusCode = "statusCodeB";
+        Account acctAttempt = new Account();
+        acctAttempt.setAccountNumber(acctNum);
+        acctAttempt.setOpco(opco);
+        acctAttempt.setProfileCustomerType(attemptCustType);
+        acctAttempt.setProfileAccountStatusCode(attemptStatusCode);
+        daoAccount.save(acctAttempt);
+
+        //verify attempted values set as expected
+        Account foundAttemptAcct = daoAccount.findByAccountNumber(acctNum);
+        assert(foundAttemptAcct.getProfileCustomerType().equals(attemptCustType));
+        assert(foundAttemptAcct.getProfileAccountStatusCode().equals(attemptStatusCode));
+
+        //create external or separate update to  account record
+        String extStatusCode = "statusCodeC";
+        Account acctExt = new Account();
+        acctExt.setAccountNumber(acctNum);
+        acctExt.setOpco(opco);
+        acctExt.setProfileAccountStatusCode(extStatusCode);
+        daoAccount.save(acctExt);
+
+        //verify attempted values set as expected
+        Account foundExtAcct = daoAccount.findByAccountNumber(acctNum);
+        assert(foundExtAcct.getProfileCustomerType().equals(attemptCustType));
+        assert(foundExtAcct.getProfileAccountStatusCode().equals(extStatusCode));
+
+
+        //simulate rollback to initial state values, prior to 'attempted' operation
+        //create 'rollback' account record
+        Account acctRollback = new Account();
+        acctRollback.setAccountNumber(acctNum);
+        acctRollback.setOpco(opco);
+        acctRollback.setProfileCustomerType(initCustType);
+        acctRollback.setProfileAccountStatusCode(initStatusCode);
+        BoundStatement stmtRollback =  daoAccount.batchSave(acctRollback);
+        sessionMap.get(DataCenter.SEARCH).execute(stmtRollback.setQueryTimestamp(attemptRollbackMicros));
+
+        //verify attempted values set as expected
+        Account foundRollbackAcct = daoAccount.findByAccountNumber(acctNum);
+        assert(foundRollbackAcct.getProfileCustomerType().equals(initCustType));
+        assert(foundRollbackAcct.getProfileAccountStatusCode().equals(extStatusCode));
+    }
+
+    @Test
     public void writeTimeMapped(){
         String acctNum = "acct_wrtmMapped";
         String opco = "op1";
@@ -352,7 +531,8 @@ public class CustomerTest {
         daoAccount.save(acct);
 
         Account foundAcct = daoAccount.findByAccountNumber(acctNum);
-        System.out.println("acct write time - " + foundAcct.getProfileCustomerType_wrtm());
+        long initialAcctWritetime = foundAcct.getProfileCustomerType_wrtm();
+        System.out.println("acct write time - " + initialAcctWritetime);
 
         acct.setProfileCustomerType_wrtm(1665424166134000L);
         daoAccount.save(acct);
@@ -367,22 +547,25 @@ public class CustomerTest {
         String keyValues = acctNum + delimiter + opco;
         byte[] acctObj = SerializationUtils.serialize(acct);
 
-        Insert cacheInsert = insertInto(ksConfig.getKeyspaceName(CAM_OPERATIONS_KS), "processing_cache_object")
-                .value("transaction_id", literal(transID))
-//                .value("service_name", literal(serviceName))  --todo, property not yet created
-                .value("table_name", literal(tableName))
-                .value("table_primary_key_values", literal(keyValues))
-//                .value("prevous_entry", literal(ByteUtils.toHexString(acctObj)));
-                .value("prevous_entry", literal(ByteBuffer.wrap(acctObj, 0, acctObj.length)));
-        sessionMap.get(DataCenter.SEARCH).execute(cacheInsert.build());
+//        Insert cacheInsert = insertInto(ksConfig.getKeyspaceName(CAM_OPERATIONS_KS), "processing_cache_object")
+//                .value("transaction_id", literal(transID))
+////                .value("service_name", literal(serviceName))  --todo, property not yet created
+//                .value("table_name", literal(tableName))
+//                .value("table_primary_key_values", literal(keyValues))
+////                .value("prevous_entry", literal(ByteUtils.toHexString(acctObj)));
+//                .value("prevous_entry", literal(ByteBuffer.wrap(acctObj, 0, acctObj.length)));
+//        sessionMap.get(DataCenter.SEARCH).execute(cacheInsert.build());
 
-//        ServiceProcessCache cacheEntry = new ServiceProcessCache();
-//        cacheEntry.setTransactionID(transID);
-//        cacheEntry.setTableName(tableName);
-//        cacheEntry.setTableKeyValues(keyValues);
-////        cacheEntry.setPreviousEntry(acctObj);
-//        cacheEntry.setPreviousEntry(ByteBuffer.wrap(acctObj, 0, acctObj.length));
-//        daoServiceProcess.save(cacheEntry);
+        ServiceProcessCache cacheEntry = new ServiceProcessCache();
+        cacheEntry.setTransactionID(transID);
+        cacheEntry.setTableName(tableName);
+        cacheEntry.setTableKeyValues(keyValues);
+//        cacheEntry.setPreviousEntry(acctObj);
+        cacheEntry.setPreviousEntry(ByteBuffer.wrap(acctObj, 0, acctObj.length));
+        daoServiceProcess.save(cacheEntry);
+
+        BoundStatement stmt = daoServiceProcess.batchSave(cacheEntry);
+//        stmt.setQueryTimestamp()
 
 
         ServiceProcessCache foundCache = daoServiceProcess.findByTransactionId(transID);
@@ -390,6 +573,12 @@ public class CustomerTest {
         Account recreatedAcct = (Account) SerializationUtils.deserialize(foundAcctObj);
 
         assert(recreatedAcct.getProfileCustomerType().equals(custType));
+
+//        LocalDateTime.now().toInstant();
+        Instant queryTime = Instant.now();
+        long curMillis = queryTime.toEpochMilli();
+        System.out.println("Current epoch micros - " + (curMillis * 1000));
+
     }
 
     @Test

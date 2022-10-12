@@ -23,6 +23,7 @@ public class Account implements Serializable {
     @CqlName("profile__archive_date") private LocalDate profileArchiveDate;
 
     @Computed("writetime(profile__customer_type)")  private long profileCustomerType_wrtm;
+    @Computed("writetime(profile__account_status__status_code)")  private long profileStatusCode_wrtm;
 //    @CqlName("account_regulatory__regulated_agentRegimeEffYearMonth") private LocalDate acctRegRegimeEffYearMon;
 
     public Account() {};
@@ -34,6 +35,12 @@ public class Account implements Serializable {
 
     public void setProfileCustomerType_wrtm(long profileCustomerType_wrtm) {
         this.profileCustomerType_wrtm = profileCustomerType_wrtm;
+    }
+
+    public long getProfileStatusCode_wrtm() { return profileStatusCode_wrtm;}
+
+    public void setProfileStatusCode_wrtm(long profileStatusCode_wrtm) {
+        this.profileStatusCode_wrtm = profileStatusCode_wrtm;
     }
 
     public String getAccountNumber() { return accountNumber;}
