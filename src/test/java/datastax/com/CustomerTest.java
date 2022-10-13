@@ -368,8 +368,8 @@ public class CustomerTest {
         //Update account record as part of an 'attempted' operation
         //Below will simulate if this operation needs to be rolledback
         //store current 'writetime' value to be used later during rollback
-//        Instant instantRollback = Instant.now();
-//        long attemptRollbackMicros = instantRollback.toEpochMilli() * 1000;
+        Instant instantRollback = Instant.now();
+        long attemptRollbackMicros = instantRollback.toEpochMilli() * 1000;
 
 
         //create 'attempted' account record
@@ -397,6 +397,9 @@ public class CustomerTest {
                 .addStatement(daoServiceProcess.batchSave(cacheAcct))
                 .build();
         sessionMap.get(DataCenter.SEARCH).execute(batch);
+        Instant instantRollbackAfterSave = Instant.now();
+        long attemptRollbackMicrosAfterSave = instantRollbackAfterSave.toEpochMilli() * 1000;
+
 
         //verify attempted values set as expected
         Account foundAttemptAcct = daoAccount.findByAccountNumber(acctNum);
@@ -431,16 +434,18 @@ public class CustomerTest {
         Account acctRollback = new Account();
         acctRollback.setAccountNumber(acctNum);
         acctRollback.setOpco(opco);
-        acctRollback.setProfileCustomerType(initCustType);
+        acctRollback.setProfileCustomerType(initCustType);  //todo use values from cached entry
         acctRollback.setProfileAccountStatusCode(initStatusCode);
         BoundStatement stmtRollback =  daoAccount.batchSave(acctRollback);
 //        sessionMap.get(DataCenter.SEARCH).execute(stmtRollback.setQueryTimestamp(attemptRollbackMicros));
-        sessionMap.get(DataCenter.SEARCH).execute(stmtRollback.setQueryTimestamp(prev_wrtm+1L));
+        sessionMap.get(DataCenter.SEARCH).execute(stmtRollback.setQueryTimestamp(prev_wrtm+1L));  //?? is the increment of 1 microsecond reasonable ??
 
         //verify attempted values set as expected
         Account foundRollbackAcct = daoAccount.findByAccountNumber(acctNum);
         System.out.println(("Rollback State"));
         System.out.println("\tPrevious entry writetime - " + prev_wrtm);
+        System.out.println("\tBefore local attempt writetime  - " + attemptRollbackMicros);
+        System.out.println("\tAfter local attempt writetime   - " + attemptRollbackMicrosAfterSave);
         System.out.println(("\tCustomerType - " + foundRollbackAcct.getProfileCustomerType() + ",   writetime - " + foundRollbackAcct.getProfileCustomerType_wrtm()));
         System.out.println(("\tStatusCode   - " + foundRollbackAcct.getProfileAccountStatusCode() + ", writetime - " + foundRollbackAcct.getProfileStatusCode_wrtm()));
         assert(foundRollbackAcct.getProfileCustomerType().equals(initCustType));
