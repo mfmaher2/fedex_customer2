@@ -30,6 +30,7 @@ CREATE TYPE IF NOT EXISTS cam_audit_history_<ENV_LEVEL_ID>ks.history_field_type 
 );
 
 CREATE TYPE IF NOT EXISTS cam_audit_history_<ENV_LEVEL_ID>ks.audit_history_entry (
+     opco text,
      history_detail__descriptive_identifier text,
      history_detail__additional_identifier__key set<frozen<history_additional_identifier_type>>,
      history_detail__entity set<frozen<history_entity_type>>,
@@ -43,7 +44,6 @@ CREATE TYPE IF NOT EXISTS cam_time_event_<ENV_LEVEL_ID>ks.time_event_additional_
 
 CREATE TABLE IF NOT EXISTS cam_audit_history_<ENV_LEVEL_ID>ks.audit_history_v1 (
      account_number text,
-     opco text,                     --maps to history_detail__opco
      last_update_tmstp timestamp,
      audit_details set<frozen<audit_history_entry>>,
      request_action text,
@@ -52,8 +52,8 @@ CREATE TABLE IF NOT EXISTS cam_audit_history_<ENV_LEVEL_ID>ks.audit_history_v1 (
      user_id text,
      source text,
      request_type text,
-    PRIMARY KEY(account_number, last_update_tmstp, opco, transaction_id))
- WITH CLUSTERING ORDER BY(last_update_tmstp DESC, opco ASC, transaction_id ASC)
+    PRIMARY KEY(account_number, last_update_tmstp, transaction_id))
+ WITH CLUSTERING ORDER BY(last_update_tmstp DESC, transaction_id ASC)
      AND bloom_filter_fp_chance = 0.01
      AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
      AND comment = ''

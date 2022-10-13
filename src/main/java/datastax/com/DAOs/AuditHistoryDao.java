@@ -15,8 +15,16 @@ public interface AuditHistoryDao {
     @Select
     PagingIterable<AuditHistory> findAllByAccountNumber(String accountNum);
 
+    @Query("SELECT * FROM ${qualifiedTableId} WHERE account_number = :accountNum AND solr_query = :solrQuery" )
+    @StatementAttributes(executionProfileName = "search")
+    PagingIterable<AuditHistory> findAllByAccountNumberAndSearch(String accountNum, String solrQuery);
+
+    @Query("SELECT * FROM ${qualifiedTableId} WHERE account_number = :accountNum  AND last_update_tmstp >= :startDateTime AND last_update_tmstp <= :endDateTime AND solr_query = :solrQuery" )
+    @StatementAttributes(executionProfileName = "search")
+    PagingIterable<AuditHistory> findAllByAccountNumberDurationSearch(String accountNum, Instant startDateTime, Instant endDateTime, String solrQuery);
+
     @Query("SELECT * FROM ${qualifiedTableId} WHERE account_number = :accountNum AND last_update_tmstp >= :startDateTime AND last_update_tmstp <= :endDateTime")
-    PagingIterable<AuditHistory> findByAccountNumDateTimeRange(String accountNum, Instant startDateTime, Instant endDateTime);
+    PagingIterable<AuditHistory> findAllByAccountNumDateTimeRange(String accountNum, Instant startDateTime, Instant endDateTime);
 
     @Select(customWhereClause = "solr_query = :solrQuery")
     @StatementAttributes(executionProfileName = "search")

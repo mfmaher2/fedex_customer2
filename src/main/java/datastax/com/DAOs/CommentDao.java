@@ -19,7 +19,7 @@ public interface CommentDao {
     PagingIterable<Comment> findByCommentID(String commentID);
 
 //    @Query("SELECT * FROM ${keyspaceId}.comment_v1 WHERE account_number = :accountNum AND opco in ('FX','FDFR') AND comment__type in ('GI') AND comment__comment_date_time >= :startDateTime AND comment__comment_date_time <= :endDateTime")
-//    PagingIterable<Comment> findByAccountNumDateTimeRange(String accountNum, Instant startDateTime, Instant endDateTime);
+//    PagingIterable<Comment> findAllByAccountNumDateTimeRange(String accountNum, Instant startDateTime, Instant endDateTime);
 
     //@Query("SELECT * FROM ${keyspaceId}.comment_v1 WHERE account_number = :accountNum AND comment__comment_date_time >= :startDateTime AND comment__comment_date_time <= :endDateTime AND comment__type = :type ")
     //PagingIterable<Comment> findByAccountNumTypeDateTimeRange(String accountNum, Instant startDateTime, Instant endDateTime, String type);
