@@ -914,7 +914,7 @@ public class CustomerTest {
         assert(cleanVerifyAfterResults.all().size() == 0);
     }
     @Test
-    public void auditHistoryNextedEntityWriteReadTest() throws InterruptedException {
+    public void auditHistoryNestedEntityWriteReadTest() throws InterruptedException {
 
         String acctNum = "acct_testNestedAuditEntities";
 
@@ -954,12 +954,14 @@ public class CustomerTest {
         entities2.add(entityType2_1);
 
         AuditHistoryEntry historyEntry1 = new AuditHistoryEntry();
+        historyEntry1.setOpco("auditOpco_1");
         historyEntry1.setDescriptiveIdentifier("histEntry1");
         historyEntry1.setEntity(entities1);
         Set<AuditHistoryEntry> histEntries1 = new HashSet<>();
         histEntries1.add(historyEntry1);
 
         AuditHistoryEntry historyEntry2 = new AuditHistoryEntry();
+        historyEntry2.setOpco("auditOpco_2");
         historyEntry2.setDescriptiveIdentifier("histEntry2");
         historyEntry2.setEntity(entities2);
         Set<AuditHistoryEntry> histEntries2 = new HashSet<>();
@@ -968,12 +970,12 @@ public class CustomerTest {
         Instant lastUpdate1 = Instant.parse("2022-04-01T00:00:00.001Z");
         Instant lastUpdate2 = Instant.parse("2022-05-05T00:00:00.001Z");
 
-        String opco1 = "auditOpco_1";
-        String opco2 = "auditOpco_2";
+        String appID1 = "auditAppId_1";
+        String appID2 = "auditAppId_2";
 
         AuditHistory hist1 = new AuditHistory();
         hist1.setAccountNumber(acctNum);
-        hist1.setOpco(opco1);
+        hist1.setAppID(appID1);
         hist1.setLastUpdated(lastUpdate1);
         hist1.setTransactionID("transID1");
         hist1.setAuditDetails(histEntries1);
@@ -981,7 +983,7 @@ public class CustomerTest {
 
         AuditHistory hist2 = new AuditHistory();
         hist2.setAccountNumber(acctNum);
-        hist2.setOpco(opco2);
+        hist2.setAppID(appID2);
         hist2.setLastUpdated(lastUpdate2);
         hist2.setTransactionID("transID2");
         hist2.setAuditDetails(histEntries2);
@@ -1000,7 +1002,7 @@ public class CustomerTest {
                 SimpleStatement.builder(query).setExecutionProfileName("search").build()
             );
         Row resultRow = rs.one();
-        assert(resultRow.getString("opco").equals(opco1));
+        assert(resultRow.getString("app_id").equals(appID1));
         assert(rs.isFullyFetched());
 
         //test using Solr query via DAO/Mapper
@@ -1008,7 +1010,7 @@ public class CustomerTest {
                 construcAuditEntryEntityStanzaSolrQuery("stz1")
             );
         AuditHistory returnHist = mappedRS.one();
-        assert(returnHist.getOpco().equals(opco1));
+        assert(returnHist.getAppID().equals(appID1));
         assert(mappedRS.isFullyFetched());
 
         //cleanup any records created during test
@@ -1020,9 +1022,7 @@ public class CustomerTest {
     @Test
     public void auditHistorySAITest(){
         String acctNum = "888999000";
-        String opco = "op1";
         Instant maxDT = Instant.parse("9999-12-31T00:00:00.000Z");
-
 
         Instant lastUpdate1 = Instant.parse("2021-04-01T00:00:00.001Z");
         Instant lastUpdate2 = Instant.parse("2021-04-02T00:00:00.001Z");
@@ -1040,31 +1040,28 @@ public class CustomerTest {
         //create test records
         AuditHistory audit1 = new AuditHistory();
         audit1.setAccountNumber(acctNum);
-        audit1.setOpco(opco);
         audit1.setLastUpdated(lastUpdate1);
         audit1.setTransactionID(transID1);
         daoAuditHistory.save(audit1);
 
         AuditHistory audit2 = new AuditHistory();
         audit2.setAccountNumber(acctNum);
-        audit2.setOpco(opco);
         audit2.setLastUpdated(lastUpdate2);
         audit2.setTransactionID(transID2);
         daoAuditHistory.save(audit2);
 
         AuditHistory audit3 = new AuditHistory();
         audit3.setAccountNumber(acctNum);
-        audit3.setOpco(opco);
         audit3.setLastUpdated(lastUpdate3);
         audit3.setTransactionID(transID3);
         daoAuditHistory.save(audit3);
 
         //find all audit entries for account
-        PagingIterable<AuditHistory> allAudits = daoAuditHistory.findByAccountNumDateTimeRange(acctNum, lastUpdate1, maxDT);
+        PagingIterable<AuditHistory> allAudits = daoAuditHistory.findAllByAccountNumDateTimeRange(acctNum, lastUpdate1, maxDT);
         assert(allAudits.all().size() == 3);
 
         //find two earliese entries for account and verify order
-        PagingIterable<AuditHistory> earlyAudits = daoAuditHistory.findByAccountNumDateTimeRange(acctNum, lastUpdate1, lastUpdate2);
+        PagingIterable<AuditHistory> earlyAudits = daoAuditHistory.findAllByAccountNumDateTimeRange(acctNum, lastUpdate1, lastUpdate2);
 
         //only record #1 and record #2 should be returned
         //because of descending cluster order, #2 should be first record retrieved

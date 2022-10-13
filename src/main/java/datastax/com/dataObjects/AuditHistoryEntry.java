@@ -11,12 +11,16 @@ import java.util.Set;
 @SchemaHint(targetElement = SchemaHint.TargetElement.UDT)
 public class AuditHistoryEntry {
 
+    @CqlName("opco") private String opco;
     @CqlName("history_detail__descriptive_identifier") private String descriptiveIdentifier;
     @CqlName("history_detail__additional_identifier__key") private Set<AuditHistoryAdditionalIdentifier> additionalIdentifierKey;
     @CqlName("history_detail__entity") private Set<AuditHistoryEntityType> entity;
     @CqlName("history_detail__field") private Set<AuditHistoryFieldType> field;
 
     public AuditHistoryEntry() {};
+
+    public String getOpco() { return opco;}
+    public void setOpco(String val) { opco = val;}
 
     public String getDescriptiveIdentifier() { return descriptiveIdentifier;}
     public void setDescriptiveIdentifier(String val) { descriptiveIdentifier = val;}

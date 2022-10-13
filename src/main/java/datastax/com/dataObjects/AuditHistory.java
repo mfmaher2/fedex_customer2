@@ -12,9 +12,8 @@ import java.util.Set;
 @CqlName("audit_history_v1")
 public class AuditHistory {
     @PartitionKey private String accountNumber;
-    @ClusteringColumn(1) private String opco;
     @ClusteringColumn(0) @CqlName("last_update_tmstp") private Instant lastUpdated;
-    @ClusteringColumn(2) @CqlName("transaction_id") private String transactionID;
+    @ClusteringColumn(1) @CqlName("transaction_id") private String transactionID;
     @CqlName("audit_details") private Set<AuditHistoryEntry> auditDetails;
     @CqlName("request_action") private String requestAction;
     @CqlName("app_id") private String appID;
@@ -28,12 +27,8 @@ public class AuditHistory {
         return "{\"q\": \"{!tuple}audit_details.history_detail__entity.stanza:" + stanza + "\" }";
     }
 
-
     public String getAccountNumber() { return accountNumber; }
     public void setAccountNumber(String val) {accountNumber = val; }
-
-    public String getOpco() { return opco; }
-    public void setOpco(String val) {opco = val; }
 
     public Instant getLastUpdated() { return lastUpdated; }
     public void setLastUpdated(Instant val) { lastUpdated = val;}
