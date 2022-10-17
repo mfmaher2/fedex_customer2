@@ -55,9 +55,10 @@ public class CustomerTest {
     static AccountContactDao daoAccountContact = null;
     static ServiceProcessCacheDao daoServiceProcess = null;
 
-    private static boolean skipSchemaCreation = true;
-    private static boolean skipDataLoad = true;
-    private static boolean skipKeyspaceDrop = true;
+    private static boolean skipSchemaCreation = false;
+    private static boolean skipDataLoad = false;
+    private static boolean skipKeyspaceDropOnExit = true;
+    private static boolean skipKeyspaceDrop = false;
     private static boolean skipIndividualTableDrop = false;
     private static String productName = "Customer" ;
     private static Environment environment = null;
@@ -135,7 +136,7 @@ public class CustomerTest {
     @AfterClass
     public static void close() throws InterruptedException {
         System.out.println("Running " + productName + " close");
-        dropTestKeyspace();
+        if(!skipKeyspaceDropOnExit) { dropTestKeyspace(); }
         sessionMap.values().forEach(s -> s.close());
     }
 
