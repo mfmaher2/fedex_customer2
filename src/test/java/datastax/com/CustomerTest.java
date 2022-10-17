@@ -55,9 +55,9 @@ public class CustomerTest {
     static AccountContactDao daoAccountContact = null;
     static ServiceProcessCacheDao daoServiceProcess = null;
 
-    private static boolean skipSchemaCreation = false;
-    private static boolean skipDataLoad = false;
-    private static boolean skipKeyspaceDrop = false;
+    private static boolean skipSchemaCreation = true;
+    private static boolean skipDataLoad = true;
+    private static boolean skipKeyspaceDrop = true;
     private static boolean skipIndividualTableDrop = false;
     private static String productName = "Customer" ;
     private static Environment environment = null;
@@ -1408,67 +1408,77 @@ public class CustomerTest {
     }
 
     //TODO convert possible functionality of following test to use SAI
-//    @Test
-//    public void searchSubStringTest() throws InterruptedException {
-//        //using dummy values for contact record to test substring matching functionaliyt
-//        String insertRec1 = "INSERT INTO account_contact\n" +
-//                "    (account_number, opco, contact_document_id, contact_type_code, contact_business_id, person__first_name)\n" +
-//                "    VALUES('123456', 'opc1', 101, 'type1', 'cBus1', 'FedExDotCom');";
-//
-//        String insertRec2 = "INSERT INTO account_contact\n" +
-//                "    (account_number, opco, contact_document_id, contact_type_code, contact_business_id, person__first_name)\n" +
-//                "    VALUES('123456', 'opc1', 102, 'type1', 'cBus2', 'FedExDotom');";
-//
-//        //add test records to table
-//        session.execute(insertRec1);
-//        session.execute(insertRec2);
-//
-//        //sleep for a time to allow Solr indexes to update completely
-//        System.out.println("Inserted substring test records. Pausing to allow indexes to update...");
-//        Thread.sleep(11000);
-//
-//        //construct test query using Solr
-//        String searchQueryBase = "SELECT * \n" +
-//                "FROM account_contact\n" +
-//                "WHERE solr_query = ";
-//
-//        //query 1, should find two records
-//        String searchQueryDetail1 = "'person__first_name:FedEx*'";
-//        ResultSet rs1 = session.execute(searchQueryBase + searchQueryDetail1);
-//        assert(rs1.all().size() == 2);
-//
-//        //query 2, should find two records
-//        String searchQueryDetail2 = "'person__first_name:FedEx*D*'";
-//        ResultSet rs2 = session.execute(searchQueryBase + searchQueryDetail2);
-//        assert(rs2.all().size() == 2);
-//
-//        //query 3, should find one record
-//        String searchQueryDetail3 = "'person__first_name:FedEx*C*'";
-//        ResultSet rs3 = session.execute(searchQueryBase + searchQueryDetail3);
-//        Row row3 = rs3.one();
-//        assert(row3.getLong("contact_document_id") == 101);
-//        assert(row3.getString("contact_business_id").equals("cBus1"));
-//        assert(rs3.isFullyFetched() == true); //only one record found
-//
-//        //query 4, should find one record
-//        String searchQueryDetail4 = "'person__first_name:FedEx*D*C*'";
-//        ResultSet rs4 = session.execute(searchQueryBase + searchQueryDetail4);
-//        Row row4 = rs4.one();
-//        assert(row4.getLong("contact_document_id") == 101);
-//        assert(row4.getString("contact_business_id").equals("cBus1"));
-//        assert(rs4.isFullyFetched() == true); //only one record found
-//
-//        //query 5, should find one record
-//        String searchQueryDetail5 = "'person__first_name:FedEx*D*tom'";
-//        ResultSet rs5 = session.execute(searchQueryBase + searchQueryDetail5);
-//        Row row5 = rs5.one();
-//        assert(row5.getLong("contact_document_id") == 102);
-//        assert(row5.getString("contact_business_id").equals("cBus2"));
-//        assert(rs5.isFullyFetched() == true); //only one record found
-//
-//        String cleanup = "DELETE FROM account_contact WHERE account_number = '123456'";
-//        session.execute(cleanup);
-//    }
+    @Test
+    public void searchSubStringTest() throws InterruptedException {
+
+//        String acctNum
+        //using dummy values for contact record to test substring matching functionaliyt
+        String insertRec1 = "INSERT INTO " + ksConfig.getKeyspaceName(SEARCH_KS) + ".cam_search_v1\n" +
+                "    (account_number, opco, contact_document_id, contact_type_code, contact_business_id, company_name)\n" +
+                "    VALUES('123456', 'opc1', 101, 'type1', 'cBus1', 'FedExDotCom');";
+
+        String insertRec2 = "INSERT INTO " + ksConfig.getKeyspaceName(SEARCH_KS) + ".cam_search_v1\n" +
+                "    (account_number, opco, contact_document_id, contact_type_code, contact_business_id, company_name)\n" +
+                "    VALUES('123456', 'opc1', 102, 'type1', 'cBus2', 'FedExDotom');";
+
+
+//        insertInto(ksConfig.getKeyspaceName(SEARCH_KS), "cam_search_v1")
+//                .value("account_number", literal(""))
+
+
+        //add test records to table
+        sessionMap.get(DataCenter.SEARCH).execute(insertRec1);
+        sessionMap.get(DataCenter.SEARCH).execute(insertRec2);
+
+        //sleep for a time to allow Solr indexes to update completely
+        System.out.println("Inserted substring test records. Pausing to allow indexes to update...");
+        Thread.sleep(11000);
+
+        //construct test query using Solr
+        String searchQueryBase = "SELECT * \n" +
+                "FROM " + ksConfig.getKeyspaceName(SEARCH_KS) + ".cam_search_v1\n" +
+                "WHERE solr_query = ";
+
+        //query 1, should find two records
+        String searchQueryDetail1 = "'company_name:FedEx*'";
+
+//        exucuteSearchQuery
+//        ResultSet rs1 = sessionMap.get(DataCenter.SEARCH).execute(searchQueryBase + searchQueryDetail1);
+        ResultSet rs1 = exucuteSearchQuery(searchQueryBase + searchQueryDetail1);
+        assert(rs1.all().size() == 2);
+
+        //query 2, should find two records
+        String searchQueryDetail2 = "'company_name:FedEx*D*'";
+        ResultSet rs2 = exucuteSearchQuery(searchQueryBase + searchQueryDetail2);
+        assert(rs2.all().size() == 2);
+
+        //query 3, should find one record
+        String searchQueryDetail3 = "'company_name:FedEx*C*'";
+        ResultSet rs3 = exucuteSearchQuery(searchQueryBase + searchQueryDetail3);
+        Row row3 = rs3.one();
+        assert(row3.getLong("contact_document_id") == 101);  //todo check opco or other property?
+        assert(row3.getString("contact_business_id").equals("cBus1"));
+        assert(rs3.isFullyFetched() == true); //only one record found
+
+        //query 4, should find one record
+        String searchQueryDetail4 = "'company_name:FedEx*D*C*'";
+        ResultSet rs4 = exucuteSearchQuery(searchQueryBase + searchQueryDetail4);
+        Row row4 = rs4.one();
+        assert(row4.getLong("contact_document_id") == 101);  //todo check opco or other property?
+        assert(row4.getString("contact_business_id").equals("cBus1"));
+        assert(rs4.isFullyFetched() == true); //only one record found
+
+        //query 5, should find one record
+        String searchQueryDetail5 = "'company_name:FedEx*D*tom'";
+        ResultSet rs5 = exucuteSearchQuery(searchQueryBase + searchQueryDetail5);
+        Row row5 = rs5.one();
+        assert(row5.getLong("contact_document_id") == 102);
+        assert(row5.getString("contact_business_id").equals("cBus2"));
+        assert(rs5.isFullyFetched() == true); //only one record found
+
+//        String cleanup = "DELETE FROM account_contact WHERE account_number = '123456'";  //todo reenable proper cleanup
+//        sessionMap.get(DataCenter.SEARCH).execute(cleanup);
+    }
 
     @Test
     public void customerAcctTypesTest(){
@@ -2270,11 +2280,17 @@ public class CustomerTest {
         ;
 
         ResultSet resCheck = sessionMap.get(DataCenter.SEARCH).execute(
-                SimpleStatement.builder(solrQuery).setExecutionProfileName("search").build()
+                SimpleStatement.builder(solrQuery).setExecutionProfileName("search").build() //todo use helper function
         );
 
         //call common verification method
         verifyExpectedUdtValues(resCheck);
+    }
+
+    ResultSet exucuteSearchQuery(String query) {
+        return sessionMap.get(DataCenter.SEARCH).execute(
+                SimpleStatement.builder(query).setExecutionProfileName("search").build()
+                );
     }
 
     private void verifyExpectedUdtValues(ResultSet resCheck){
