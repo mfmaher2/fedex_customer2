@@ -1408,11 +1408,8 @@ public class CustomerTest {
         //https://docs.datastax.com/en/dse/5.1/cql/cql/cql_using/useInsertMap.html
     }
 
-    //TODO convert possible functionality of following test to use SAI
     @Test
     public void searchSubStringTest() throws InterruptedException {
-
-//        String acctNum
         //using dummy values for contact record to test substring matching functionaliyt
         String insertRec1 = "INSERT INTO " + ksConfig.getKeyspaceName(SEARCH_KS) + ".cam_search_v1\n" +
                 "    (account_number, opco, contact_document_id, contact_type_code, contact_business_id, company_name)\n" +
@@ -1421,11 +1418,6 @@ public class CustomerTest {
         String insertRec2 = "INSERT INTO " + ksConfig.getKeyspaceName(SEARCH_KS) + ".cam_search_v1\n" +
                 "    (account_number, opco, contact_document_id, contact_type_code, contact_business_id, company_name)\n" +
                 "    VALUES('123456', 'opc1', 102, 'type1', 'cBus2', 'FedExDotom');";
-
-
-//        insertInto(ksConfig.getKeyspaceName(SEARCH_KS), "cam_search_v1")
-//                .value("account_number", literal(""))
-
 
         //add test records to table
         sessionMap.get(DataCenter.SEARCH).execute(insertRec1);
@@ -1442,9 +1434,6 @@ public class CustomerTest {
 
         //query 1, should find two records
         String searchQueryDetail1 = "'company_name:FedEx*'";
-
-//        exucuteSearchQuery
-//        ResultSet rs1 = sessionMap.get(DataCenter.SEARCH).execute(searchQueryBase + searchQueryDetail1);
         ResultSet rs1 = exucuteSearchQuery(searchQueryBase + searchQueryDetail1);
         assert(rs1.all().size() == 2);
 
@@ -1457,7 +1446,7 @@ public class CustomerTest {
         String searchQueryDetail3 = "'company_name:FedEx*C*'";
         ResultSet rs3 = exucuteSearchQuery(searchQueryBase + searchQueryDetail3);
         Row row3 = rs3.one();
-        assert(row3.getLong("contact_document_id") == 101);  //todo check opco or other property?
+        assert(row3.getLong("contact_document_id") == 101);
         assert(row3.getString("contact_business_id").equals("cBus1"));
         assert(rs3.isFullyFetched() == true); //only one record found
 
@@ -1465,7 +1454,7 @@ public class CustomerTest {
         String searchQueryDetail4 = "'company_name:FedEx*D*C*'";
         ResultSet rs4 = exucuteSearchQuery(searchQueryBase + searchQueryDetail4);
         Row row4 = rs4.one();
-        assert(row4.getLong("contact_document_id") == 101);  //todo check opco or other property?
+        assert(row4.getLong("contact_document_id") == 101);
         assert(row4.getString("contact_business_id").equals("cBus1"));
         assert(rs4.isFullyFetched() == true); //only one record found
 
@@ -1477,8 +1466,8 @@ public class CustomerTest {
         assert(row5.getString("contact_business_id").equals("cBus2"));
         assert(rs5.isFullyFetched() == true); //only one record found
 
-//        String cleanup = "DELETE FROM account_contact WHERE account_number = '123456'";  //todo reenable proper cleanup
-//        sessionMap.get(DataCenter.SEARCH).execute(cleanup);
+        String cleanup = "DELETE FROM " + ksConfig.getKeyspaceName(SEARCH_KS) + ".cam_search_v1 WHERE account_number = '123456'";
+        sessionMap.get(DataCenter.SEARCH).execute(cleanup);
     }
 
     @Test
