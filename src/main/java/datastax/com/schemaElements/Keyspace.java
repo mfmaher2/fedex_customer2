@@ -15,7 +15,7 @@ public enum Keyspace {
     DYNAMIC_PROFILE_KS,
     SEARCH_KS,
     SEQUENCE_KS,
-    CAM_OPERATIONS_KS,
+    SYSTEM_OPERATIONS_KS,
 
     //archive specific keyspace
     ACCOUNT_ARCHIVE_KS,

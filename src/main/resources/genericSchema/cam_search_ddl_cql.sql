@@ -144,7 +144,7 @@ WITH CLUSTERING ORDER BY(opco ASC, contact_type_code ASC, contact_business_id AS
     AND read_repair_chance = 0.0
     AND speculative_retry = '99PERCENTILE';
 
-CREATE TABLE IF NOT EXISTS cam_operations_<ENV_LEVEL_ID>ks.processing_cache (
+CREATE TABLE IF NOT EXISTS system_operations_<ENV_LEVEL_ID>ks.processing_cache (
     transaction_id text, --todo change to UUID
     table_name text,
     table_primary_key_properties text,
@@ -170,7 +170,7 @@ WITH CLUSTERING ORDER BY(table_name ASC, table_primary_key_values ASC, property_
     AND read_repair_chance = 0.0
     AND speculative_retry = '99PERCENTILE';
 
-CREATE TABLE IF NOT EXISTS cam_operations_<ENV_LEVEL_ID>ks.processing_cache_object (
+CREATE TABLE IF NOT EXISTS system_operations_<ENV_LEVEL_ID>ks.processing_cache_object (
     transaction_id text, --todo change to UUID
     service_name text,
     table_name text,

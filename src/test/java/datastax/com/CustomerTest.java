@@ -9,7 +9,6 @@ import com.datastax.oss.driver.api.querybuilder.insert.Insert;
 import com.datastax.oss.driver.api.querybuilder.select.Select;
 import com.datastax.oss.protocol.internal.util.Bytes;
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.*;
-import static com.datastax.oss.protocol.internal.ProtocolConstants.BatchType.LOGGED;
 import static datastax.com.dataObjects.AuditHistory.construcAuditEntryEntityStanzaSolrQuery;
 import static datastax.com.schemaElements.Keyspace.*;
 import static org.apache.commons.lang3.SerializationUtils.serialize;
@@ -32,8 +31,6 @@ import java.nio.ByteBuffer;
 import java.text.ParseException;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -101,7 +98,7 @@ public class CustomerTest {
             daoApplyDiscount = customerMapper.applyDiscountDao(ksConfig.getKeyspaceName(APPLY_DISCOUNT_KS));
             daoComment = customerMapper.commentDao(ksConfig.getKeyspaceName(COMMENT_KS));
             daoAuditHistory = customerMapper.auditHistoryDao(ksConfig.getKeyspaceName(AUDIT_HISTORY_KS));
-            daoServiceProcess = customerMapper.serviceProcessCacheDao(ksConfig.getKeyspaceName(CAM_OPERATIONS_KS));
+            daoServiceProcess = customerMapper.serviceProcessCacheDao(ksConfig.getKeyspaceName(SYSTEM_OPERATIONS_KS));
 
             daoAccountContact = customerMapperEdge.accountContactDao(ksConfig.getKeyspaceName(ACCOUNT_CONTACT_KS));
 
@@ -437,7 +434,6 @@ public class CustomerTest {
         acctRollback.setProfileCustomerType(initCustType);  //todo use values from cached entry
         acctRollback.setProfileAccountStatusCode(initStatusCode);
         BoundStatement stmtRollback =  daoAccount.batchSave(acctRollback);
-//        sessionMap.get(DataCenter.SEARCH).execute(stmtRollback.setQueryTimestamp(attemptRollbackMicros));
         sessionMap.get(DataCenter.SEARCH).execute(stmtRollback.setQueryTimestamp(prev_wrtm+1L));  //?? is the increment of 1 microsecond reasonable ??
 
         //verify attempted values set as expected
@@ -454,6 +450,7 @@ public class CustomerTest {
 
     @Test
     public void writeTimeMapped(){
+        //todo - is this test needed?
         String acctNum = "acct_wrtmMapped";
         String opco = "op1";
         String custType = "cType1";
@@ -481,26 +478,13 @@ public class CustomerTest {
         String keyValues = acctNum + delimiter + opco;
         byte[] acctObj = SerializationUtils.serialize(acct);
 
-//        Insert cacheInsert = insertInto(ksConfig.getKeyspaceName(CAM_OPERATIONS_KS), "processing_cache_object")
-//                .value("transaction_id", literal(transID))
-////                .value("service_name", literal(serviceName))  --todo, property not yet created
-//                .value("table_name", literal(tableName))
-//                .value("table_primary_key_values", literal(keyValues))
-////                .value("prevous_entry", literal(ByteUtils.toHexString(acctObj)));
-//                .value("prevous_entry", literal(ByteBuffer.wrap(acctObj, 0, acctObj.length)));
-//        sessionMap.get(DataCenter.SEARCH).execute(cacheInsert.build());
-
         ServiceProcessCache cacheEntry = new ServiceProcessCache();
         cacheEntry.setTransactionID(transID);
         cacheEntry.setTableName(tableName);
         cacheEntry.setTableKeyValues(keyValues);
-//        cacheEntry.setPreviousEntry(acctObj);
         cacheEntry.setPreviousEntry(ByteBuffer.wrap(acctObj, 0, acctObj.length));
         daoServiceProcess.save(cacheEntry);
-
         BoundStatement stmt = daoServiceProcess.batchSave(cacheEntry);
-//        stmt.setQueryTimestamp()
-
 
         ServiceProcessCache foundCache = daoServiceProcess.findByTransactionId(transID);
         byte[] foundAcctObj = ByteUtils.getArray(foundCache.getPreviousEntry());
@@ -508,11 +492,9 @@ public class CustomerTest {
 
         assert(recreatedAcct.getProfileCustomerType().equals(custType));
 
-//        LocalDateTime.now().toInstant();
         Instant queryTime = Instant.now();
         long curMillis = queryTime.toEpochMilli();
         System.out.println("Current epoch micros - " + (curMillis * 1000));
-
     }
 
     @Test

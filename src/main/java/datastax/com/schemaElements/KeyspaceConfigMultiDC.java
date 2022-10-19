@@ -39,7 +39,7 @@ public class KeyspaceConfigMultiDC extends KeyspaceConfig{
         keyspaceNames.put(Keyspace.LINE_OF_BUSINESS_ARCHIVE_KS, "cam_line_of_business_archive_ks");
         keyspaceNames.put(Keyspace.CENTRALIZED_VIEW_ARCHIVE_KS, "cam_centralized_view_archive_ks");
         keyspaceNames.put(Keyspace.PAYMENT_INFO_ARCHIVE_KS, "cam_payment_info_archive_ks");
-        keyspaceNames.put(Keyspace.CAM_OPERATIONS_KS, "cam_operations_ks");
+        keyspaceNames.put(Keyspace.SYSTEM_OPERATIONS_KS, "system_operations_ks");
 
         //test only keyspace(s)
         keyspaceNames.put(Keyspace.CUSTOMER, "customer_test");
@@ -59,7 +59,7 @@ public class KeyspaceConfigMultiDC extends KeyspaceConfig{
         AddKeyspaceDataCenter(Keyspace.CENTRALIZED_VIEW_KS, datacenters.get(DataCenter.CORE), 1);
         AddKeyspaceDataCenter(Keyspace.PAYMENT_INFO_KS, datacenters.get(DataCenter.CORE), 1);
         AddKeyspaceDataCenter(Keyspace.SEQUENCE_KS, datacenters.get(DataCenter.CORE), 1);
-        AddKeyspaceDataCenter(Keyspace.CAM_OPERATIONS_KS, datacenters.get(DataCenter.CORE), 1);
+        AddKeyspaceDataCenter(Keyspace.SYSTEM_OPERATIONS_KS, datacenters.get(DataCenter.CORE), 1);
 
         AddKeyspaceDataCenter(Keyspace.ACCOUNT_KS, datacenters.get(DataCenter.EDGE), 1);
         AddKeyspaceDataCenter(Keyspace.ACCOUNT_CONTACT_KS, datacenters.get(DataCenter.EDGE), 1);
@@ -70,7 +70,7 @@ public class KeyspaceConfigMultiDC extends KeyspaceConfig{
         AddKeyspaceDataCenter(Keyspace.DYNAMIC_PROFILE_KS, datacenters.get(DataCenter.EDGE), 1);
 
         AddKeyspaceDataCenter(Keyspace.SEARCH_KS, datacenters.get(DataCenter.SEARCH), 1);
-        AddKeyspaceDataCenter(Keyspace.CAM_OPERATIONS_KS, datacenters.get(DataCenter.SEARCH), 1);
+        AddKeyspaceDataCenter(Keyspace.SYSTEM_OPERATIONS_KS, datacenters.get(DataCenter.SEARCH), 1);
 
         //archive specific keyspace
         AddKeyspaceDataCenter(Keyspace.ACCOUNT_CONTACT_ARCHIVE_KS, datacenters.get(DataCenter.CORE), 1);
