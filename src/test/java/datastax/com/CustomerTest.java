@@ -1409,7 +1409,142 @@ public class CustomerTest {
     }
 
     @Test
+    public void searchPropTypeTest() throws InterruptedException {
+        String acctNum = "acctSolrType";
+        CqlSession sessionSearch = sessionMap.get(DataCenter.SEARCH);
+
+        //Create elements to cleanup and verify table state prior to test
+        //Elements will also be used to cleanup and verify at conclusion of test
+        SimpleStatement stmtCleanup =  deleteFrom(ksConfig.getKeyspaceName(SEARCH_KS), "cam_search_v1")
+                .whereColumn("account_number").isEqualTo(literal(acctNum))
+                .build();
+
+        SimpleStatement stmtCleanupVerify = selectFrom(ksConfig.getKeyspaceName(SEARCH_KS), "cam_search_v1")
+                .all()
+                .whereColumn("account_number").isEqualTo(literal(acctNum))
+                .build();
+
+        sessionSearch.execute(stmtCleanup);
+        ResultSet rsVerifyCleanOnStart = sessionSearch.execute(stmtCleanupVerify);
+        assert(rsVerifyCleanOnStart.all().isEmpty());
+
+        SimpleStatement stmtEntry1 =  insertInto(ksConfig.getKeyspaceName(SEARCH_KS), "cam_search_v1")
+                .value("account_number", literal(acctNum))
+                .value("opco", literal("opco1"))
+                .value("contact_document_id", literal(1001))
+                .value("contact_type_code", literal("type1"))
+                .value("contact_business_id", literal("cBus1"))
+                .value("company_name", literal("FedExDotCom"))
+                .value("person__first_name", literal("Bob"))
+                .value("person__last_name", literal("Smity"))
+                .build();
+        sessionSearch.execute(stmtEntry1);
+
+        SimpleStatement stmtEntry2 =  insertInto(ksConfig.getKeyspaceName(SEARCH_KS), "cam_search_v1")
+                .value("account_number", literal(acctNum))
+                .value("opco", literal("opco2"))
+                .value("contact_document_id", literal(1002))
+                .value("contact_type_code", literal("type2"))
+                .value("contact_business_id", literal("cBus2"))
+                .value("company_name", literal("FedEx"))
+                .value("person__first_name", literal("Andrew"))
+                .value("person__last_name", literal("Miller"))
+                .build();
+        sessionSearch.execute(stmtEntry2);
+
+        SimpleStatement stmtEntry3 =  insertInto(ksConfig.getKeyspaceName(SEARCH_KS), "cam_search_v1")
+                .value("account_number", literal(acctNum))
+                .value("opco", literal("opco3"))
+                .value("contact_document_id", literal(1003))
+                .value("contact_type_code", literal("type3"))
+                .value("contact_business_id", literal("cBus3"))
+                .value("company_name", literal("FedExGround"))
+                .value("person__first_name", literal("John Andrew"))
+                .value("person__last_name", literal("Jones"))
+                .build();
+        sessionSearch.execute(stmtEntry3);
+
+        SimpleStatement stmtEntry4 =  insertInto(ksConfig.getKeyspaceName(SEARCH_KS), "cam_search_v1")
+                .value("account_number", literal(acctNum))
+                .value("opco", literal("opco4"))
+                .value("contact_document_id", literal(1004))
+                .value("contact_type_code", literal("type4"))
+                .value("contact_business_id", literal("cBus4"))
+                .value("company_name", literal("FedExDotom"))
+                .value("person__first_name", literal("John"))
+                .value("person__last_name", literal("Smity"))
+                .build();
+        sessionSearch.execute(stmtEntry4);
+
+        //pause to allow Solr index to update
+        Thread.sleep(11000);
+
+        //Verify record(s) written correctly
+        ResultSet rsFindFirstName =  exucuteSearchStatement(
+            selectFrom(ksConfig.getKeyspaceName(SEARCH_KS), "cam_search_v1")
+                .all()
+                .whereColumn("solr_query").isEqualTo(literal("person__first_name:Bob"))
+                .build()
+        );
+        Row rowFoundFirst = rsFindFirstName.one();
+        assert(rowFoundFirst.getString("opco").equals("opco1"));
+        assert(rsFindFirstName.isFullyFetched()); //only one record found
+        
+        
+        //verify case insensitve search on first name
+        ResultSet rsFindFirstNoCase =  exucuteSearchStatement(
+                selectFrom(ksConfig.getKeyspaceName(SEARCH_KS), "cam_search_v1")
+                        .all()
+                        .whereColumn("solr_query").isEqualTo(literal("person__first_name:bOb"))
+                        .build()
+        );
+        Row rowFoundFirstNoCase = rsFindFirstNoCase.one();
+        assert(rowFoundFirstNoCase.getString("opco").equals("opco1"));
+        assert(rsFindFirstNoCase.isFullyFetched()); //only one record found
+
+        //verify nameLine search
+        ResultSet rsFindNameLine =  exucuteSearchStatement(
+                selectFrom(ksConfig.getKeyspaceName(SEARCH_KS), "cam_search_v1")
+                        .all()
+                        .whereColumn("solr_query").isEqualTo(literal("nameLine:*Andrew*"))
+                        .build()
+        );
+        assert(rsFindNameLine.all().size() == 2);
+
+        //verify nameLine case insensitive search
+        ResultSet rsFindNameLineNoCase =  exucuteSearchStatement(
+                selectFrom(ksConfig.getKeyspaceName(SEARCH_KS), "cam_search_v1")
+                        .all()
+                        .whereColumn("solr_query").isEqualTo(literal("nameLine:*andrew*"))
+                        .build()
+        );
+        assert(rsFindNameLineNoCase.all().size() == 2);
+
+
+        //todo - determine why not working as expected
+        //verify nameLine special character processing
+//        ResultSet rsFindNameLineSpecChar =  exucuteSearchStatement(
+//                selectFrom(ksConfig.getKeyspaceName(SEARCH_KS), "cam_search_v1")
+//                        .columns("account_number", "opco", "company_name", "person__first_name", "person__last_name")
+//                        .whereColumn("solr_query").isEqualTo(literal("nameLine:*FedExGround*"))
+//                        .build()
+//        );
+//        List<Row> results = rsFindNameLineSpecChar.all();
+//        results.forEach(row->{System.out.println(row.getFormattedContents());});
+//        assert(results.size() == 1);
+//
+
+        //cleanup up records after test
+        sessionSearch.execute(stmtCleanup);
+        ResultSet rsVerifyCleanOnFinish = sessionSearch.execute(stmtCleanupVerify);
+        assert(rsVerifyCleanOnFinish.all().isEmpty());
+    }
+
+    @Test
     public void searchSubStringTest() throws InterruptedException {
+        String cleanup = "DELETE FROM " + ksConfig.getKeyspaceName(SEARCH_KS) + ".cam_search_v1 WHERE account_number = '123456'";
+        sessionMap.get(DataCenter.SEARCH).execute(cleanup);
+
         //using dummy values for contact record to test substring matching functionaliyt
         String insertRec1 = "INSERT INTO " + ksConfig.getKeyspaceName(SEARCH_KS) + ".cam_search_v1\n" +
                 "    (account_number, opco, contact_document_id, contact_type_code, contact_business_id, company_name)\n" +
@@ -1466,7 +1601,6 @@ public class CustomerTest {
         assert(row5.getString("contact_business_id").equals("cBus2"));
         assert(rs5.isFullyFetched() == true); //only one record found
 
-        String cleanup = "DELETE FROM " + ksConfig.getKeyspaceName(SEARCH_KS) + ".cam_search_v1 WHERE account_number = '123456'";
         sessionMap.get(DataCenter.SEARCH).execute(cleanup);
     }
 
@@ -2281,6 +2415,12 @@ public class CustomerTest {
         return sessionMap.get(DataCenter.SEARCH).execute(
                 SimpleStatement.builder(query).setExecutionProfileName("search").build()
                 );
+    }
+
+    ResultSet exucuteSearchStatement(SimpleStatement statement) {
+        return sessionMap.get(DataCenter.SEARCH).execute(
+                statement.setExecutionProfileName("search")
+        );
     }
 
     private void verifyExpectedUdtValues(ResultSet resCheck){
