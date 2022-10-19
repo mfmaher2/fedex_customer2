@@ -27,6 +27,7 @@ public class KeyspaceConfigSingleDC extends KeyspaceConfig{
         keyspaceNames.put(Keyspace.DYNAMIC_PROFILE_KS, "cam_dynamic_profile_l1_ks");
         keyspaceNames.put(Keyspace.SEARCH_KS, "cam_search_l1_ks");
         keyspaceNames.put(Keyspace.SEQUENCE_KS, "cam_sequence_l1_ks");
+        keyspaceNames.put(Keyspace.CAM_OPERATIONS_KS, "cam_operations_l1_ks");
 
         //archive specific keyspace
         keyspaceNames.put(Keyspace.ACCOUNT_ARCHIVE_KS, "cam_account_archive_l1_ks");
@@ -57,6 +58,7 @@ public class KeyspaceConfigSingleDC extends KeyspaceConfig{
         AddKeyspaceDataCenter(Keyspace.DYNAMIC_PROFILE_KS, datacenterName, 1);
         AddKeyspaceDataCenter(Keyspace.SEARCH_KS, datacenterName, 1);
         AddKeyspaceDataCenter(Keyspace.SEQUENCE_KS, datacenterName, 1);
+        AddKeyspaceDataCenter(Keyspace.CAM_OPERATIONS_KS, datacenterName, 1);
 
         //archive specific keyspace
         AddKeyspaceDataCenter(Keyspace.ACCOUNT_ARCHIVE_KS, datacenterName, 1);

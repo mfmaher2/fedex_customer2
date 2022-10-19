@@ -1,17 +1,15 @@
 package datastax.com.dataObjects;
 
-import com.datastax.oss.driver.api.mapper.annotations.ClusteringColumn;
-import com.datastax.oss.driver.api.mapper.annotations.CqlName;
-import com.datastax.oss.driver.api.mapper.annotations.Entity;
-import com.datastax.oss.driver.api.mapper.annotations.PartitionKey;
+import com.datastax.oss.driver.api.mapper.annotations.*;
 
+import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.Date;
 import java.util.Map;
 
 @Entity
 @CqlName("cust_acct_v1")
-public class Account {
+public class Account implements Serializable {
 
     @PartitionKey private String accountNumber;
     @ClusteringColumn private String opco;
@@ -23,9 +21,27 @@ public class Account {
     @CqlName("profile__hazardous_shipper_flag") private String hazardousShipperFlag;
     @CqlName("duty_tax_info") private Map<String, String> dutyTaxInfo;
     @CqlName("profile__archive_date") private LocalDate profileArchiveDate;
+
+    @Computed("writetime(profile__customer_type)")  private long profileCustomerType_wrtm;
+    @Computed("writetime(profile__account_status__status_code)")  private long profileStatusCode_wrtm;
 //    @CqlName("account_regulatory__regulated_agentRegimeEffYearMonth") private LocalDate acctRegRegimeEffYearMon;
 
     public Account() {};
+
+
+    public long getProfileCustomerType_wrtm() {
+        return profileCustomerType_wrtm;
+    }
+
+    public void setProfileCustomerType_wrtm(long profileCustomerType_wrtm) {
+        this.profileCustomerType_wrtm = profileCustomerType_wrtm;
+    }
+
+    public long getProfileStatusCode_wrtm() { return profileStatusCode_wrtm;}
+
+    public void setProfileStatusCode_wrtm(long profileStatusCode_wrtm) {
+        this.profileStatusCode_wrtm = profileStatusCode_wrtm;
+    }
 
     public String getAccountNumber() { return accountNumber;}
     public void setAccountNumber(String val) { accountNumber = val;}

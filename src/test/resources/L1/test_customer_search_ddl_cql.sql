@@ -140,19 +140,19 @@ ALTER SEARCH INDEX SCHEMA ON cam_search_l1_ks.cam_search_v1
         }]
     }$$;
 
-ALTER SEARCH INDEX SCHEMA ON cam_search_l1_ks.cam_search_v1 SET FIELD[@name='profile__airport_code'] @type='textNorm1';
-ALTER SEARCH INDEX SCHEMA ON cam_search_l1_ks.cam_search_v1 SET FIELD[@name='profile__synonym_name_1'] @type='textNorm1';
-ALTER SEARCH INDEX SCHEMA ON cam_search_l1_ks.cam_search_v1 SET FIELD[@name='profile__synonym_name_2'] @type='textNorm1';
-ALTER SEARCH INDEX SCHEMA ON cam_search_l1_ks.cam_search_v1 SET FIELD[@name='person__first_name'] @type='textNorm1';
-ALTER SEARCH INDEX SCHEMA ON cam_search_l1_ks.cam_search_v1 SET FIELD[@name='person__last_name'] @type='textNorm1';
-ALTER SEARCH INDEX SCHEMA ON cam_search_l1_ks.cam_search_v1 SET FIELD[@name='person__middle_name'] @type='textNorm1';
-ALTER SEARCH INDEX SCHEMA ON cam_search_l1_ks.cam_search_v1 SET FIELD[@name='address__street_line'] @type='textNorm1';
-ALTER SEARCH INDEX SCHEMA ON cam_search_l1_ks.cam_search_v1 SET FIELD[@name='address__additional_line1'] @type='textNorm1';
-ALTER SEARCH INDEX SCHEMA ON cam_search_l1_ks.cam_search_v1 SET FIELD[@name='address__geo_political_subdivision1'] @type='textNorm1';
-ALTER SEARCH INDEX SCHEMA ON cam_search_l1_ks.cam_search_v1 SET FIELD[@name='address__geo_political_subdivision2'] @type='textNorm1';
-ALTER SEARCH INDEX SCHEMA ON cam_search_l1_ks.cam_search_v1 SET FIELD[@name='address__geo_political_subdivision3'] @type='textNorm1';
-ALTER SEARCH INDEX SCHEMA ON cam_search_l1_ks.cam_search_v1 SET FIELD[@name='address__postal_code'] @type='textNorm1';
-ALTER SEARCH INDEX SCHEMA ON cam_search_l1_ks.cam_search_v1 SET FIELD[@name='email'] @type='textNorm1';
+ALTER SEARCH INDEX SCHEMA ON cam_search_l1_ks.cam_search_v1 SET field[@name='profile__airport_code']@type='textNorm1';
+ALTER SEARCH INDEX SCHEMA ON cam_search_l1_ks.cam_search_v1 SET field[@name='profile__synonym_name_1']@type='textNorm1';
+ALTER SEARCH INDEX SCHEMA ON cam_search_l1_ks.cam_search_v1 SET field[@name='profile__synonym_name_2']@type='textNorm1';
+ALTER SEARCH INDEX SCHEMA ON cam_search_l1_ks.cam_search_v1 SET field[@name='person__first_name']@type='textNorm1';
+ALTER SEARCH INDEX SCHEMA ON cam_search_l1_ks.cam_search_v1 SET field[@name='person__last_name']@type='textNorm1';
+ALTER SEARCH INDEX SCHEMA ON cam_search_l1_ks.cam_search_v1 SET field[@name='person__middle_name']@type='textNorm1';
+ALTER SEARCH INDEX SCHEMA ON cam_search_l1_ks.cam_search_v1 SET field[@name='address__street_line']@type='textNorm1';
+ALTER SEARCH INDEX SCHEMA ON cam_search_l1_ks.cam_search_v1 SET field[@name='address__additional_line1']@type='textNorm1';
+ALTER SEARCH INDEX SCHEMA ON cam_search_l1_ks.cam_search_v1 SET field[@name='address__geo_political_subdivision1']@type='textNorm1';
+ALTER SEARCH INDEX SCHEMA ON cam_search_l1_ks.cam_search_v1 SET field[@name='address__geo_political_subdivision2']@type='textNorm1';
+ALTER SEARCH INDEX SCHEMA ON cam_search_l1_ks.cam_search_v1 SET field[@name='address__geo_political_subdivision3']@type='textNorm1';
+ALTER SEARCH INDEX SCHEMA ON cam_search_l1_ks.cam_search_v1 SET field[@name='address__postal_code']@type='textNorm1';
+ALTER SEARCH INDEX SCHEMA ON cam_search_l1_ks.cam_search_v1 SET field[@name='email']@type='textNorm1';
 
 ALTER SEARCH INDEX SCHEMA ON cam_search_l1_ks.cam_search_v1
     ADD fields.field[ @name='nameLine',
