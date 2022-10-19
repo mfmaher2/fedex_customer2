@@ -22,8 +22,8 @@ public class Account implements Serializable {
     @CqlName("duty_tax_info") private Map<String, String> dutyTaxInfo;
     @CqlName("profile__archive_date") private LocalDate profileArchiveDate;
 
-    @Computed("writetime(profile__customer_type)")  private long profileCustomerType_wrtm;
-    @Computed("writetime(profile__account_status__status_code)")  private long profileStatusCode_wrtm;
+    @Computed("writetime(profile__customer_type)")  private long profileCustomerType_wrtm;  //for test/verification purposes only
+    @Computed("writetime(profile__account_status__status_code)")  private long profileStatusCode_wrtm; //for test/verification purposes only
 //    @CqlName("account_regulatory__regulated_agentRegimeEffYearMonth") private LocalDate acctRegRegimeEffYearMon;
 
     public Account() {};

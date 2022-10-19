@@ -52,10 +52,10 @@ public class CustomerTest {
     static AccountContactDao daoAccountContact = null;
     static ServiceProcessCacheDao daoServiceProcess = null;
 
-    private static boolean skipSchemaCreation = false;
-    private static boolean skipDataLoad = false;
+    private static boolean skipSchemaCreation = true;
+    private static boolean skipDataLoad = true;
     private static boolean skipKeyspaceDropOnExit = true;
-    private static boolean skipKeyspaceDrop = false;
+    private static boolean skipKeyspaceDrop = true;
     private static boolean skipIndividualTableDrop = false;
     private static String productName = "Customer" ;
     private static Environment environment = null;
@@ -1440,7 +1440,7 @@ public class CustomerTest {
                 .value("contact_document_id", literal(1003))
                 .value("contact_type_code", literal("type3"))
                 .value("contact_business_id", literal("cBus3"))
-                .value("company_name", literal("FedExGround"))
+                .value("company_name", literal("FedEx#Ground"))
                 .value("person__first_name", literal("John Andrew"))
                 .value("person__last_name", literal("Jones"))
                 .build();
@@ -1505,16 +1505,17 @@ public class CustomerTest {
 
         //todo - determine why not working as expected
         //verify nameLine special character processing
-//        ResultSet rsFindNameLineSpecChar =  exucuteSearchStatement(
-//                selectFrom(ksConfig.getKeyspaceName(SEARCH_KS), "cam_search_v1")
-//                        .columns("account_number", "opco", "company_name", "person__first_name", "person__last_name")
-//                        .whereColumn("solr_query").isEqualTo(literal("nameLine:*FedExGround*"))
-//                        .build()
-//        );
-//        List<Row> results = rsFindNameLineSpecChar.all();
-//        results.forEach(row->{System.out.println(row.getFormattedContents());});
-//        assert(results.size() == 1);
-//
+        ResultSet rsFindNameLineSpecChar =  exucuteSearchStatement(
+                selectFrom(ksConfig.getKeyspaceName(SEARCH_KS), "cam_search_v1")
+                        .columns("account_number", "opco", "company_name", "person__first_name", "person__last_name")
+//                        .whereColumn("solr_query").isEqualTo(literal("nameLine:*FedEx#Ground*")) //fails
+                        .whereColumn("solr_query").isEqualTo(literal("nameLine:*FedExGround*"))
+                        .build()
+        );
+        List<Row> results = rsFindNameLineSpecChar.all();
+        results.forEach(row->{System.out.println(row.getFormattedContents());});
+        assert(results.size() == 1);
+
 
         //cleanup up records after test
         sessionSearch.execute(stmtCleanup);

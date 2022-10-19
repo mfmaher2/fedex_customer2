@@ -12,7 +12,7 @@ public class ServiceProcessCache {
     @ClusteringColumn(0) @CqlName("table_name") private String tableName;
     @ClusteringColumn(1) @CqlName("table_primary_key_values") private String tableKeyValues;
     @CqlName("prevous_entry") private ByteBuffer previousEntry;
-    @Computed("writetime(prevous_entry)") private long previousEntry_wrtm;
+    @Computed("writetime(prevous_entry)") private long previousEntry_wrtm;  //only @Computed or writetime() needed for rollback functionality
 
     public ServiceProcessCache() {};
 
