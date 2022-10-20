@@ -1,61 +1,83 @@
 package datastax.com.serviceSimulation;
 
-import com.datastax.oss.driver.api.core.CqlSession;
+//import com.datastax.oss.driver.api.core.CqlSession;
+//import com.github.javafaker.Faker;
+//import datastax.com.CustomerMapper;
+//import datastax.com.CustomerMapperEdge;
+//import datastax.com.DAOs.AccountContactDao;
+//import datastax.com.DAOs.AccountDao;
+//import datastax.com.DAOs.AuditHistoryDao;
+//import datastax.com.dataObjects.AccountContact;
+//import datastax.com.schemaElements.DataCenter;
+//import datastax.com.schemaElements.Environment;
+//import datastax.com.schemaElements.KeyspaceConfig;
+//
+//import java.io.IOException;
+//import java.util.Map;
+
+import com.datastax.oss.driver.api.core.*;
+import com.datastax.oss.driver.api.core.cql.*;
+import com.datastax.oss.driver.api.core.data.ByteUtils;
+import com.datastax.oss.driver.api.core.data.UdtValue;
+import com.datastax.oss.driver.api.querybuilder.delete.Delete;
+import com.datastax.oss.driver.api.querybuilder.insert.Insert;
+import com.datastax.oss.driver.api.querybuilder.select.Select;
+import com.datastax.oss.protocol.internal.util.Bytes;
+import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.*;
+import static datastax.com.dataObjects.AuditHistory.construcAuditEntryEntityStanzaSolrQuery;
+import static datastax.com.schemaElements.Keyspace.*;
+import static org.apache.commons.lang3.SerializationUtils.serialize;
+
 import com.github.javafaker.Faker;
 import datastax.com.CustomerMapper;
 import datastax.com.CustomerMapperEdge;
-import datastax.com.DAOs.AccountContactDao;
-import datastax.com.DAOs.AccountDao;
-import datastax.com.DAOs.AuditHistoryDao;
-import datastax.com.dataObjects.AccountContact;
-import datastax.com.schemaElements.DataCenter;
-import datastax.com.schemaElements.Environment;
-import datastax.com.schemaElements.KeyspaceConfig;
+import datastax.com.dataObjects.*;
+import datastax.com.DAOs.*;
+import datastax.com.schemaElements.*;
+import org.apache.commons.lang3.SerializationUtils;
+import org.json.JSONException;
+import org.json.JSONObject;
 
-import java.io.IOException;
-import java.util.Map;
+import java.io.*;
+import java.net.*;
+import java.nio.ByteBuffer;
+import java.text.ParseException;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 
 import static datastax.com.schemaElements.Keyspace.*;
 
 public class ServiceSimulator {
 
-    private static CustomerMapper customerMapper = null;
-    private static CustomerMapperEdge customerMapperEdge = null;
-    private AccountDao daoAccount = null;
-    private AccountContactDao daoAccountContact = null;
-    private AuditHistoryDao daoAuditHistory = null;
+    ServiceEnvironmentDetails serviceEnvironment;
 
-    private static Environment environment = null;
-    private static Map<DataCenter, CqlSession> sessionMap = null;
-    private static KeyspaceConfig ksConfig = null;
-
-
+    private static AtomicInteger transactionID = new AtomicInteger();
     Faker faker = new Faker();
 
-    ServiceSimulator() throws IOException {
-
-//        //Create environment and set local convenience variables based on environment
-//        environment = new Environment(Environment.AvailableEnviroments.L1);
-//        sessionMap = environment.getSessionMap();
-//        ksConfig = environment.getKeyspaceConfig();
-//
-//
-//        System.out.println("\tBeginning Mapper and DAO creation");
-//        customerMapper = new CustomerMapperBuilder(sessionMap.get(DataCenter.CORE)).build();
-//        customerMapperEdge = new CustomerMapperEdgeBuilder(sessionMap.get(DataCenter.EDGE)).build();
-//
-//        daoAccount = customerMapper.accountDao(ksConfig.getKeyspaceName(ACCOUNT_KS));
-//        daoAccountContact = customerMapperEdge.accountContactDao(ksConfig.getKeyspaceName(ACCOUNT_CONTACT_KS));
-//        daoAuditHistory = customerMapper.auditHistoryDao(ksConfig.getKeyspaceName(AUDIT_HISTORY_KS));
-//        System.out.println("\tMapper and DAO creation complete");
-
+    public ServiceSimulator(ServiceEnvironmentDetails servEnv) throws IOException {
+        serviceEnvironment = servEnv;
+        callAccountContactService();
     }
 
     private void callAccountContactService()
     {
         //generate contact data
+        ContactServiceSim.updateContactRecord(
+                String.valueOf(transactionID.incrementAndGet()),
+                generateAccountContactRecord(),
+                serviceEnvironment
+        );
 
 //        AccountContact contact = generateAccountContactRecord();
+//        daoAccountContact.save(contact);
+//
+//        AccountContact contact2 = generateAccountContactRecord();
+//        daoAccountContact.update(contact2);
     }
 
     private AccountContact generateAccountContactRecord(){

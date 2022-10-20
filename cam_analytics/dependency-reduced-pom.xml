@@ -1084,10 +1084,6 @@
           <groupId>com.googlecode.json-simple</groupId>
         </exclusion>
         <exclusion>
-          <artifactId>snakeyaml</artifactId>
-          <groupId>org.yaml</groupId>
-        </exclusion>
-        <exclusion>
           <artifactId>logback-core</artifactId>
           <groupId>ch.qos.logback</groupId>
         </exclusion>
@@ -1560,10 +1556,6 @@
         <exclusion>
           <artifactId>json-simple</artifactId>
           <groupId>com.googlecode.json-simple</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>snakeyaml</artifactId>
-          <groupId>org.yaml</groupId>
         </exclusion>
         <exclusion>
           <artifactId>reporter-config3</artifactId>

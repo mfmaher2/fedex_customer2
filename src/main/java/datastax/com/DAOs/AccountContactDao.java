@@ -13,6 +13,9 @@ public interface AccountContactDao {
     @Select
     PagingIterable<AccountContact> findAllByAccountNumber(String accountNum);
 
+    @Select(customWhereClause = "account_number = :accountNum AND opco = :opco AND contact_type_code = :contactTypeCode AND contact_business_id = :contactBusinessID")
+    AccountContact findByKeys(String accountNum, String opco, String contactTypeCode, String contactBusinessID);
+
     @Select(customWhereClause = "person__last_name = :lastName")
     PagingIterable<AccountContact> findAllByLastName(String lastName);
 
@@ -24,6 +27,9 @@ public interface AccountContactDao {
 
     @Update
     void update(AccountContact contact);
+
+    @Update
+    BoundStatement batchUpdate(AccountContact contact);
 
     @Delete
     void delete(AccountContact contact);

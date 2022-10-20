@@ -11,6 +11,7 @@ public class ServiceProcessCache {
     @PartitionKey @CqlName("transaction_id") private String transactionID;
     @ClusteringColumn(0) @CqlName("table_name") private String tableName;
     @ClusteringColumn(1) @CqlName("table_primary_key_values") private String tableKeyValues;
+    @CqlName("service_name") private String serviceName;
     @CqlName("prevous_entry") private ByteBuffer previousEntry;
     @Computed("writetime(prevous_entry)") private long previousEntry_wrtm;  //only @Computed or writetime() needed for rollback functionality
 
@@ -24,6 +25,9 @@ public class ServiceProcessCache {
 
     public String getTableKeyValues() { return tableKeyValues; }
     public void setTableKeyValues(String val) { tableKeyValues = val; }
+
+    public String getServiceName() {return serviceName;}
+    public void setServiceName(String val) { serviceName = val; }
 
     public ByteBuffer getPreviousEntry() { return previousEntry; }
     public void setPreviousEntry(ByteBuffer val) { previousEntry = val; }

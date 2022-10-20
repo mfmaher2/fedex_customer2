@@ -5,12 +5,13 @@ import com.datastax.oss.driver.api.mapper.annotations.CqlName;
 import com.datastax.oss.driver.api.mapper.annotations.Entity;
 import com.datastax.oss.driver.api.mapper.annotations.PartitionKey;
 
+import java.io.Serializable;
 import java.util.Map;
 import java.util.Set;
 
 @Entity
 @CqlName("account_contact")
-public class AccountContact {
+public class AccountContact implements Serializable {
     @PartitionKey private String accountNumber;
     @ClusteringColumn(0) private String opco;
     @ClusteringColumn(1) @CqlName("contact_type_code")private String contactTypeCode;
