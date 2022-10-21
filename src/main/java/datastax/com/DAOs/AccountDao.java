@@ -35,6 +35,9 @@ public interface AccountDao {
     @Update
     void update(Account account);
 
+    @Update
+    BoundStatement batchUpdate(Account account);
+
     @Delete
     void delete(Account account);
 
