@@ -43,6 +43,7 @@ public class ServiceSimulationTest {
     public void simulationTestNoFailures() throws IOException {
         ServiceEnvironmentDetails envDetails = new ServiceEnvironmentDetails(environment, sessionMap, ksConfig, customerMapper, customerMapperEdge);
         ServiceSimulator sim = new ServiceSimulator(envDetails);
+        sim.simulationServiceCalls(10, 25);
         assert(true);
     }
 
