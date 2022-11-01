@@ -1407,6 +1407,84 @@ public class CustomerTest {
         //reference for CQL manipulation for map type fields
         //https://docs.datastax.com/en/dse/5.1/cql/cql/cql_using/useInsertMap.html
     }
+    @Test
+    public void searchPhoneTest(){
+        String acctNum = "acctSolrPhoneNum";
+        CqlSession sessionSearch = sessionMap.get(DataCenter.SEARCH);
+
+        //Create elements to cleanup and verify table state prior to test
+        //Elements will also be used to cleanup and verify at conclusion of test
+        SimpleStatement stmtCleanup =  deleteFrom(ksConfig.getKeyspaceName(SEARCH_KS), "cam_search_v1")
+                .whereColumn("account_number").isEqualTo(literal(acctNum))
+                .build();
+
+        SimpleStatement stmtCleanupVerify = selectFrom(ksConfig.getKeyspaceName(SEARCH_KS), "cam_search_v1")
+                .all()
+                .whereColumn("account_number").isEqualTo(literal(acctNum))
+                .build();
+
+        sessionSearch.execute(stmtCleanup);
+        ResultSet rsVerifyCleanOnStart = sessionSearch.execute(stmtCleanupVerify);
+        assert(rsVerifyCleanOnStart.all().isEmpty());
+
+        SimpleStatement stmtEntry1 =  insertInto(ksConfig.getKeyspaceName(SEARCH_KS), "cam_search_v1")
+                .value("account_number", literal(acctNum))
+                .value("opco", literal("opco1"))
+                .value("contact_document_id", literal(1001))
+                .value("contact_type_code", literal("type1"))
+                .value("contact_business_id", literal("cBus1"))
+                .value("company_name", literal("FedExDotCom"))
+                .value("person__first_name", literal("Bob"))
+                .value("person__last_name", literal("Smity"))
+                .build();
+        sessionSearch.execute(stmtEntry1);
+
+        SimpleStatement stmtEntry2 =  insertInto(ksConfig.getKeyspaceName(SEARCH_KS), "cam_search_v1")
+                .value("account_number", literal(acctNum))
+                .value("opco", literal("opco2"))
+                .value("contact_document_id", literal(1002))
+                .value("contact_type_code", literal("type2"))
+                .value("contact_business_id", literal("cBus2"))
+                .value("company_name", literal("FedEx"))
+                .value("person__first_name", literal("Andrew"))
+                .value("person__last_name", literal("Miller"))
+                .build();
+        sessionSearch.execute(stmtEntry2);
+
+
+        TelecomDetailsType tele3 = new TelecomDetailsType();
+        tele3.setPhoneNumber("555.1113");
+        SimpleStatement stmtEntry3 =  insertInto(ksConfig.getKeyspaceName(SEARCH_KS), "cam_search_v1")
+                .value("account_number", literal(acctNum))
+                .value("opco", literal("opco3"))
+                .value("contact_document_id", literal(1003))
+                .value("contact_type_code", literal("type3"))
+                .value("contact_business_id", literal("cBus3"))
+                .value()
+                .value("company_name", literal("FedEx#Ground"))
+                .value("person__first_name", literal("John Andrew"))
+                .value("person__last_name", literal("Jones"))
+                .build();
+        sessionSearch.execute(stmtEntry3);
+
+        SimpleStatement stmtEntry4 =  insertInto(ksConfig.getKeyspaceName(SEARCH_KS), "cam_search_v1")
+                .value("account_number", literal(acctNum))
+                .value("opco", literal("opco4"))
+                .value("contact_document_id", literal(1004))
+                .value("contact_type_code", literal("type4"))
+                .value("contact_business_id", literal("cBus4"))
+                .value("company_name", literal("FedExDotom"))
+                .value("person__first_name", literal("John"))
+                .value("person__last_name", literal("Smity"))
+                .build();
+        sessionSearch.execute(stmtEntry4);
+
+        //pause to allow Solr index to update
+        Thread.sleep(11000);
+
+
+    }
+
 
     @Test
     public void searchPropTypeTest() throws InterruptedException {
