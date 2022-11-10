@@ -1,4 +1,4 @@
-CREATE TYPE IF NOT EXISTS cam_search_<ENV_LEVEL_ID>ks.telecom_details_type (
+CREATE TYPE IF NOT EXISTS @datastax_app_name@_search@datastax_app_level@ks.telecom_details_type (
     telecom_method text,
     numeric_country_code text,
     alpha_country_code text,
@@ -10,18 +10,18 @@ CREATE TYPE IF NOT EXISTS cam_search_<ENV_LEVEL_ID>ks.telecom_details_type (
     text_message_flag boolean
 );
 
-CREATE TYPE IF NOT EXISTS cam_audit_history_<ENV_LEVEL_ID>ks.history_additional_identifier_type (
+CREATE TYPE IF NOT EXISTS @datastax_app_name@_audit_history@datastax_app_level@ks.history_additional_identifier_type (
     type text,
     value text
 );
 
-CREATE TYPE IF NOT EXISTS cam_audit_history_<ENV_LEVEL_ID>ks.history_entity_type (
+CREATE TYPE IF NOT EXISTS @datastax_app_name@_audit_history@datastax_app_level@ks.history_entity_type (
     action text,
     stanza_name text,
     stanza text
 );
 
-CREATE TYPE IF NOT EXISTS cam_audit_history_<ENV_LEVEL_ID>ks.history_field_type (
+CREATE TYPE IF NOT EXISTS @datastax_app_name@_audit_history@datastax_app_level@ks.history_field_type (
     action text,
     stanza_name text,
     field_name text,
@@ -29,7 +29,7 @@ CREATE TYPE IF NOT EXISTS cam_audit_history_<ENV_LEVEL_ID>ks.history_field_type 
     new_value text
 );
 
-CREATE TYPE IF NOT EXISTS cam_audit_history_<ENV_LEVEL_ID>ks.audit_history_entry (
+CREATE TYPE IF NOT EXISTS @datastax_app_name@_audit_history@datastax_app_level@ks.audit_history_entry (
      opco text,
      history_detail__descriptive_identifier text,
      history_detail__additional_identifier__key set<frozen<history_additional_identifier_type>>,
@@ -37,12 +37,12 @@ CREATE TYPE IF NOT EXISTS cam_audit_history_<ENV_LEVEL_ID>ks.audit_history_entry
      history_detail__field set<frozen<history_field_type>>,
 );
 
-CREATE TYPE IF NOT EXISTS cam_time_event_<ENV_LEVEL_ID>ks.time_event_additional_details_items(
+CREATE TYPE IF NOT EXISTS @datastax_app_name@_time_event@datastax_app_level@ks.time_event_additional_details_items(
     name text,
     value text
 );
 
-CREATE TABLE IF NOT EXISTS cam_audit_history_<ENV_LEVEL_ID>ks.audit_history_v1 (
+CREATE TABLE IF NOT EXISTS @datastax_app_name@_audit_history@datastax_app_level@ks.audit_history_v1 (
      account_number text,
      last_update_tmstp timestamp,
      audit_details set<frozen<audit_history_entry>>,
@@ -69,7 +69,7 @@ CREATE TABLE IF NOT EXISTS cam_audit_history_<ENV_LEVEL_ID>ks.audit_history_v1 (
      AND read_repair_chance = 0.0
      AND speculative_retry = '99PERCENTILE';
 
-CREATE TABLE IF NOT EXISTS cam_time_event_<ENV_LEVEL_ID>ks.time_event_v1 (
+CREATE TABLE IF NOT EXISTS @datastax_app_name@_time_event@datastax_app_level@ks.time_event_v1 (
     account_number text,
     type text,             -- possible values: MONTHLY_BILLING_INDICATOR,ACCOUNT_RESTORE
     status text,           -- possible values: FAILED,IN_PROGRESS,NOT_STARTED,SUCCESS
@@ -96,7 +96,7 @@ WITH CLUSTERING ORDER BY (process_time DESC, type ASC, status ASC)
     AND speculative_retry = '99PERCENTILE';
 
 --Possible search use case specific table
-CREATE TABLE IF NOT EXISTS cam_search_<ENV_LEVEL_ID>ks.cam_search_v1 (
+CREATE TABLE IF NOT EXISTS @datastax_app_name@_search@datastax_app_level@ks.cam_search_v1 (
     account_number text,
     opco text,
     last_update_tmstp timestamp,
@@ -144,7 +144,7 @@ WITH CLUSTERING ORDER BY(opco ASC, contact_type_code ASC, contact_business_id AS
     AND read_repair_chance = 0.0
     AND speculative_retry = '99PERCENTILE';
 
-CREATE TABLE IF NOT EXISTS system_operations_<ENV_LEVEL_ID>ks.component_process_cache (
+CREATE TABLE IF NOT EXISTS system_operations@datastax_app_level@ks.component_process_cache (
     transaction_id text, --todo change to UUID
 --    transaction_id uuid, --todo use UUID type
     service_name text,
@@ -174,7 +174,7 @@ WITH CLUSTERING ORDER BY(table_name ASC, table_primary_key_values ASC)
     AND speculative_retry = '99PERCENTILE';
 
 
-CREATE TABLE IF NOT EXISTS system_operations_<ENV_LEVEL_ID>ks.component_process_audit_message (
+CREATE TABLE IF NOT EXISTS system_operations@datastax_app_level@ks.component_process_audit_message (
     transaction_id text, --todo change to UUID
 --    transaction_id uuid, --todo use UUID type
     service_name text,
@@ -198,7 +198,7 @@ WITH CLUSTERING ORDER BY(service_name ASC)
     AND read_repair_chance = 0.0
     AND speculative_retry = '99PERCENTILE';
 
-CREATE TABLE IF NOT EXISTS system_operations_<ENV_LEVEL_ID>ks.component_process_audit_fields (
+CREATE TABLE IF NOT EXISTS system_operations@datastax_app_level@ks.component_process_audit_fields (
     transaction_id text, --todo change to UUID
 --    transaction_id uuid, --todo use UUID type
     service_name text,

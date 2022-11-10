@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS cam_sequence_<ENV_LEVEL_ID>ks.sequence_num_tbl (
+CREATE TABLE IF NOT EXISTS @datastax_app_name@_sequence@datastax_app_level@ks.sequence_num_tbl (
     domain text,
     sequence_name text,
     current_num int,
@@ -7,14 +7,14 @@ CREATE TABLE IF NOT EXISTS cam_sequence_<ENV_LEVEL_ID>ks.sequence_num_tbl (
     is_wrapped boolean,
     PRIMARY KEY ((domain, sequence_name)));
 
-CREATE TABLE IF NOT EXISTS cam_sequence_<ENV_LEVEL_ID>ks.id_available (
+CREATE TABLE IF NOT EXISTS @datastax_app_name@_sequence@datastax_app_level@ks.id_available (
     domain text,
     identifier text,
     PRIMARY KEY (domain, identifier)
 ) WITH CLUSTERING ORDER BY(identifier ASC)
 ;
 
-CREATE TABLE IF NOT EXISTS cam_sequence_<ENV_LEVEL_ID>ks.id_assignment (
+CREATE TABLE IF NOT EXISTS @datastax_app_name@_sequence@datastax_app_level@ks.id_assignment (
     domain text,
     identifier text,
     assigned_by text,
@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS cam_sequence_<ENV_LEVEL_ID>ks.id_assignment (
 ) WITH CLUSTERING ORDER BY(identifier ASC)
 ;
 
-CREATE TABLE IF NOT EXISTS cam_sequence_<ENV_LEVEL_ID>ks.id_assignment_single (
+CREATE TABLE IF NOT EXISTS @datastax_app_name@_sequence@datastax_app_level@ks.id_assignment_single (
     domain text,
     identifier text,
     assigned_by text,
@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS cam_sequence_<ENV_LEVEL_ID>ks.id_assignment_single (
 ;
 
 -- example using composite partition key with bucket
-CREATE TABLE IF NOT EXISTS cam_sequence_<ENV_LEVEL_ID>ks.id_assignment_single_bucket (
+CREATE TABLE IF NOT EXISTS @datastax_app_name@_sequence@datastax_app_level@ks.id_assignment_single_bucket (
     domain text,
     bucket int,
     identifier text,
@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS cam_sequence_<ENV_LEVEL_ID>ks.id_assignment_single_bu
 ) WITH CLUSTERING ORDER BY(identifier ASC)
 ;
 
-CREATE TYPE IF NOT EXISTS cam_account_contact_<ENV_LEVEL_ID>ks.telecom_details_type (
+CREATE TYPE IF NOT EXISTS @datastax_app_name@_account_contact@datastax_app_level@ks.telecom_details_type (
     telecom_method text,
     numeric_country_code text,
     alpha_country_code text,
@@ -52,7 +52,7 @@ CREATE TYPE IF NOT EXISTS cam_account_contact_<ENV_LEVEL_ID>ks.telecom_details_t
     text_message_flag boolean
 );
 
-CREATE TYPE IF NOT EXISTS cam_account_contact_archive_<ENV_LEVEL_ID>ks.telecom_details_type (
+CREATE TYPE IF NOT EXISTS @datastax_app_name@_account_contact_archive@datastax_app_level@ks.telecom_details_type (
     telecom_method text,
     numeric_country_code text,
     alpha_country_code text,
@@ -65,7 +65,7 @@ CREATE TYPE IF NOT EXISTS cam_account_contact_archive_<ENV_LEVEL_ID>ks.telecom_d
 );
 
 
-CREATE TYPE IF NOT EXISTS cam_line_of_business_<ENV_LEVEL_ID>ks.telecom_details_type (
+CREATE TYPE IF NOT EXISTS @datastax_app_name@_line_of_business@datastax_app_level@ks.telecom_details_type (
     telecom_method text,
     numeric_country_code text,
     alpha_country_code text,
@@ -77,7 +77,7 @@ CREATE TYPE IF NOT EXISTS cam_line_of_business_<ENV_LEVEL_ID>ks.telecom_details_
     text_message_flag boolean
 );
 
-CREATE TYPE IF NOT EXISTS cam_line_of_business_archive_<ENV_LEVEL_ID>ks.telecom_details_type (
+CREATE TYPE IF NOT EXISTS @datastax_app_name@_line_of_business_archive@datastax_app_level@ks.telecom_details_type (
     telecom_method text,
     numeric_country_code text,
     alpha_country_code text,
@@ -89,44 +89,44 @@ CREATE TYPE IF NOT EXISTS cam_line_of_business_archive_<ENV_LEVEL_ID>ks.telecom_
     text_message_flag boolean
 );
 
-CREATE TYPE IF NOT EXISTS cam_account_contact_<ENV_LEVEL_ID>ks.social_media_type (
+CREATE TYPE IF NOT EXISTS @datastax_app_name@_account_contact@datastax_app_level@ks.social_media_type (
     type_code text,
     value text
 );
 
-CREATE TYPE IF NOT EXISTS cam_account_contact_archive_<ENV_LEVEL_ID>ks.social_media_type (
+CREATE TYPE IF NOT EXISTS @datastax_app_name@_account_contact_archive@datastax_app_level@ks.social_media_type (
     type_code text,
     value text
 );
 
-CREATE TYPE IF NOT EXISTS cam_line_of_business_<ENV_LEVEL_ID>ks.social_media_type (
+CREATE TYPE IF NOT EXISTS @datastax_app_name@_line_of_business@datastax_app_level@ks.social_media_type (
     type_code text,
     value text
 );
 
-CREATE TYPE IF NOT EXISTS cam_line_of_business_archive_<ENV_LEVEL_ID>ks.social_media_type (
+CREATE TYPE IF NOT EXISTS @datastax_app_name@_line_of_business_archive@datastax_app_level@ks.social_media_type (
     type_code text,
     value text
 );
 
-CREATE TYPE IF NOT EXISTS cam_account_<ENV_LEVEL_ID>ks.tax_data_type (
+CREATE TYPE IF NOT EXISTS @datastax_app_name@_account@datastax_app_level@ks.tax_data_type (
     tax_id text,
     tax_id_desc text
 );
 
-CREATE TYPE IF NOT EXISTS cam_account_<ENV_LEVEL_ID>ks.tax_exempt_data_type (
+CREATE TYPE IF NOT EXISTS @datastax_app_name@_account@datastax_app_level@ks.tax_exempt_data_type (
     tax_exempt_id text,
     tax_exempt_id_desc text,
     tax_exempt_flag boolean
 );
 
-CREATE TYPE IF NOT EXISTS cam_account_archive_<ENV_LEVEL_ID>ks.tax_exempt_data_type (
+CREATE TYPE IF NOT EXISTS @datastax_app_name@_account_archive@datastax_app_level@ks.tax_exempt_data_type (
     tax_exempt_id text,
     tax_exempt_id_desc text,
     tax_exempt_flag boolean
 );
 
-CREATE TYPE IF NOT EXISTS cam_account_<ENV_LEVEL_ID>ks.potential_revenue_type (
+CREATE TYPE IF NOT EXISTS @datastax_app_name@_account@datastax_app_level@ks.potential_revenue_type (
     shipping_revenue_type text,
     time_period text,
     shipping_package_quantity text,
@@ -138,7 +138,7 @@ CREATE TYPE IF NOT EXISTS cam_account_<ENV_LEVEL_ID>ks.potential_revenue_type (
     shipping_package_percent text
 );
 
-CREATE TYPE IF NOT EXISTS cam_account_<ENV_LEVEL_ID>ks.other_potential_info_type (
+CREATE TYPE IF NOT EXISTS @datastax_app_name@_account@datastax_app_level@ks.other_potential_info_type (
     revenue_event_source text,
     revenue_comments text,
     comment_sequence_nbr int,
@@ -146,7 +146,7 @@ CREATE TYPE IF NOT EXISTS cam_account_<ENV_LEVEL_ID>ks.other_potential_info_type
     program text
 );
 
-CREATE TYPE IF NOT EXISTS cam_account_archive_<ENV_LEVEL_ID>ks.potential_revenue_type (
+CREATE TYPE IF NOT EXISTS @datastax_app_name@_account_archive@datastax_app_level@ks.potential_revenue_type (
     shipping_revenue_type text,
     time_period text,
     shipping_package_quantity text,
@@ -158,7 +158,7 @@ CREATE TYPE IF NOT EXISTS cam_account_archive_<ENV_LEVEL_ID>ks.potential_revenue
     shipping_package_percent text
 );
 
-CREATE TYPE IF NOT EXISTS cam_account_archive_<ENV_LEVEL_ID>ks.other_potential_info_type (
+CREATE TYPE IF NOT EXISTS @datastax_app_name@_account_archive@datastax_app_level@ks.other_potential_info_type (
     revenue_event_source text,
     revenue_comments text,
     comment_sequence_nbr int,
@@ -166,7 +166,7 @@ CREATE TYPE IF NOT EXISTS cam_account_archive_<ENV_LEVEL_ID>ks.other_potential_i
     program text
 );
 
-CREATE TABLE IF NOT EXISTS cam_account_<ENV_LEVEL_ID>ks.cust_acct_v1 (
+CREATE TABLE IF NOT EXISTS @datastax_app_name@_account@datastax_app_level@ks.cust_acct_v1 (
     account_number text,
     opco text,
     last_update_tmstp timestamp,
@@ -573,7 +573,7 @@ WITH CLUSTERING ORDER BY (opco ASC)
     AND read_repair_chance = 0.0
     AND speculative_retry = '99PERCENTILE';
 
-CREATE TABLE IF NOT EXISTS cam_apply_discount_<ENV_LEVEL_ID>ks.apply_discount_detail_v1 (
+CREATE TABLE IF NOT EXISTS @datastax_app_name@_apply_discount@datastax_app_level@ks.apply_discount_detail_v1 (
     account_number text,
     opco text,
     last_update_tmstp timestamp,
@@ -597,7 +597,7 @@ WITH CLUSTERING ORDER BY(opco ASC, apply_discount__effective_date_time DESC)
     AND read_repair_chance = 0.0
     AND speculative_retry = '99PERCENTILE';
 
-CREATE TABLE IF NOT EXISTS cam_payment_info_<ENV_LEVEL_ID>ks.payment_info_v1 (
+CREATE TABLE IF NOT EXISTS @datastax_app_name@_payment_info@datastax_app_level@ks.payment_info_v1 (
     account_number text,
     opco text,
     last_update_tmstp timestamp,
@@ -769,7 +769,7 @@ WITH CLUSTERING ORDER BY(opco ASC, record_type_cd ASC, record_key ASC, record_se
     AND read_repair_chance = 0.0
     AND speculative_retry = '99PERCENTILE';
 
-CREATE TABLE IF NOT EXISTS cam_account_contact_<ENV_LEVEL_ID>ks.account_contact (
+CREATE TABLE IF NOT EXISTS @datastax_app_name@_account_contact@datastax_app_level@ks.account_contact (
     account_number text,
     opco text,
     last_update_tmstp timestamp,
@@ -850,7 +850,7 @@ WITH CLUSTERING ORDER BY(opco ASC, contact_type_code ASC, contact_business_id AS
     AND read_repair_chance = 0.0
     AND speculative_retry = '99PERCENTILE';
 
-CREATE TABLE IF NOT EXISTS cam_assoc_account_<ENV_LEVEL_ID>ks.assoc_accounts_v1 (
+CREATE TABLE IF NOT EXISTS @datastax_app_name@_assoc_account@datastax_app_level@ks.assoc_accounts_v1 (
     account_number text,
     associated_account__opco text,
     associated_account__number text,
@@ -872,7 +872,7 @@ WITH CLUSTERING ORDER BY(associated_account__opco ASC, associated_account__numbe
     AND read_repair_chance = 0.0
     AND speculative_retry = '99PERCENTILE';
 
-CREATE TABLE IF NOT EXISTS cam_account_<ENV_LEVEL_ID>ks.national_account_v1  (
+CREATE TABLE IF NOT EXISTS @datastax_app_name@_account@datastax_app_level@ks.national_account_v1  (
     account_number text,
     opco text,
     last_update_tmstp timestamp,
@@ -900,7 +900,7 @@ CREATE TABLE IF NOT EXISTS cam_account_<ENV_LEVEL_ID>ks.national_account_v1  (
 
 --groupId
 --groupMembership
-CREATE TABLE IF NOT EXISTS cam_group_<ENV_LEVEL_ID>ks.group_info_v1 (
+CREATE TABLE IF NOT EXISTS @datastax_app_name@_group@datastax_app_level@ks.group_info_v1 (
      account_number text,
      opco text,
      last_update_tmstp timestamp,
@@ -929,7 +929,7 @@ CREATE TABLE IF NOT EXISTS cam_group_<ENV_LEVEL_ID>ks.group_info_v1 (
      AND speculative_retry = '99PERCENTILE';
 
 --comments
-CREATE TABLE IF NOT EXISTS cam_comment_<ENV_LEVEL_ID>ks.comment_v1 (
+CREATE TABLE IF NOT EXISTS @datastax_app_name@_comment@datastax_app_level@ks.comment_v1 (
     account_number text,
     opco text,
     last_update_tmstp timestamp,
@@ -958,7 +958,7 @@ WITH CLUSTERING ORDER BY(opco ASC, comment__type ASC, comment__comment_date_time
     AND read_repair_chance = 0.0
     AND speculative_retry = '99PERCENTILE';
 
-CREATE TABLE IF NOT EXISTS cam_centralized_view_<ENV_LEVEL_ID>ks.centralized_view_v1 (
+CREATE TABLE IF NOT EXISTS @datastax_app_name@_centralized_view@datastax_app_level@ks.centralized_view_v1 (
     account_number text,
     last_update_tmstp timestamp,
     account_status__status_code text,
@@ -980,7 +980,7 @@ WITH bloom_filter_fp_chance = 0.01
     AND read_repair_chance = 0.0
     AND speculative_retry = '99PERCENTILE';
 
-CREATE TABLE IF NOT EXISTS cam_line_of_business_<ENV_LEVEL_ID>ks.line_of_business_v1 (
+CREATE TABLE IF NOT EXISTS @datastax_app_name@_line_of_business@datastax_app_level@ks.line_of_business_v1 (
     account_number text,
     opco text,
     last_update_tmstp timestamp,
@@ -1076,7 +1076,7 @@ CREATE TABLE IF NOT EXISTS cam_line_of_business_<ENV_LEVEL_ID>ks.line_of_busines
 
 -- expressCustomerAccountDynamicProfile
 -- groundCustomerAccountDynamicProfile
-CREATE TABLE IF NOT EXISTS cam_dynamic_profile_<ENV_LEVEL_ID>ks.account_dynamic_profile_v1 (
+CREATE TABLE IF NOT EXISTS @datastax_app_name@_dynamic_profile@datastax_app_level@ks.account_dynamic_profile_v1 (
     account_number text,
     opco text,
     last_update_tmstp timestamp,
@@ -1112,7 +1112,7 @@ WITH CLUSTERING ORDER BY (opco ASC, payor_type ASC, shipment_type ASC)
 -- expressCustomerEntityDynamicProfile
 -- groundCustomerEntityDynamicProfile
 -- freightCustomerEntityDynamicProfile
-CREATE TABLE IF NOT EXISTS cam_dynamic_profile_<ENV_LEVEL_ID>ks.entity_dynamic_profile_v1 (
+CREATE TABLE IF NOT EXISTS @datastax_app_name@_dynamic_profile@datastax_app_level@ks.entity_dynamic_profile_v1 (
     entity_number text,
     opco text,
     last_update_tmstp timestamp,
@@ -1139,7 +1139,7 @@ CREATE TABLE IF NOT EXISTS cam_dynamic_profile_<ENV_LEVEL_ID>ks.entity_dynamic_p
 
 -- expressInvoicePaymentProfile
 -- need _v1 in table name?
-CREATE TABLE IF NOT EXISTS cam_dynamic_profile_<ENV_LEVEL_ID>ks.invoice_payment_profile_v1 (
+CREATE TABLE IF NOT EXISTS @datastax_app_name@_dynamic_profile@datastax_app_level@ks.invoice_payment_profile_v1 (
     account_number text,
     opco text,
     last_update_tmstp timestamp,
@@ -1170,7 +1170,7 @@ WITH CLUSTERING ORDER BY (opco ASC, payor_type ASC, shipment_type ASC)
 --***
 -- Archive tables
 --***
-CREATE TABLE IF NOT EXISTS cam_account_archive_<ENV_LEVEL_ID>ks.cust_acct_v1 (
+CREATE TABLE IF NOT EXISTS @datastax_app_name@_account_archive@datastax_app_level@ks.cust_acct_v1 (
     account_number text,
     opco text,
     last_update_tmstp timestamp,
@@ -1581,7 +1581,7 @@ WITH CLUSTERING ORDER BY (opco ASC, archive_tmstp DESC)
     AND read_repair_chance = 0.0
     AND speculative_retry = '99PERCENTILE';
 
-CREATE TABLE IF NOT EXISTS cam_account_contact_archive_<ENV_LEVEL_ID>ks.account_contact (
+CREATE TABLE IF NOT EXISTS @datastax_app_name@_account_contact_archive@datastax_app_level@ks.account_contact (
     account_number text,
     opco text,
     last_update_tmstp timestamp,
@@ -1664,7 +1664,7 @@ WITH CLUSTERING ORDER BY(opco ASC, contact_type_code ASC, contact_business_id AS
     AND read_repair_chance = 0.0
     AND speculative_retry = '99PERCENTILE';
 
-CREATE TABLE IF NOT EXISTS cam_assoc_account_archive_<ENV_LEVEL_ID>ks.assoc_accounts_v1 (
+CREATE TABLE IF NOT EXISTS @datastax_app_name@_assoc_account_archive@datastax_app_level@ks.assoc_accounts_v1 (
     account_number text,
     associated_account__opco text,
     associated_account__number text,
@@ -1688,7 +1688,7 @@ WITH CLUSTERING ORDER BY(associated_account__opco ASC, associated_account__numbe
     AND read_repair_chance = 0.0
     AND speculative_retry = '99PERCENTILE';
 
-CREATE TABLE IF NOT EXISTS cam_apply_discount_archive_<ENV_LEVEL_ID>ks.apply_discount_detail_v1 (
+CREATE TABLE IF NOT EXISTS @datastax_app_name@_apply_discount_archive@datastax_app_level@ks.apply_discount_detail_v1 (
     account_number text,
     opco text,
     last_update_tmstp timestamp,
@@ -1714,7 +1714,7 @@ WITH CLUSTERING ORDER BY(opco ASC, apply_discount__effective_date_time DESC, arc
     AND read_repair_chance = 0.0
     AND speculative_retry = '99PERCENTILE';
 
-CREATE TABLE IF NOT EXISTS cam_line_of_business_archive_<ENV_LEVEL_ID>ks.line_of_business_v1 (
+CREATE TABLE IF NOT EXISTS @datastax_app_name@_line_of_business_archive@datastax_app_level@ks.line_of_business_v1 (
     account_number text,
     opco text,
     last_update_tmstp timestamp,
@@ -1810,7 +1810,7 @@ CREATE TABLE IF NOT EXISTS cam_line_of_business_archive_<ENV_LEVEL_ID>ks.line_of
      AND read_repair_chance = 0.0
      AND speculative_retry = '99PERCENTILE';
 
-CREATE TABLE IF NOT EXISTS cam_centralized_view_archive_<ENV_LEVEL_ID>ks.centralized_view_v1 (
+CREATE TABLE IF NOT EXISTS @datastax_app_name@_centralized_view_archive@datastax_app_level@ks.centralized_view_v1 (
     account_number text,
     last_update_tmstp timestamp,
     account_status__status_code text,
@@ -1835,7 +1835,7 @@ WITH CLUSTERING ORDER BY(archive_tmstp DESC)
     AND read_repair_chance = 0.0
     AND speculative_retry = '99PERCENTILE';
 
-CREATE TABLE IF NOT EXISTS cam_payment_info_<ENV_LEVEL_ID>archive_ks.payment_info_v1 (
+CREATE TABLE IF NOT EXISTS @datastax_app_name@_payment_info@datastax_app_level@archive_ks.payment_info_v1 (
     account_number text,
     opco text,
     last_update_tmstp timestamp,

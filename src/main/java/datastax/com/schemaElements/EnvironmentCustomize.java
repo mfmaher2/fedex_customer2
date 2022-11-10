@@ -16,7 +16,8 @@ import java.util.stream.Stream;
 public class EnvironmentCustomize
 {
     //schema replacement values
-    protected final String ENV_ID_PLACEHOLDER = "ENV_LEVEL_ID";
+    protected final String ENV_ID_PLACEHOLDER = "datastax_app_level";
+    protected final String APP_ID_PLACEHOLDER = "datastax_app_name";
 
     //output schema files, output files with customized values
     protected final String CAM_DDL_FILE = "cam_ddl.cql";
@@ -68,6 +69,7 @@ public class EnvironmentCustomize
         mapReplaceContent.put("SEQ_NUM_SCHEMA", TEST_SEQ_NUM_FILE);
 
         mapReplaceContent.put(ENV_ID_PLACEHOLDER, envConfig.environmentID);
+        mapReplaceContent.put(APP_ID_PLACEHOLDER, envConfig.appID);
 
         mapReplaceContent.put("SCHEMA_FOLDER", outputDirectory);
         mapReplaceContent.put("DATA_FILES_PATH", envConfig.dataFilesPath);
@@ -83,7 +85,7 @@ public class EnvironmentCustomize
 
         //assign translation values and create common substitutor to be used for all files
         assignScriptReplacementValues();
-        StrSubstitutor substitutor = new  StrSubstitutor(mapReplaceContent, "<", ">");
+        StrSubstitutor substitutor = new  StrSubstitutor(mapReplaceContent, "@", "@");
 
         mapSourceToDestFiles.forEach((sourceFile, destinationFile) -> {
             String sourceFullPath = envConfig.sourceFilesPath + "/" + sourceFile;

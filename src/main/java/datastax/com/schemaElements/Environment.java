@@ -46,6 +46,7 @@ public class Environment {
         EnvironmentCustomizeParameters environmentParams = new EnvironmentCustomizeParameters();
 
         //common values
+        environmentParams.appID = "cam";
         environmentParams.sourceFilesPath = Paths.get("src/main/resources/genericSchema/").toAbsolutePath().toString();
         environmentParams.dataFilesPath = Paths.get("src/test/testData").toAbsolutePath().toString();
         environmentParams.cqlshPath = "/Users/michaeldownie/dse/dse-5.1.14/bin/cqlsh";
@@ -64,7 +65,7 @@ public class Environment {
         //**********
         ksConfig = new KeyspaceConfigSingleDC("SearchGraphAnalytics");
 
-        environmentParams.environmentID = "l1_";
+        environmentParams.environmentID = "_l1_";
         environmentParams.schemaCreateHost = "127.0.0.1";
         environmentParams.schemaCreatePort = "9042";
         environmentParams.searchIndexCreateHost = "127.0.0.1";
@@ -92,7 +93,7 @@ public class Environment {
         //** Begin L4 environment config
         ksConfig = new KeyspaceConfigMultiDC("core", "edge", "search");
 
-        environmentParams.environmentID = "";
+        environmentParams.environmentID = "_";
         environmentParams.schemaCreateHost = "127.0.0.1";
         environmentParams.schemaCreatePort = "9042";
         environmentParams.searchIndexCreateHost = "127.0.0.1";
