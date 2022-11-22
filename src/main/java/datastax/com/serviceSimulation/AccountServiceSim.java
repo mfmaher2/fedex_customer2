@@ -10,13 +10,14 @@ import datastax.com.schemaElements.DataCenter;
 import org.apache.commons.lang3.SerializationUtils;
 
 import java.nio.ByteBuffer;
+import java.util.UUID;
 
 public class AccountServiceSim {
 
     static private final String TABLE_NAME = "cust_acct_v1";
     static private final String SERVICE_NAME = "AccountService";
     static private final String KEY_DELIMITER = "|";
-    public static boolean updateAccountEnterpriseSource(String transactionID, String accountNum, String opco, String newEntSource, ServiceEnvironmentDetails envDetails){
+    public static boolean updateAccountEnterpriseSource(UUID transactionID, String accountNum, String opco, String newEntSource, ServiceEnvironmentDetails envDetails){
         boolean returnCode = true;
 
         //Prepare record update

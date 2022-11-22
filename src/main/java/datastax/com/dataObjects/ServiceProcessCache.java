@@ -4,17 +4,18 @@ import com.datastax.oss.driver.api.mapper.annotations.*;
 
 import java.nio.ByteBuffer;
 import java.time.Instant;
+import java.util.UUID;
 
 @Entity
-@CqlName("component_process_cache")
+@CqlName("component_processing")
 public class ServiceProcessCache {
 
-    @PartitionKey @CqlName("transaction_id") private String transactionID;
+    @PartitionKey @CqlName("transaction_id") private UUID transactionID;
     @ClusteringColumn(0) @CqlName("table_name") private String tableName;
     @ClusteringColumn(1) @CqlName("table_primary_key_values") private String tableKeyValues;
     @CqlName("service_name") private String serviceName;
-    @CqlName("prevous_entry") private ByteBuffer previousEntry;
-    @Computed("writetime(prevous_entry)") private long previousEntry_wrtm;  //only @Computed or writetime() needed for rollback functionality
+    @CqlName("previous_entry") private ByteBuffer previousEntry;
+    @Computed("writetime(previous_entry)") private long previousEntry_wrtm;  //only @Computed or writetime() needed for rollback functionality
     @CqlName("new_entry") private ByteBuffer newEntry;
     @CqlName("publish_message") private ByteBuffer publishMessage;
     @CqlName("status_code") private String statusCode;
@@ -22,8 +23,8 @@ public class ServiceProcessCache {
 
     public ServiceProcessCache() {};
 
-    public String getTransactionID() { return transactionID; }
-    public void setTransactionID(String val) { transactionID = val; }
+    public UUID getTransactionID() { return transactionID; }
+    public void setTransactionID(UUID val) { transactionID = val; }
 
     public String getTableName() { return tableName; }
     public void setTableName(String val) { tableName = val; }

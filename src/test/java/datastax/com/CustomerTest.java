@@ -52,10 +52,10 @@ public class CustomerTest {
     static AccountContactDao daoAccountContact = null;
     static ServiceProcessCacheDao daoServiceProcess = null;
 
-    private static boolean skipSchemaCreation = false;
-    private static boolean skipDataLoad = false;
+    private static boolean skipSchemaCreation = true;
+    private static boolean skipDataLoad = true;
     private static boolean skipKeyspaceDropOnExit = true;
-    private static boolean skipKeyspaceDrop = false;
+    private static boolean skipKeyspaceDrop = true;
     private static boolean skipIndividualTableDrop = false;
     private static String productName = "Customer" ;
     private static Environment environment = null;
@@ -379,7 +379,7 @@ public class CustomerTest {
         acctAttempt.setProfileAccountStatusCode(attemptStatusCode);
 
         //create cache entr for attempted update
-        String transID = "acctRollbackCache";
+        UUID transID = UUID.randomUUID();
         String tblName = "account";
         String keyValues = acctNum + "|" + opco;
         ServiceProcessCache cacheAcct = new ServiceProcessCache();
@@ -471,7 +471,7 @@ public class CustomerTest {
         Account foundAcct2 = daoAccount.findByAccountNumber(acctNum);
         System.out.println("acct write time - " + foundAcct2.getProfileCustomerType_wrtm());
 
-        String transID = "testTxID_1";
+        UUID transID = UUID.randomUUID();
         String serviceName = "srvc_1";
         String tableName = "tbl_1";
         String delimiter = "|";
@@ -480,6 +480,7 @@ public class CustomerTest {
 
         ServiceProcessCache cacheEntry = new ServiceProcessCache();
         cacheEntry.setTransactionID(transID);
+        cacheEntry.setServiceName(serviceName);
         cacheEntry.setTableName(tableName);
         cacheEntry.setTableKeyValues(keyValues);
         cacheEntry.setPreviousEntry(ByteBuffer.wrap(acctObj, 0, acctObj.length));

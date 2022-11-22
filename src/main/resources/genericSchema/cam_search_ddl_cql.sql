@@ -144,17 +144,18 @@ WITH CLUSTERING ORDER BY(opco ASC, contact_type_code ASC, contact_business_id AS
     AND read_repair_chance = 0.0
     AND speculative_retry = '99PERCENTILE';
 
-CREATE TABLE IF NOT EXISTS system_operations@datastax_app_level@ks.component_process_cache (
-    transaction_id text, --todo change to UUID
---    transaction_id uuid, --todo use UUID type
+CREATE TABLE IF NOT EXISTS system_operations@datastax_app_level@ks.component_processing (
+    transaction_id uuid,
     service_name text,
     table_name text,
+    service_url text,
     table_primary_key_properties text,
     table_primary_key_values text,
-    prevous_entry blob,
+    previous_entry blob,
     new_entry blob,
     publish_message blob,
     status_code text,
+    retry_count int,
     last_update_tmstp timestamp,
    PRIMARY KEY(transaction_id, table_name, table_primary_key_values))
 WITH CLUSTERING ORDER BY(table_name ASC, table_primary_key_values ASC)
@@ -174,12 +175,14 @@ WITH CLUSTERING ORDER BY(table_name ASC, table_primary_key_values ASC)
     AND speculative_retry = '99PERCENTILE';
 
 
-CREATE TABLE IF NOT EXISTS system_operations@datastax_app_level@ks.component_process_audit_message (
-    transaction_id text, --todo change to UUID
---    transaction_id uuid, --todo use UUID type
+CREATE TABLE IF NOT EXISTS system_operations@datastax_app_level@ks.component_process_audit (
+    transaction_id uuid,
     service_name text,
+    table_name text,
     user_id text,
     received_message text,
+    previous_values text,
+    new_values text,
     last_update_tmstp timestamp,
    PRIMARY KEY(transaction_id, service_name))
 WITH CLUSTERING ORDER BY(service_name ASC)
@@ -197,33 +200,3 @@ WITH CLUSTERING ORDER BY(service_name ASC)
     AND min_index_interval = 128
     AND read_repair_chance = 0.0
     AND speculative_retry = '99PERCENTILE';
-
-CREATE TABLE IF NOT EXISTS system_operations@datastax_app_level@ks.component_process_audit_fields (
-    transaction_id text, --todo change to UUID
---    transaction_id uuid, --todo use UUID type
-    service_name text,
-    table_name text,
-    user_id text,
-    property_name text,
-    prev_value text,
-    pre_update_tmstp timestamp,
-    new_value text,
-    new_update_tmstp timestamp,
-   PRIMARY KEY(transaction_id, table_name, property_name))
-WITH CLUSTERING ORDER BY(table_name ASC, property_name ASC)
-    AND bloom_filter_fp_chance = 0.01
-    AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
-    AND comment = ''
-    AND compaction = {'class': 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy', 'enabled': 'true', 'sstable_size_in_mb': '160', 'tombstone_compaction_interval': '86400', 'tombstone_threshold': '0.2', 'unchecked_tombstone_compaction': 'false'}
-    AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
-    AND crc_check_chance = 1.0
-    AND dclocal_read_repair_chance = 0.0
-    AND default_time_to_live = 0
-    AND gc_grace_seconds = 864000
-    AND max_index_interval = 2048
-    AND memtable_flush_period_in_ms = 0
-    AND min_index_interval = 128
-    AND read_repair_chance = 0.0
-    AND speculative_retry = '99PERCENTILE';
-
-

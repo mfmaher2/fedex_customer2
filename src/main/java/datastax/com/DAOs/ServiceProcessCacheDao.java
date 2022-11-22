@@ -7,6 +7,8 @@ import com.datastax.oss.driver.api.mapper.annotations.Select;
 import datastax.com.dataObjects.Account;
 import datastax.com.dataObjects.ServiceProcessCache;
 
+import java.util.UUID;
+
 @Dao
 public interface ServiceProcessCacheDao {
     @Insert
@@ -16,5 +18,5 @@ public interface ServiceProcessCacheDao {
     BoundStatement batchSave(ServiceProcessCache cacheEntry);
 
     @Select
-    ServiceProcessCache findByTransactionId(String transID);
+    ServiceProcessCache findByTransactionId(UUID transID);
 }

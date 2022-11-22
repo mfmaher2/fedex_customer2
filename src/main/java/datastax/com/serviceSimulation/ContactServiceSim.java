@@ -13,6 +13,7 @@ import datastax.com.schemaElements.DataCenter;
 import org.apache.commons.lang3.SerializationUtils;
 
 import java.nio.ByteBuffer;
+import java.util.UUID;
 
 public class ContactServiceSim {
 
@@ -20,7 +21,7 @@ public class ContactServiceSim {
     static private final String SERVICE_NAME = "AccountContactService";
     static private final String KEY_DELIMITER = "|";
 
-    public static boolean updateContactRecord(String transactionID, AccountContact updatedContact, ServiceEnvironmentDetails envDetails){
+    public static boolean updateContactRecord(UUID transactionID, AccountContact updatedContact, ServiceEnvironmentDetails envDetails){
 
         boolean returnCode = true;
 

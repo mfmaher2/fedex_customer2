@@ -59,6 +59,7 @@ public class KeyspaceConfigMultiDC extends KeyspaceConfig{
         AddKeyspaceDataCenter(Keyspace.CENTRALIZED_VIEW_KS, datacenters.get(DataCenter.CORE), 1);
         AddKeyspaceDataCenter(Keyspace.PAYMENT_INFO_KS, datacenters.get(DataCenter.CORE), 1);
         AddKeyspaceDataCenter(Keyspace.SEQUENCE_KS, datacenters.get(DataCenter.CORE), 1);
+        AddKeyspaceDataCenter(Keyspace.SEARCH_KS, datacenters.get(DataCenter.CORE), 1);
         AddKeyspaceDataCenter(Keyspace.SYSTEM_OPERATIONS_KS, datacenters.get(DataCenter.CORE), 1);
 
         AddKeyspaceDataCenter(Keyspace.ACCOUNT_KS, datacenters.get(DataCenter.EDGE), 1);
