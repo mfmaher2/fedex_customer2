@@ -174,6 +174,10 @@ WITH CLUSTERING ORDER BY(table_name ASC, table_primary_key_values ASC)
     AND read_repair_chance = 0.0
     AND speculative_retry = '99PERCENTILE';
 
+CREATE CUSTOM INDEX IF NOT EXISTS ON system_operations@datastax_app_level@ks.component_processing (service_name) USING 'StorageAttachedIndex';
+CREATE CUSTOM INDEX IF NOT EXISTS ON system_operations@datastax_app_level@ks.component_processing (status_code) USING 'StorageAttachedIndex';
+CREATE CUSTOM INDEX IF NOT EXISTS ON system_operations@datastax_app_level@ks.component_processing (last_update_tmstp) USING 'StorageAttachedIndex';
+
 
 CREATE TABLE IF NOT EXISTS system_operations@datastax_app_level@ks.component_process_audit (
     transaction_id uuid,

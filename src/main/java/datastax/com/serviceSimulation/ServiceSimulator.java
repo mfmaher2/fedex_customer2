@@ -101,7 +101,7 @@ public class ServiceSimulator {
 
 
         UUID transactionID = UUID.randomUUID();
-        System.out.println("Begin processing transaction #" + curTransactionRefNum + " transaction ID=" + transactionID + startContactCall + " update mode=" + updateExisting);
+        System.out.println("Begin processing transaction #" + curTransactionRefNum + " transaction ID=" + transactionID + ", start time=" + startContactCall + " update mode=" + updateExisting);
         //Call contact service simulator
         ContactServiceSim.updateContactRecord(
                 transactionID,

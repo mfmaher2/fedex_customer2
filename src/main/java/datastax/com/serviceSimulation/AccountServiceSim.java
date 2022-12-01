@@ -27,6 +27,7 @@ public class AccountServiceSim {
         updatedAccount.setProfileEnterpriseSource(newEntSource);
 
         //Retrieve current state of record if it exists
+        System.out.println("\t\tupdateAccountEnterpriseSource() - retrieving record for accountNum=" + accountNum + ", opco="+opco + ", transactionID="+transactionID);
         Account existingRecord = envDetails.daoAccount.findByAccountNumberOpco(accountNum, opco);
 
         ByteBuffer bytesExistingRecord = null;
