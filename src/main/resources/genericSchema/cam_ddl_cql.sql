@@ -898,6 +898,27 @@ CREATE TABLE IF NOT EXISTS @datastax_app_name@_account@datastax_app_level@ks.nat
      AND read_repair_chance = 0.0
      AND speculative_retry = '99PERCENTILE';
 
+---Current
+--account_number  opco    group_id__number    group_id_detail__name   group_id_detail__master_account
+--123123123       FX      0001                CS-accessible           456456456
+--987987987       FX      0001                CS-accessible           456456456
+--
+----change to master account 'CS-accessible' -> 'CS-accessible#2'
+--Query group_id__number = '0001' -> 2 records
+--Update all records found with new value
+--
+--
+--
+----Proposed
+--account_number          opco    type        group_id__number    group_id_detail__name   group_id_detail__master_account
+--0001 (group number)     FX      DETAIL      0001                CS-accessible           456456456
+--123123123               FX      MEMBERSHIP  0001
+--987987987               FX      MEMBERSHIP  0001
+--
+----change to master account 'CS-accessible' -> 'CS-accessible#2'
+--Update call using group ID value as 'account_number'
+--account_number -> group_key
+
 --groupId
 --groupMembership
 CREATE TABLE IF NOT EXISTS @datastax_app_name@_group@datastax_app_level@ks.group_info_v1 (
