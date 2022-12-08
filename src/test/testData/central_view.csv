@@ -1,0 +1,3 @@
+account_number,account_status__status_code,account_status__status_date,last_update_tmstp,opco_description
+acctCentralView_1,,,2022-02-01T00:00:00Z,"{'FX':'123123123'}"
+acctCentralView_2,,,2022-02-01T00:00:00Z,"{'FTC':'456456456','FX':'345345345'}"
