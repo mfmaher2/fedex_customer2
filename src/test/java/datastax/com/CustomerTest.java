@@ -39,6 +39,7 @@ import java.util.function.Function;
 public class CustomerTest {
     private static CustomerMapper customerMapper = null;
     private static CustomerMapperEdge customerMapperEdge = null;
+    private static CustomerMapperSearch customerMapperSearch = null;
     static AccountDao daoAccount = null;
     static PaymentInfoDao daoPayment = null;
     static AssocAccountDao daoAssoc = null;
@@ -50,11 +51,12 @@ public class CustomerTest {
     static AuditHistoryDao daoAuditHistory = null;
     static AccountContactDao daoAccountContact = null;
     static ServiceProcessCacheDao daoServiceProcess = null;
+    static CAMSearchDao daoCAMSearch = null;
 
-    private static boolean skipSchemaCreation = false;
-    private static boolean skipDataLoad = false;
+    private static boolean skipSchemaCreation = true;
+    private static boolean skipDataLoad = true;
     private static boolean skipKeyspaceDropOnExit = true;
-    private static boolean skipKeyspaceDrop = false;
+    private static boolean skipKeyspaceDrop = true;
     private static boolean skipIndividualTableDrop = false;
 
     private static String productName = "Customer" ;
@@ -88,6 +90,7 @@ public class CustomerTest {
             System.out.println("\tBeginning Mapper and DAO creation");
             customerMapper = new CustomerMapperBuilder(sessionMap.get(DataCenter.CORE)).build();
             customerMapperEdge = new CustomerMapperEdgeBuilder(sessionMap.get(DataCenter.EDGE)).build();
+            customerMapperSearch = new CustomerMapperSearchBuilder(sessionMap.get(DataCenter.EDGE)).build();
 
             daoAccount = customerMapper.accountDao(ksConfig.getKeyspaceName(ACCOUNT_KS));
             daoPayment = customerMapper.paymentInfoDao(ksConfig.getKeyspaceName(PAYMENT_INFO_KS));
@@ -99,8 +102,11 @@ public class CustomerTest {
             daoComment = customerMapper.commentDao(ksConfig.getKeyspaceName(COMMENT_KS));
             daoAuditHistory = customerMapper.auditHistoryDao(ksConfig.getKeyspaceName(AUDIT_HISTORY_KS));
             daoServiceProcess = customerMapper.serviceProcessCacheDao(ksConfig.getKeyspaceName(SYSTEM_OPERATIONS_KS));
+            daoServiceProcess = customerMapper.serviceProcessCacheDao(ksConfig.getKeyspaceName(SYSTEM_OPERATIONS_KS));
 
             daoAccountContact = customerMapperEdge.accountContactDao(ksConfig.getKeyspaceName(ACCOUNT_CONTACT_KS));
+
+            daoCAMSearch = customerMapperSearch.camSearchDao(ksConfig.getKeyspaceName(SEARCH_KS));
 
             System.out.println("\tMapper and DAO creation complete");
         }
@@ -136,6 +142,20 @@ public class CustomerTest {
         if(!skipKeyspaceDropOnExit) { dropTestKeyspace(); }
         sessionMap.values().forEach(s -> s.close());
     }
+
+    @Test
+    public void generateSolrPerformanceData(){
+        long numGeneratedRecords = 1000;
+
+        CAMSearch searchRec = new CAMSearch();
+        searchRec.setAccountNumber("acct1");
+        searchRec.setOpco("op1");
+        searchRec.setContactTypeCode("cd1");
+        searchRec.setContactBusinessID("bd1");
+        daoCAMSearch.save(searchRec);
+    }
+
+
 
     @Test
     public void multiThreadWrite(){
