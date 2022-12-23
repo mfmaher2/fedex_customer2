@@ -17,13 +17,13 @@ public class Environment {
     private KeyspaceConfig ksConfig = null;
     private EnvironmentCustomize customizedEnvironment = null;
 
-    public Environment(AvailableEnviroments envSelected) throws IOException {
+    public Environment(AvailableEnviroments envSelected, boolean cleanupOnExit) throws IOException {
         switch(envSelected){
             case L1:
-                setupL1Environment();
+                setupL1Environment(cleanupOnExit);
                 break;
             case L4:
-                setupL4Environment();
+                setupL4Environment(cleanupOnExit);
                 break;
             default:
                 throw new RuntimeException("Unknown environment options provided");
@@ -55,7 +55,7 @@ public class Environment {
         return environmentParams;
     }
 
-    public void setupL1Environment() throws IOException {
+    public void setupL1Environment(boolean cleanupOnExit) throws IOException {
         //Setup for specific test environment - only one (L1 or L4) should be uncommented
         //**********
         //** Begin L1 environment config
@@ -72,7 +72,7 @@ public class Environment {
         environmentParams.searchIndexCreatePort = "9042";
 
         //create environment details based on parameters
-        generateEnvironment(environmentParams);
+        generateEnvironment(environmentParams, cleanupOnExit);
 
         String sessionConf = "src/main/resources/L1/application.conf";
         String confFilePath = Paths.get(sessionConf).toAbsolutePath().toString();
@@ -87,7 +87,7 @@ public class Environment {
         sessionMap.put(DataCenter.SEARCH, commonSession);
     }
 
-    public void setupL4Environment() throws IOException {
+    public void setupL4Environment(boolean cleanupOnExit) throws IOException {
         EnvironmentCustomizeParameters environmentParams = getIntializedEnvironmentParameters();
 
         //** Begin L4 environment config
@@ -100,7 +100,7 @@ public class Environment {
         environmentParams.searchIndexCreatePort = "9044";
 
         //create environment details based on parameters
-        generateEnvironment(environmentParams);
+        generateEnvironment(environmentParams, cleanupOnExit);
 
         //L4 - core DC session
         String coreSessionConf = "src/main/resources/L4/core-application.conf";
@@ -127,8 +127,8 @@ public class Environment {
         sessionMap.put(DataCenter.SEARCH, searchSession);
     }
 
-    private void generateEnvironment(EnvironmentCustomizeParameters envParams) throws IOException {
+    private void generateEnvironment(EnvironmentCustomizeParameters envParams, boolean cleanupOnExit) throws IOException {
         customizedEnvironment = new EnvironmentCustomize(envParams);
-        customizedEnvironment.generateCustomizedEnvironment();
+        customizedEnvironment.generateCustomizedEnvironment(cleanupOnExit);
     }
 }

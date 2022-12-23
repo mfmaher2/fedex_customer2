@@ -27,7 +27,7 @@ public class ServiceSimulationTest {
         System.out.println("\nStarting CAM Service Simulation Testing");
 
         //Create environment and set local convenience variables based on environment
-        environment = new Environment(Environment.AvailableEnviroments.L1);
+        environment = new Environment(Environment.AvailableEnviroments.L1, true);
         sessionMap = environment.getSessionMap();
         ksConfig = environment.getKeyspaceConfig();
 

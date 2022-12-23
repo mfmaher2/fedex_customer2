@@ -54,11 +54,12 @@ public class CustomerTest {
     static ServiceProcessCacheDao daoServiceProcess = null;
     static CAMSearchDao daoCAMSearch = null;
 
-    private static boolean skipSchemaCreation = true;
-    private static boolean skipDataLoad = true;
+    private static boolean skipSchemaCreation = false;
+    private static boolean skipDataLoad = false;
     private static boolean skipKeyspaceDropOnExit = true;
-    private static boolean skipKeyspaceDrop = true;
+    private static boolean skipKeyspaceDrop = false;
     private static boolean skipIndividualTableDrop = false;
+    private static boolean cleaupEnvironmentScriptsOnExit = true;
 
     private static String productName = "Customer" ;
     private static Environment environment = null;
@@ -73,10 +74,10 @@ public class CustomerTest {
             //**********
             //setup environment to match current test setup
             //L1
-            environment = new Environment(Environment.AvailableEnviroments.L1);
+            environment = new Environment(Environment.AvailableEnviroments.L1, cleaupEnvironmentScriptsOnExit);
 
             //L4
-//            environment = new Environment(Environment.AvailableEnviroments.L4);
+//            environment = new Environment(Environment.AvailableEnviroments.L4, cleaupEnvironmentScriptsOnExit);
             //**********
 
             //set local convenience variables based on environment
@@ -320,12 +321,20 @@ public class CustomerTest {
         assert(retrievedAcctID.equals(acctNum));
     }
 
-//   @Ignore
+   @Ignore
     @Test
     public void outputKeyspaceCreation() throws IOException {
         String outputFilePath = "/Users/michaeldownie/Downloads/camKeyspaceCreate.cql";
         KeyspaceCreator.outputKeyspacesCreationCQL(ksConfig, outputFilePath);
     }
+
+    @Ignore
+    @Test
+    public void outputSchemaCreation() throws IOException {
+       Environment tempEnv =  new Environment(Environment.AvailableEnviroments.L1, false);
+    }
+
+
 
     @Test
     public void prepareTimout(){

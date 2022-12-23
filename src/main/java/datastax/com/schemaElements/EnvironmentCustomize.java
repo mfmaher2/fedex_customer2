@@ -75,7 +75,7 @@ public class EnvironmentCustomize
         mapReplaceContent.put("DATA_FILES_PATH", envConfig.dataFilesPath);
     }
 
-    public void generateCustomizedEnvironment() throws IOException {
+    public void generateCustomizedEnvironment(boolean cleanupOnExit) throws IOException {
         String camSchemaDirPrfix = "camSchema_";
 
         Path outputPath = Files.createTempDirectory(camSchemaDirPrfix);
@@ -100,7 +100,9 @@ public class EnvironmentCustomize
         setFileAsExecutable(outputDirectory + "/" + SCHEMA_CREATE_FILE);
         setFileAsExecutable(outputDirectory + "/" + DATA_LOAD_FILE);
 
-        setCleanupOnExit();
+        if(cleanupOnExit) {
+            setCleanupOnExit();
+        }
     }
 
     protected void setFileAsExecutable(String fileLocation){
