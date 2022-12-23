@@ -12,6 +12,7 @@ import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.*;
 import static datastax.com.dataObjects.AuditHistory.construcAuditEntryEntityStanzaSolrQuery;
 import static datastax.com.schemaElements.Keyspace.*;
 
+import com.github.javafaker.Faker;
 import datastax.com.dataObjects.*;
 import datastax.com.DAOs.*;
 import datastax.com.multiThreadTest.AccountWriter;
@@ -143,19 +144,85 @@ public class CustomerTest {
         sessionMap.values().forEach(s -> s.close());
     }
 
+    @Ignore
     @Test
     public void generateSolrPerformanceData(){
-        long numGeneratedRecords = 1000;
+        long numGeneratedRecords = 10000000 ;
 
-        CAMSearch searchRec = new CAMSearch();
-        searchRec.setAccountNumber("acct1");
-        searchRec.setOpco("op1");
-        searchRec.setContactTypeCode("cd1");
-        searchRec.setContactBusinessID("bd1");
-        daoCAMSearch.save(searchRec);
+        Faker faker = new Faker();
+        final String ACCT_PREFIX = "acct_";
+        final String OPCO_PREFIX = "opco_";
+        final String CONTACTTYPECODE_PREFIX = "contTypeCD_";
+        final String CONTACTBUSID_PREFIX = "contBusID_";
+        final String COMPANY_PREFIX = "__company_";
+        final String FIRSTNAME_PREFIX = "__firstname_";
+        final String MIDDLENAME_PREFIX = "__middlename_";
+        final String LASTNAME_PREFIX = "__lastname_";
+        final String EMAIL_PREFIX = "__email_";
+        final String STREETADDR_PREFIX = "__streetaddress_";
+        final String ADDRCOUNTRYCODE_PREFIX = "addressCountryCode_";
+        final String ACCTSTATUS_PREFIX = "custAcctStatus_";
+        final String ACCTTYPE_PREFIX = "custAcctType_";
+        final String PHONENUM_PREFIX = "phoneNum_";
+
+
+        System.out.println("Starting Solr test record generation....");
+        for(int seedNum=1; seedNum<=numGeneratedRecords; seedNum++) {
+            if((seedNum % 10000) == 0){
+                System.out.println("\tProcessing seed number = " + seedNum);
+            }
+            CAMSearch searchRec = new CAMSearch();
+
+            //set primary key values
+            searchRec.setAccountNumber(ACCT_PREFIX + seedNum);
+            searchRec.setOpco(OPCO_PREFIX + seedNum);
+            searchRec.setContactTypeCode(CONTACTTYPECODE_PREFIX + seedNum);
+            searchRec.setContactBusinessID(CONTACTBUSID_PREFIX + seedNum);
+
+
+            //set values that may be used for wildcard search
+            searchRec.setCompanyName(faker.company().name() + COMPANY_PREFIX + seedNum);
+            searchRec.setPersonFirstName(faker.name().firstName() + FIRSTNAME_PREFIX + seedNum);
+            searchRec.setPersonMiddleName(faker.name().firstName() + MIDDLENAME_PREFIX + seedNum);
+            searchRec.setPersonLastName(faker.name().lastName() + LASTNAME_PREFIX + seedNum);
+            searchRec.setEmail(faker.bothify("????##@mail.com" + EMAIL_PREFIX + seedNum));
+            searchRec.setAddressStreetLine(faker.address().streetAddress() + STREETADDR_PREFIX + seedNum);
+
+            //set values that may be used for exact search
+            searchRec.setAddressCountryCode(ADDRCOUNTRYCODE_PREFIX + seedNum);
+            searchRec.setProfileCustAcctStatus(ACCTSTATUS_PREFIX + seedNum);
+            searchRec.setProfileAccountType(ACCTTYPE_PREFIX + seedNum);
+
+            ContactTelecomDetails writeTeleCom = new ContactTelecomDetails();
+            writeTeleCom.setTelecomMethod(faker.code().isbn10());
+            writeTeleCom.setAreaCode(faker.number().digits(3));
+            writeTeleCom.setPhoneNumber(PHONENUM_PREFIX + seedNum);
+
+            Set<ContactTelecomDetails> setTelecom = new HashSet<>();
+            setTelecom.add(writeTeleCom);
+            searchRec.setTeleCom(setTelecom);
+
+            //set all other record properties
+            searchRec.setLastUpdated(Instant.now());
+            searchRec.setProfileArchiveReasonCode(faker.code().asin());
+            searchRec.setProfileAirportCode(faker.lordOfTheRings().location());
+            searchRec.setProfileSynonym1(faker.name().username());
+            searchRec.setProfileSynonym2(faker.name().fullName());
+            searchRec.setProfileInterlineCode(faker.code().imei());
+            searchRec.setInvoicePrefBillRestricInd(faker.code().gtin8());
+            searchRec.setCreditCashOnlyReason(faker.chuckNorris().fact());
+            searchRec.setCreditCreditRating(faker.number().digits(3));
+            searchRec.setContactDocID(faker.number().randomNumber(10, true));
+            searchRec.setAddressAddLine1(faker.address().secondaryAddress());
+            searchRec.setAddressGeoPoliticalSub1(faker.address().city());
+            searchRec.setAddressGeoPoliticalSub2(faker.address().state());
+            searchRec.setAddressGeoPoliticalSub3(faker.address().country());
+            searchRec.setAddresPostalCode(faker.address().zipCode());
+            searchRec.setShareID(faker.number().digits(7));
+
+            daoCAMSearch.save(searchRec);
+        }
     }
-
-
 
     @Test
     public void multiThreadWrite(){
@@ -253,7 +320,7 @@ public class CustomerTest {
         assert(retrievedAcctID.equals(acctNum));
     }
 
-   @Ignore
+//   @Ignore
     @Test
     public void outputKeyspaceCreation() throws IOException {
         String outputFilePath = "/Users/michaeldownie/Downloads/camKeyspaceCreate.cql";

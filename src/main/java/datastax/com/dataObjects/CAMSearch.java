@@ -57,8 +57,82 @@ public class CAMSearch {
     public String getContactBusinessID() {return contactBusinessID;}
     public void setContactBusinessID(String val) {contactBusinessID = val;}
 
+    public String getProfileArchiveReasonCode() {return profileArchiveReasonCode;}
+    public void setProfileArchiveReasonCode(String val) {profileArchiveReasonCode = val;}
+
+    public String getProfileCustAcctStatus() {return profileCustAcctStatus;}
+    public void setProfileCustAcctStatus(String val) {profileCustAcctStatus = val;}
+
+    public String getProfileAccountType() {return profileAccountType;}
+    public void setProfileAccountType(String val) {profileAccountType = val;}
+
+    public String getProfileAirportCode() {return profileAirportCode;}
+    public void setProfileAirportCode(String val) {profileAirportCode = val;}
+
+    public String getProfileSynonym1() {return profileSynonym1;}
+    public void setProfileSynonym1(String val) {profileSynonym1 = val;}
+
+    public String getProfileSynonym2() {return profileSynonym2;}
+    public void setProfileSynonym2(String val) {profileSynonym2 = val;}
+
+    public String getProfileInterlineCode() {return profileInterlineCode;}
+    public void setProfileInterlineCode(String val) {profileInterlineCode = val;}
+
+    public String getInvoicePrefBillRestricInd() {return invoicePrefBillRestricInd;}
+    public void setInvoicePrefBillRestricInd(String val) {invoicePrefBillRestricInd = val;}
+
+    public String getCreditCashOnlyReason() {return creditCashOnlyReason;}
+    public void setCreditCashOnlyReason(String val) {creditCashOnlyReason = val;}
+
+    public String getCreditCreditRating() {return creditCreditRating;}
+    public void setCreditCreditRating(String val) {creditCreditRating = val;}
+
+    public String getCompanyName() {return companyName;}
+    public void setCompanyName(String val) {companyName = val;}
+
+    public String getPersonFirstName() {return personFirstName;}
+    public void setPersonFirstName(String val) {personFirstName = val;}
+
+    public String getPersonLastName() {return personLastName;}
+    public void setPersonLastName(String val) {personLastName = val;}
+
+    public String getPersonMiddleName() {return personMiddleName;}
+    public void setPersonMiddleName(String val) {personMiddleName = val;}
+
+    public String getAddressStreetLine() {return addressStreetLine;}
+    public void setAddressStreetLine(String val) {addressStreetLine = val;}
+
+    public String getAddressAddLine1() {return addressAddLine1;}
+    public void setAddressAddLine1(String val) {addressAddLine1 = val;}
+
+    public String getAddressGeoPoliticalSub1() {return addressGeoPoliticalSub1;}
+    public void setAddressGeoPoliticalSub1(String val) {addressGeoPoliticalSub1 = val;}
+    public String getAddressGeoPoliticalSub2() {return addressGeoPoliticalSub2;}
+    public void setAddressGeoPoliticalSub2(String val) {addressGeoPoliticalSub2 = val;}
+    public String getAddressGeoPoliticalSub3() {return addressGeoPoliticalSub3;}
+    public void setAddressGeoPoliticalSub3(String val) {addressGeoPoliticalSub3 = val;}
+
+    public String getAddresPostalCode() {return addresPostalCode;}
+    public void setAddresPostalCode(String val) {addresPostalCode = val;}
+
+    public String getAddressCountryCode() {return addressCountryCode;}
+    public void setAddressCountryCode(String val) {addressCountryCode = val;}
+
+    public String getShareID() {return shareID;}
+    public void setShareID(String val) {shareID = val;}
+
+    public String getEmail() {return email;}
+    public void setEmail(String val) {email = val;}
+
+
+
+
+
     public Instant getLastUpdated() { return lastUpdated; }
     public void setLastUpdated(Instant val) { lastUpdated = val;}
+
+    public long getContactDocID() { return contactDocID; }
+    public void setContactDocID(long val) { contactDocID = val;}
 
     public Set<ContactTelecomDetails> getTeleCom() { return teleCom; }
     public void setTeleCom(Set<ContactTelecomDetails> tc) { teleCom = tc; }
