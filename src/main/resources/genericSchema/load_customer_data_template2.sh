@@ -1,0 +1,10 @@
+@DSBULK_PATH@ load -k @datastax_app_name@_customer_test@datastax_app_level@ks -t contact -url @DATA_FILES_PATH@/contactData.csv --schema.allowMissingFields true
+@DSBULK_PATH@ load -k @datastax_app_name@_account@datastax_app_level@ks -t cust_acct_v1 -url @DATA_FILES_PATH@/customerAccountData.csv --schema.allowMissingFields true
+@DSBULK_PATH@ load -k @datastax_app_name@_payment_info@datastax_app_level@ks -t payment_info_v1 -url @DATA_FILES_PATH@/paymentInfoData.csv --schema.allowMissingFields true
+@DSBULK_PATH@ load -k @datastax_app_name@_assoc_account@datastax_app_level@ks -t assoc_accounts_v1 -url @DATA_FILES_PATH@/assocAcctData.csv --schema.allowMissingFields true
+#@CQLSH_PATH@ 127.0.0.1 -e"COPY customer.national_account_v1 (opco, account_number, national_account_detail__membership_eff_date_time, national_account_detail__national_account_nbr, national_account_detail__national_subgroup_nbr, national_account_detail__national_priority_cd, national_account_detail__membership_exp_date_time, last_update_tmstp, national_account_detail__national_account_company_cd) FROM '@DATA_FILES_PATH@/nationAcctData.csv' WITH HEADER=TRUE;"
+
+@DSBULK_PATH@ load -k @datastax_app_name@_account@datastax_app_level@ks -t national_account_v1 -url @DATA_FILES_PATH@/nationAcctData.csv -m '0=opco, 1=account_number, 2=national_account_detail__membership_eff_date_time, 3=national_account_detail__national_account_nbr, 5=national_account_detail__national_priority_cd, 6=national_account_detail__membership_exp_date_time, 7=last_update_tmstp, 8=national_account_detail__national_account_company_cd' -delim ',' --schema.allowMissingFields true
+@DSBULK_PATH@ load -k @datastax_app_name@_apply_discount@datastax_app_level@ks -t apply_discount_detail_v1 -url @DATA_FILES_PATH@/applyDiscountData.csv -m '0=opco, 1=account_number, 2=apply_discount__effective_date_time, 3=apply_discount__expiration_date_time, 5=apply_discount__discount_flag, 6=last_update_tmstp' -delim ',' --schema.allowMissingFields true
+
+# @CQLSH_PATH@ 127.0.0.1 -e"COPY customer.enterprise_profile FROM '@DATA_FILES_PATH@/entProfile.csv' WITH HEADER=TRUE;"

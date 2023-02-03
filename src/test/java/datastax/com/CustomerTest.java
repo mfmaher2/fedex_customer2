@@ -54,12 +54,12 @@ public class CustomerTest {
     static ServiceProcessCacheDao daoServiceProcess = null;
     static CAMSearchDao daoCAMSearch = null;
 
-    private static boolean skipSchemaCreation = false;
-    private static boolean skipDataLoad = false;
+    private static boolean skipSchemaCreation = true;
+    private static boolean skipDataLoad = true;
     private static boolean skipKeyspaceDropOnExit = true;
-    private static boolean skipKeyspaceDrop = false;
+    private static boolean skipKeyspaceDrop = true;
     private static boolean skipIndividualTableDrop = false;
-    private static boolean cleaupEnvironmentScriptsOnExit = true;
+    private static boolean cleaupEnvironmentScriptsOnExit = false;
 
     private static String productName = "Customer" ;
     private static Environment environment = null;
@@ -189,7 +189,7 @@ public class CustomerTest {
             searchRec.setEmail(faker.bothify("????##@mail.com" + EMAIL_PREFIX + seedNum));
             searchRec.setAddressStreetLine(faker.address().streetAddress() + STREETADDR_PREFIX + seedNum);
 
-            //set values that may be used for exact search
+            //set values that may be used for exact searchls
             searchRec.setAddressCountryCode(ADDRCOUNTRYCODE_PREFIX + seedNum);
             searchRec.setProfileCustAcctStatus(ACCTSTATUS_PREFIX + seedNum);
             searchRec.setProfileAccountType(ACCTTYPE_PREFIX + seedNum);
@@ -324,7 +324,7 @@ public class CustomerTest {
    @Ignore
     @Test
     public void outputKeyspaceCreation() throws IOException {
-        String outputFilePath = "/Users/michaeldownie/Downloads/camKeyspaceCreate.cql";
+        String outputFilePath = "/Users/Michael Maher/Downloads/camKeyspaceCreate.cql";
         KeyspaceCreator.outputKeyspacesCreationCQL(ksConfig, outputFilePath);
     }
 
