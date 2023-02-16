@@ -42,6 +42,7 @@ public class CustomerTest {
     private static CustomerMapperEdge customerMapperEdge = null;
     private static CustomerMapperSearch customerMapperSearch = null;
     static AccountDao daoAccount = null;
+    static GroupInfoDao daoGroupInfo = null;
     static PaymentInfoDao daoPayment = null;
     static AssocAccountDao daoAssoc = null;
     static ContactDao daoContact = null;
@@ -58,7 +59,7 @@ public class CustomerTest {
     private static boolean skipDataLoad = true;
     private static boolean skipKeyspaceDropOnExit = true;
     private static boolean skipKeyspaceDrop = true;
-    private static boolean skipIndividualTableDrop = false;
+    private static boolean skipIndividualTableDrop = true;
     private static boolean cleaupEnvironmentScriptsOnExit = false;
 
     private static String productName = "Customer" ;
@@ -95,6 +96,7 @@ public class CustomerTest {
             customerMapperSearch = new CustomerMapperSearchBuilder(sessionMap.get(DataCenter.EDGE)).build();
 
             daoAccount = customerMapper.accountDao(ksConfig.getKeyspaceName(ACCOUNT_KS));
+            daoGroupInfo = customerMapper.groupInfoDao(ksConfig.getKeyspaceName(GROUP_KS));
             daoPayment = customerMapper.paymentInfoDao(ksConfig.getKeyspaceName(PAYMENT_INFO_KS));
             daoAssoc = customerMapper.assocAccountDao(ksConfig.getKeyspaceName(ASSOC_ACCOUNT_KS));
             daoContact  =  customerMapper.contactDao(ksConfig.getKeyspaceName(CUSTOMER));
@@ -289,6 +291,13 @@ public class CustomerTest {
 
     }
 
+   @Ignore
+    @Test
+    public void outputKeyspaceCreation() throws IOException {
+        String outputFilePath = "/Users/Michael Maher/Downloads/camKeyspaceCreate.cql";
+        KeyspaceCreator.outputKeyspacesCreationCQL(ksConfig, outputFilePath);
+    }
+
     @Ignore
     @Test
     public void outsideWebServiceCall() throws IOException, JSONException {
@@ -321,20 +330,11 @@ public class CustomerTest {
         assert(retrievedAcctID.equals(acctNum));
     }
 
-   @Ignore
-    @Test
-    public void outputKeyspaceCreation() throws IOException {
-        String outputFilePath = "/Users/Michael Maher/Downloads/camKeyspaceCreate.cql";
-        KeyspaceCreator.outputKeyspacesCreationCQL(ksConfig, outputFilePath);
-    }
-
     @Ignore
     @Test
     public void outputSchemaCreation() throws IOException {
        Environment tempEnv =  new Environment(Environment.AvailableEnviroments.L1, false);
     }
-
-
 
     @Test
     public void prepareTimout(){
@@ -729,7 +729,6 @@ public class CustomerTest {
         assert(cleanVerifyAccountResults.all().size() == 0);
     }
 
-
     @Test
     public void batchStatementTest() {
 
@@ -921,6 +920,7 @@ public class CustomerTest {
         PagingIterable<AccountContact> cleanVerifyAfterResults = daoAccountContact.findAllByAccountNumber(acctNum);
         assert(cleanVerifyAfterResults.all().size() == 0);
     }
+
     @Test
     public void auditHistoryNestedEntityWriteReadTest() throws InterruptedException {
 
@@ -1936,7 +1936,6 @@ public class CustomerTest {
         }
     }
 
-
     @Test
     public void sampleTest(){
         String acctID = "00112770";
@@ -1974,6 +1973,7 @@ public class CustomerTest {
         ByteBuffer buff = Bytes.fromHexString(temp);
         System.out.println(buff);
     }
+
     @Test
     public void sampleTestSearch(){
         String acctID = "00112770";
@@ -2228,7 +2228,6 @@ public class CustomerTest {
         assert(foundAssoc.getAssociatedAccountNumber().equals(expectedAssocAcct));
     }
 
-
     @Test
     public void customerPaymentMapperReadTest(){
         String acctID = "1111";
@@ -2450,6 +2449,7 @@ public class CustomerTest {
 
         runQueryList(contactQueries);
     }
+
     @Test
     public void verifyContactUDTsKeyQuery(){
 
@@ -2637,7 +2637,6 @@ public class CustomerTest {
         assert(null == readVerifyDeleteEnd);
     }
 
-
     @Test
     public void verifyContactUDTInsertUpdate(){
         CqlSession localSession = sessionMap.get(DataCenter.CORE);
@@ -2747,5 +2746,62 @@ public class CustomerTest {
                 }
             }
         }
+    }
+
+    @Test
+    public void groupInfoDetailMapperReadTest(){
+        String acctID = "796837236";
+        String expectedOpco = "FX";
+        String expectedGroupCode = "BILLTOPPD";
+        String expectedDetailType = "detail1";
+
+//        GroupInfo custAllProps = new GroupInfo();
+//        custAllProps.setAccountNumber(acctID);
+//        custAllProps.setOpco(expectedOpco);
+//        custAllProps.setGroupIdType(expectedDetailType);
+//        daoGroupInfo.save(custAllProps);
+
+        GroupInfo foundAccount = daoGroupInfo.findByAccountNumber(acctID);
+
+        assert(foundAccount.getOpco().equals(expectedOpco));
+        assert(foundAccount.getGroupIdCode().equals(expectedGroupCode));
+        assert(foundAccount.getGroupIdType().equals(expectedDetailType));
+    }
+
+    @Test
+    public void groupInfoMembershipMapperReadTest(){
+        String acctID = "796837236";
+        String expectedOpco = "FX";
+        String expectedGroupCode = "BILLTOPPD";
+        String expectedMembershipType = "MEMBERSHIP";
+
+//        GroupInfo custAllProps = new GroupInfo();
+//        custAllProps.setAccountNumber(acctID);
+//        custAllProps.setOpco(expectedOpco);
+//        custAllProps.setGroupIdType(expectedMembershipType);
+//        daoGroupInfo.save(custAllProps);
+
+        GroupInfo foundAccount = daoGroupInfo.findByAccountNumber(acctID);
+
+        assert(foundAccount.getOpco().equals(expectedOpco));
+        assert(foundAccount.getGroupIdCode().equals(expectedGroupCode));
+        assert(foundAccount.getGroupIdType().equals(expectedMembershipType));
+    }
+
+    @Test
+    public void groupInfoDetailMapperReadTestAsync() throws ExecutionException, InterruptedException {
+        String acctID = "796837236";
+        String expectedOpco = "FX";
+        String expectedGroupCode = "BILLTOPPD";
+        String expectedMembershipType = "MEMBERSHIP";
+
+
+        CompletableFuture<GroupInfo> cfFoundAccount = daoGroupInfo.findByAccountNumberAsync(acctID);
+        cfFoundAccount.join();
+        GroupInfo foundAccount = cfFoundAccount.get();
+
+        assert(foundAccount.getOpco().equals(expectedOpco));
+//        assert(foundAccount.getGroupIdType().equals(expectedDetailType));
+        assert(foundAccount.getGroupIdType().equals(expectedMembershipType));
     }
 }

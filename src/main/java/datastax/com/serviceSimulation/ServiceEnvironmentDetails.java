@@ -3,10 +3,7 @@ package datastax.com.serviceSimulation;
 import com.datastax.oss.driver.api.core.CqlSession;
 import datastax.com.CustomerMapper;
 import datastax.com.CustomerMapperEdge;
-import datastax.com.DAOs.AccountContactDao;
-import datastax.com.DAOs.AccountDao;
-import datastax.com.DAOs.AuditHistoryDao;
-import datastax.com.DAOs.ServiceProcessCacheDao;
+import datastax.com.DAOs.*;
 import datastax.com.schemaElements.DataCenter;
 import datastax.com.schemaElements.Environment;
 import datastax.com.schemaElements.KeyspaceConfig;
@@ -23,6 +20,7 @@ public class ServiceEnvironmentDetails {
     public AccountDao daoAccount = null;
     public AccountContactDao daoAccountContact = null;
     public AuditHistoryDao daoAuditHistory = null;
+    public GroupInfoDao daoGroupInfo = null;
     public ServiceProcessCacheDao daoServiceProcess = null;
 
     public Environment environment = null;
@@ -41,6 +39,7 @@ public class ServiceEnvironmentDetails {
         daoAccount = customerMapper.accountDao(ksConfig.getKeyspaceName(ACCOUNT_KS));
         daoAccountContact = customerMapperEdge.accountContactDao(ksConfig.getKeyspaceName(ACCOUNT_CONTACT_KS));
         daoAuditHistory = customerMapper.auditHistoryDao(ksConfig.getKeyspaceName(AUDIT_HISTORY_KS));
+        daoGroupInfo = customerMapper.groupInfoDao(ksConfig.getKeyspaceName(GROUP_KS));
         daoServiceProcess = customerMapper.serviceProcessCacheDao(ksConfig.getKeyspaceName(SYSTEM_OPERATIONS_KS));
         System.out.println("\tDAO creation complete");
 

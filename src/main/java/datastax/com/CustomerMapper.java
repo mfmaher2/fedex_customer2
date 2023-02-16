@@ -4,6 +4,7 @@ import com.datastax.oss.driver.api.mapper.annotations.DaoFactory;
 import com.datastax.oss.driver.api.mapper.annotations.DaoKeyspace;
 import com.datastax.oss.driver.api.mapper.annotations.Mapper;
 import datastax.com.DAOs.*;
+import datastax.com.dataObjects.GroupInfo;
 
 @Mapper
 public interface CustomerMapper {
@@ -16,6 +17,9 @@ public interface CustomerMapper {
 
     @DaoFactory
     AccountDao accountDao(@DaoKeyspace String keyspace);
+
+    @DaoFactory
+    GroupInfoDao groupInfoDao(@DaoKeyspace String keyspace);
 
     @DaoFactory
     AssocAccountDao assocAccountDao(@DaoKeyspace String keyspace);

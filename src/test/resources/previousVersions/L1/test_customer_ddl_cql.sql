@@ -944,13 +944,14 @@ CREATE TABLE IF NOT EXISTS cam_group_l1_ks.group_info_v1 (
      last_update_tmstp timestamp,
      group_id__code text,
      group_id__number text,
+     group_id__type text,
      group_id_detail__requester text,
      group_id_detail__name text,
      group_id_detail__master_account text,
      effective_date_time timestamp,
      expiration_date_time timestamp,
-    PRIMARY KEY(account_number, opco, group_id__code, group_id__number, effective_date_time))
- WITH CLUSTERING ORDER BY(opco ASC, group_id__code ASC, group_id__number ASC, effective_date_time DESC)
+    PRIMARY KEY(account_number, opco, group_id__code, group_id__number, group_id__type, effective_date_time))
+ WITH CLUSTERING ORDER BY(opco ASC, group_id__code ASC, group_id__number ASC, group_id__type ASC, effective_date_time DESC)
      AND bloom_filter_fp_chance = 0.01
      AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
      AND comment = ''
