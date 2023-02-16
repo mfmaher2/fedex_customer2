@@ -2750,16 +2750,10 @@ public class CustomerTest {
 
     @Test
     public void groupInfoDetailMapperReadTest(){
-        String acctID = "796837236";
+        String acctID = "4444444";
         String expectedOpco = "FX";
         String expectedGroupCode = "BILLTOPPD";
-        String expectedDetailType = "detail1";
-
-//        GroupInfo custAllProps = new GroupInfo();
-//        custAllProps.setAccountNumber(acctID);
-//        custAllProps.setOpco(expectedOpco);
-//        custAllProps.setGroupIdType(expectedDetailType);
-//        daoGroupInfo.save(custAllProps);
+        String expectedDetailType = "DETAIL";
 
         GroupInfo foundAccount = daoGroupInfo.findByAccountNumber(acctID);
 
@@ -2770,16 +2764,10 @@ public class CustomerTest {
 
     @Test
     public void groupInfoMembershipMapperReadTest(){
-        String acctID = "796837236";
+        String acctID = "136873168";
         String expectedOpco = "FX";
         String expectedGroupCode = "BILLTOPPD";
         String expectedMembershipType = "MEMBERSHIP";
-
-//        GroupInfo custAllProps = new GroupInfo();
-//        custAllProps.setAccountNumber(acctID);
-//        custAllProps.setOpco(expectedOpco);
-//        custAllProps.setGroupIdType(expectedMembershipType);
-//        daoGroupInfo.save(custAllProps);
 
         GroupInfo foundAccount = daoGroupInfo.findByAccountNumber(acctID);
 
@@ -2790,7 +2778,23 @@ public class CustomerTest {
 
     @Test
     public void groupInfoDetailMapperReadTestAsync() throws ExecutionException, InterruptedException {
-        String acctID = "796837236";
+        String acctID = "4444444";
+        String expectedOpco = "FX";
+        String expectedGroupCode = "BILLTOPPD";
+        String expectedDetailType = "DETAIL";
+
+
+        CompletableFuture<GroupInfo> cfFoundAccount = daoGroupInfo.findByAccountNumberAsync(acctID);
+        cfFoundAccount.join();
+        GroupInfo foundAccount = cfFoundAccount.get();
+
+        assert(foundAccount.getOpco().equals(expectedOpco));
+        assert(foundAccount.getGroupIdType().equals(expectedDetailType));
+    }
+
+    @Test
+    public void groupInfoMembershipMapperReadTestAsync() throws ExecutionException, InterruptedException {
+        String acctID = "136873168";
         String expectedOpco = "FX";
         String expectedGroupCode = "BILLTOPPD";
         String expectedMembershipType = "MEMBERSHIP";
