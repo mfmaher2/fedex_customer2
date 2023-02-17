@@ -2808,4 +2808,15 @@ public class CustomerTest {
 //        assert(foundAccount.getGroupIdType().equals(expectedDetailType));
         assert(foundAccount.getGroupIdType().equals(expectedMembershipType));
     }
+
+    @Test
+    public void groupInfoGroupIdNumberCountTest(){
+        int expectedResultCount = 268;
+        String opco = "FX";
+        String groupCode = "BILLTOPPD";
+        String groupIdNumber = "501786";
+        PagingIterable<GroupInfo> foundgrpAccts = daoGroupInfo.findByGroupIdNumber(opco, groupCode, groupIdNumber);
+
+        assert(foundgrpAccts.all().size() == expectedResultCount);
+    }
 }
