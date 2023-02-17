@@ -23,7 +23,7 @@ public interface GroupInfoDao {
     @Select
     CompletableFuture<GroupInfo> findByAccountNumberAsync(String accountNum);
 
-    @Query("SELECT * FROM ${keyspaceId}.group_info_v1 WHERE opco = :opcoParam AND group_id__code = :groupIdCode AND group_id__number = :groupIdNumber ALLOW FILTERING ")
+    @Query("SELECT * FROM ${keyspaceId}.group_info_v1 WHERE opco = :opcoParam AND group_id__code = :groupIdCode AND group_id__number = :groupIdNumber ")
     PagingIterable<GroupInfo> findByGroupIdNumber(String opcoParam, String groupIdCode, String groupIdNumber);
 
     @Insert

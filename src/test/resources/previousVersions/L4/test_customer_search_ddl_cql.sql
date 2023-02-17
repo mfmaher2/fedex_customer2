@@ -96,6 +96,7 @@ CREATE CUSTOM INDEX IF NOT EXISTS ON cam_comment_l4_ks.comment_v1 (comment__comm
 CREATE CUSTOM INDEX IF NOT EXISTS ON cam_group_l4_ks.group_info_v1 (opco) USING 'StorageAttachedIndex';
 CREATE CUSTOM INDEX IF NOT EXISTS ON cam_group_l4_ks.group_info_v1 (last_update_tmstp) USING 'StorageAttachedIndex';
 CREATE CUSTOM INDEX IF NOT EXISTS ON cam_group_l4_ks.group_info_v1 (group_id__code) USING 'StorageAttachedIndex';
+CREATE CUSTOM INDEX IF NOT EXISTS ON cam_group_l4_ks.group_info_v1 (group_id__type) USING 'StorageAttachedIndex';
 CREATE CUSTOM INDEX IF NOT EXISTS ON cam_group_l4_ks.group_info_v1 (group_id__number) USING 'StorageAttachedIndex';
 CREATE CUSTOM INDEX IF NOT EXISTS ON cam_group_l4_ks.group_info_v1 (group_id_detail__requester) USING 'StorageAttachedIndex';
 CREATE CUSTOM INDEX IF NOT EXISTS ON cam_group_l4_ks.group_info_v1 (group_id_detail__name) USING 'StorageAttachedIndex';
