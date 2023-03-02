@@ -5,6 +5,7 @@ import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.mapper.annotations.*;
 import datastax.com.dataObjects.GroupInfo;
 
+import java.time.Instant;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
@@ -25,6 +26,9 @@ public interface GroupInfoDao {
 
     @Query("SELECT * FROM ${keyspaceId}.group_info_v1 WHERE opco = :opcoParam AND group_id__code = :groupIdCode AND group_id__number = :groupIdNumber ")
     PagingIterable<GroupInfo> findByGroupIdNumber(String opcoParam, String groupIdCode, String groupIdNumber);
+
+    @Query("SELECT * FROM ${keyspaceId}.group_info_v1 WHERE group_id__type = :groupIdType AND effective_date_time > :effectiveStartDateTime AND effective_date_time < :effectiveEndDateTime ")
+    PagingIterable<GroupInfo> findByGroupITypeEffectiveDt(String groupIdType, Instant effectiveStartDateTime, Instant effectiveEndDateTime);
 
     @Insert
     void save(GroupInfo account);

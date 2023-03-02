@@ -69,6 +69,9 @@ CREATE CUSTOM INDEX IF NOT EXISTS ON cam_account_l4_ks.cust_acct_v1 (credit_deta
 CREATE CUSTOM INDEX IF NOT EXISTS ON cam_account_l4_ks.cust_acct_v1 (account_receivables__payment_type) USING 'StorageAttachedIndex';
 CREATE CUSTOM INDEX IF NOT EXISTS ON cam_account_l4_ks.cust_acct_v1 (geographic_info__alpha_id) USING 'StorageAttachedIndex';
 CREATE CUSTOM INDEX IF NOT EXISTS ON cam_account_l4_ks.cust_acct_v1 (geographic_info__station_number) USING 'StorageAttachedIndex';
+CREATE CUSTOM INDEX IF NOT EXISTS ON cam_account_l1_ks.cust_acct_v1 (profile__account_status__status_code) USING 'StorageAttachedIndex' WITH OPTIONS = {'case_sensitive': 'false'};
+CREATE CUSTOM INDEX IF NOT EXISTS ON cam_account_l1_ks.cust_acct_v1 (profile__archive_date) USING 'StorageAttachedIndex';
+CREATE CUSTOM INDEX IF NOT EXISTS ON cam_account_l1_ks.cust_acct_v1 (profile__creation_date) USING 'StorageAttachedIndex';
 
 CREATE CUSTOM INDEX IF NOT EXISTS ON cam_account_contact_l4_ks.account_contact (last_update_tmstp) USING 'StorageAttachedIndex';
 CREATE CUSTOM INDEX IF NOT EXISTS ON cam_account_contact_l4_ks.account_contact (contact_type_code) USING 'StorageAttachedIndex';

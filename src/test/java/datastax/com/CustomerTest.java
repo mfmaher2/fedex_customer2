@@ -31,6 +31,8 @@ import java.nio.ByteBuffer;
 import java.text.ParseException;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -2767,13 +2769,26 @@ public class CustomerTest {
         String acctID = "136873168";
         String expectedOpco = "FX";
         String expectedGroupCode = "BILLTOPPD";
-        String expectedMembershipType = "MEMBERSHIP";
+        String expectedGroupType = "MEMBERSHIP";
 
         GroupInfo foundAccount = daoGroupInfo.findByAccountNumber(acctID);
 
         assert(foundAccount.getOpco().equals(expectedOpco));
         assert(foundAccount.getGroupIdCode().equals(expectedGroupCode));
-        assert(foundAccount.getGroupIdType().equals(expectedMembershipType));
+        assert(foundAccount.getGroupIdType().equals(expectedGroupType));
+    }
+
+    @Test
+    public void groupInfoMembershipByEffectiveDateMapperReadTest(){
+        int expectedResultCount = 855;
+//        String expectedGroupCode = "BILLTOPPD";
+        String expectedGroupType = "MEMBERSHIP";
+        LocalDateTime date = LocalDate.of(2023, 02, 17).atTime(2, 27, 0);
+
+        PagingIterable<GroupInfo> foundgrpAccts = daoGroupInfo.findByGroupITypeEffectiveDt(expectedGroupType, date.toInstant(ZoneOffset.UTC).minusSeconds(30),
+                date.toInstant(ZoneOffset.UTC).plusSeconds(30));
+
+        assert(foundgrpAccts.all().size() == expectedResultCount);
     }
 
     @Test
@@ -2797,7 +2812,7 @@ public class CustomerTest {
         String acctID = "136873168";
         String expectedOpco = "FX";
         String expectedGroupCode = "BILLTOPPD";
-        String expectedMembershipType = "MEMBERSHIP";
+        String expectedGroupType = "MEMBERSHIP";
 
 
         CompletableFuture<GroupInfo> cfFoundAccount = daoGroupInfo.findByAccountNumberAsync(acctID);
@@ -2806,7 +2821,7 @@ public class CustomerTest {
 
         assert(foundAccount.getOpco().equals(expectedOpco));
 //        assert(foundAccount.getGroupIdType().equals(expectedDetailType));
-        assert(foundAccount.getGroupIdType().equals(expectedMembershipType));
+        assert(foundAccount.getGroupIdType().equals(expectedGroupType));
     }
 
     @Test
