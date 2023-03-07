@@ -29,7 +29,6 @@ public class GroupInfo implements Serializable {
 
     public GroupInfo() {};
 
-
     public String getAccountNumber() { return accountNumber;}
     public void setAccountNumber(String val) { accountNumber = val;}
 

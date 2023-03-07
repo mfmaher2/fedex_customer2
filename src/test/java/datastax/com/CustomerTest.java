@@ -2779,14 +2779,52 @@ public class CustomerTest {
     }
 
     @Test
-    public void groupInfoMembershipByEffectiveDateMapperReadTest(){
-        int expectedResultCount = 855;
-//        String expectedGroupCode = "BILLTOPPD";
-        String expectedGroupType = "MEMBERSHIP";
-        LocalDateTime date = LocalDate.of(2023, 02, 17).atTime(2, 27, 0);
+    public void groupInfoMembershipByEffectiveDate2006MapperReadTest(){
+        int expectedResultCount = 1309;
+        String expectedGroupType = "GROUPMEMBERSHIP";
+        String groupIdNumber = "91";
+        LocalDateTime startdate = LocalDate.of(2006, 02, 17).atTime(2, 27, 0);
+        LocalDateTime enddate = LocalDate.of(2100, 02, 17).atTime(2, 27, 0);
 
-        PagingIterable<GroupInfo> foundgrpAccts = daoGroupInfo.findByGroupITypeEffectiveDt(expectedGroupType, date.toInstant(ZoneOffset.UTC).minusSeconds(30),
-                date.toInstant(ZoneOffset.UTC).plusSeconds(30));
+        PagingIterable<GroupInfo> foundgrpAccts = daoGroupInfo.findByGroupINumberEffectiveDt(groupIdNumber,
+                startdate.toInstant(ZoneOffset.UTC),
+                enddate.toInstant(ZoneOffset.UTC));
+
+        assert(foundgrpAccts.all().size() == expectedResultCount);
+    }
+
+    @Test
+    public void groupInfoAccountByEffectiveDateMapperReadTest(){
+
+        String acctID = "359297424";
+        String expectedOpco = "FX";
+        String expectedGroupCode = "SPOD";
+        String expectedGroupType = "GROUPMEMBERSHIP";
+        String groupIdNumber = "91";
+        LocalDateTime startdate = LocalDate.of(2007, 02, 17).atTime(2, 27, 0);
+        LocalDateTime enddate = LocalDate.of(2100, 02, 17).atTime(2, 27, 0);
+
+        GroupInfo foundAccount = daoGroupInfo.findByAccountNumberOpco(acctID, expectedOpco,
+                startdate.toInstant(ZoneOffset.UTC),
+                enddate.toInstant(ZoneOffset.UTC));
+
+        assert(foundAccount.getOpco().equals(expectedOpco));
+        assert(foundAccount.getGroupIdCode().equals(expectedGroupCode));
+        assert(foundAccount.getGroupIdType().equals(expectedGroupType));
+        assert(foundAccount.getGroupIdNumber().equals(groupIdNumber));
+    }
+
+    @Test
+    public void groupInfoMembershipByEffectiveDate2007MapperReadTest(){
+        int expectedResultCount = 1212;
+        String expectedGroupType = "GROUPMEMBERSHIP";
+        String groupIdNumber = "91";
+        LocalDateTime startdate = LocalDate.of(2007, 02, 17).atTime(2, 27, 0);
+        LocalDateTime enddate = LocalDate.of(2100, 02, 17).atTime(2, 27, 0);
+
+        PagingIterable<GroupInfo> foundgrpAccts = daoGroupInfo.findByGroupINumberEffectiveDt(groupIdNumber,
+                startdate.toInstant(ZoneOffset.UTC),
+                enddate.toInstant(ZoneOffset.UTC));
 
         assert(foundgrpAccts.all().size() == expectedResultCount);
     }
@@ -2833,5 +2871,61 @@ public class CustomerTest {
         PagingIterable<GroupInfo> foundgrpAccts = daoGroupInfo.findByGroupIdNumber(opco, groupCode, groupIdNumber);
 
         assert(foundgrpAccts.all().size() == expectedResultCount);
+    }
+
+    @Test
+    public void groupNumberPagingTest(){
+        int pageSize = 3;
+
+        Function<BoundStatementBuilder, BoundStatementBuilder> functionGroupNumberPageSize =
+                builder -> builder.setPageSize(pageSize);
+
+        String groupIdNumber = "91";
+        PagingIterable<GroupInfo> foundgrpAccts = daoGroupInfo.findByGroupIdNumber(groupIdNumber, functionGroupNumberPageSize);
+
+        assert(foundgrpAccts.getAvailableWithoutFetching() == pageSize);
+        assert (foundgrpAccts.isFullyFetched() == true);
+
+        System.out.println(foundgrpAccts.getExecutionInfo().getPagingState());
+    }
+
+
+    @Test
+    public void groupInfoAccountMultPagingTest(){
+        String groupIdNumber = "91";
+        int expectedTotalSize = 3178;
+        int pageSize = 3;
+        Select select = selectFrom(ksConfig.getKeyspaceName(GROUP_KS), "group_info_v1")
+                .all()
+                .whereColumn("group_id__number").isEqualTo(bindMarker());
+        SimpleStatement selectStmt = select.build(groupIdNumber);
+
+        System.out.println(select.asCql());
+        SimpleStatement stmt = selectStmt.setPageSize(pageSize);
+
+        ResultSet rs =  sessionMap.get(DataCenter.CORE).execute(stmt);
+        ByteBuffer pagingState = rs.getExecutionInfo().getPagingState();
+        System.out.println("Initial paging state - " + pagingState);
+
+        assert(rs.isFullyFetched() == false );
+        assert(rs.getAvailableWithoutFetching() == pageSize);
+        System.out.println("First page results:");
+        while(rs.getAvailableWithoutFetching()>0){
+            Row row = rs.one();
+            System.out.println("\t" + row.getInstant("expiration_date_time"));
+        }
+
+        SimpleStatement stmt2 = selectStmt.setPagingState(pagingState);
+        ResultSet rs2 = sessionMap.get(DataCenter.CORE).execute(stmt2);
+
+        assert(rs2.isFullyFetched() == true );
+        assert(rs2.getAvailableWithoutFetching() == (expectedTotalSize - pageSize));
+        System.out.println("Second page results:");
+        while(rs2.getAvailableWithoutFetching()>0){
+            Row row = rs2.one();
+            System.out.println("\t" + row.getInstant("expiration_date_time"));
+        }
+
+
     }
 }
