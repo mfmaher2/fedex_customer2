@@ -2889,7 +2889,6 @@ public class CustomerTest {
         System.out.println(foundgrpAccts.getExecutionInfo().getPagingState());
     }
 
-
     @Test
     public void groupInfoAccountMultPagingTest(){
         String groupIdNumber = "91";
