@@ -49,8 +49,8 @@ public class Environment {
         environmentParams.appID = "cam";
         environmentParams.sourceFilesPath = Paths.get("src/main/resources/genericSchema/").toAbsolutePath().toString();
         environmentParams.dataFilesPath = Paths.get("src/test/testData").toAbsolutePath().toString();
-        environmentParams.cqlshPath = "//wsl$/Ubuntu/home/mike/dse-6.8.30/bin/cqlsh";
-        environmentParams.bulkLoadPath = "//wsl$/Ubuntu/home/mike/dsbulk-1.10.0/bin/dsbulk";
+        environmentParams.cqlshPath = "/Users/mike.maher/Documents/dev/dse-6.8.30/bin/cqlsh";
+        environmentParams.bulkLoadPath = "/Users/mike.maher/Documents/dev/dsbulk-1.10.0/bin/dsbulk";
 
         return environmentParams;
     }

@@ -39,6 +39,12 @@ CREATE CUSTOM INDEX IF NOT EXISTS ON @datastax_app_name@_assoc_account@datastax_
 
 CREATE CUSTOM INDEX IF NOT EXISTS ON @datastax_app_name@_account@datastax_app_level@ks.cust_acct_v1 (opco) USING 'StorageAttachedIndex';
 CREATE CUSTOM INDEX IF NOT EXISTS ON @datastax_app_name@_account@datastax_app_level@ks.cust_acct_v1 (last_update_tmstp) USING 'StorageAttachedIndex';
+CREATE CUSTOM INDEX IF NOT EXISTS ON @datastax_app_name@_account@datastax_app_level@ks.cust_acct_v1 (profile__creation_date) USING 'StorageAttachedIndex';
+CREATE CUSTOM INDEX IF NOT EXISTS ON @datastax_app_name@_account@datastax_app_level@ks.cust_acct_v1 (profile__source_system) USING 'StorageAttachedIndex';
+CREATE CUSTOM INDEX IF NOT EXISTS ON @datastax_app_name@_account@datastax_app_level@ks.cust_acct_v1 (profile__customer_type) USING 'StorageAttachedIndex';
+CREATE CUSTOM INDEX IF NOT EXISTS ON @datastax_app_name@_account@datastax_app_level@ks.cust_acct_v1 (profile__account_status__status_code) USING 'StorageAttachedIndex';
+CREATE CUSTOM INDEX IF NOT EXISTS ON @datastax_app_name@_account@datastax_app_level@ks.cust_acct_v1 (profile__account_status__status_date) USING 'StorageAttachedIndex';
+CREATE CUSTOM INDEX IF NOT EXISTS ON @datastax_app_name@_account@datastax_app_level@ks.cust_acct_v1 (profile__archive_date) USING 'StorageAttachedIndex';
 CREATE CUSTOM INDEX IF NOT EXISTS ON @datastax_app_name@_account@datastax_app_level@ks.cust_acct_v1 (profile__archive_reason_code) USING 'StorageAttachedIndex' WITH OPTIONS = {'case_sensitive': 'false'};
 CREATE CUSTOM INDEX IF NOT EXISTS ON @datastax_app_name@_account@datastax_app_level@ks.cust_acct_v1 (profile__customer_account_status) USING 'StorageAttachedIndex' WITH OPTIONS = {'case_sensitive': 'false'};
 CREATE CUSTOM INDEX IF NOT EXISTS ON @datastax_app_name@_account@datastax_app_level@ks.cust_acct_v1 (profile__account_type) USING 'StorageAttachedIndex' WITH OPTIONS = {'case_sensitive': 'false'};
@@ -91,6 +97,8 @@ CREATE CUSTOM INDEX IF NOT EXISTS ON @datastax_app_name@_account_contact@datasta
 CREATE CUSTOM INDEX IF NOT EXISTS ON @datastax_app_name@_comment@datastax_app_level@ks.comment_v1 (opco) USING 'StorageAttachedIndex';
 CREATE CUSTOM INDEX IF NOT EXISTS ON @datastax_app_name@_comment@datastax_app_level@ks.comment_v1 (last_update_tmstp) USING 'StorageAttachedIndex';
 CREATE CUSTOM INDEX IF NOT EXISTS ON @datastax_app_name@_comment@datastax_app_level@ks.comment_v1 (comment__comment_id) USING 'StorageAttachedIndex';
+CREATE CUSTOM INDEX IF NOT EXISTS ON @datastax_app_name@_comment@datastax_app_level@ks.comment_v1 (comment__type) USING 'StorageAttachedIndex';
+CREATE CUSTOM INDEX IF NOT EXISTS ON @datastax_app_name@_comment@datastax_app_level@ks.comment_v1 (comment__comment_date_time) USING 'StorageAttachedIndex';
 
 CREATE CUSTOM INDEX IF NOT EXISTS ON @datastax_app_name@_group@datastax_app_level@ks.group_info_v1 (opco) USING 'StorageAttachedIndex';
 CREATE CUSTOM INDEX IF NOT EXISTS ON @datastax_app_name@_group@datastax_app_level@ks.group_info_v1 (last_update_tmstp) USING 'StorageAttachedIndex';

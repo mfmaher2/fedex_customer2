@@ -18,6 +18,7 @@ import datastax.com.DAOs.*;
 import datastax.com.multiThreadTest.AccountWriter;
 import datastax.com.schemaElements.*;
 import org.apache.commons.lang3.SerializationUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.AfterClass;
@@ -1371,6 +1372,111 @@ public class CustomerTest {
             System.out.println("ACCOUNT FUTURES TOTAL QUERY TIME : " + (System.currentTimeMillis() - futuresstart) + "\n\n");
         });
     }
+
+//    @Test
+//    public void latencyTest2() {
+//        ArrayList<CompletableFuture<Boolean>> completableFutures = new ArrayList<CompletableFuture<Boolean>>();
+//        List<String> acctList = new ArrayList<String>();
+//        acctList.add("001146670");
+//        acctList.stream().forEach(input -> {
+//
+//            // M1
+//            completableFutures.add(
+//                    CompletableFuture.supplyAsync(() -> {
+//                        long start = System.currentTimeMillis();
+//                        PagingIterable<Account> customerAccountIterable = daoAccount
+//                                .findAllByAccountNumber(input);  // QUERY ACCOUNT DATA
+//                        return customerAccountIterable;
+//                    }).thenApply(customerAccountIterable -> {
+//                        long totalStart = System.currentTimeMillis();
+//                        //mapAccountData(customerAccountIterable, resultMap); // MAP ACCOUNT DATA
+//                        try {
+//                            //mapFuturesAccountData(customerAccountIterable, resultMap);
+//                        } catch (Exception e) {
+//                            // TODO Auto-generated catch block
+//                            //e.printStackTrace();
+//                            throw new RuntimeException("FUTURE STAGE ERROR :  " + ExceptionUtils.getStackTrace(e), e);
+//                        }
+//                        // MAP ACCOUNT DATA
+//                        return true;
+//                    }));
+//            // M2
+//            completableFutures.add(CompletableFuture.supplyAsync(() -> {
+//                long start = System.currentTimeMillis();
+//                PagingIterable<AccountContact> customerContacts = daoAccountContact.findAllByAccountNumber(input);
+////                if (performanceLogger.isDebugEnabled())
+////                    performanceLogger.debug("customerContact|QUERY|" + (System.currentTimeMillis() - start) + "|" + input);
+//                return customerContacts;
+//            }).thenApply(customerContacts -> {
+//                long totalStart = System.currentTimeMillis();
+//                try {
+//                    //mapContactData(customerContacts, resultMap);
+//                } catch (Exception e) {
+//                    // TODO Auto-generated catch block
+//                    //e.printStackTrace();
+//                    throw new RuntimeException("FUTURE STAGE ERROR :  " + ExceptionUtils.getStackTrace(e), e);
+//                }
+//                return true;
+//            }));
+//            // M3
+//            completableFutures.add(CompletableFuture.supplyAsync(() -> {
+//                long start = System.currentTimeMillis();
+//                PagingIterable<AssocAccount> customerAssociatedAccounts = daoAssoc.findAllByAccountNumber(input);
+//                return customerAssociatedAccounts;
+//            }).thenApply(customerAssociatedAccounts -> {
+//                long totalStart = System.currentTimeMillis();
+//                try {
+//                    //mapAssociatedAccountData(input,customerAssociatedAccounts, resultMap);
+//                } catch (Exception e) {
+//                    // TODO Auto-generated catch block
+//                    //e.printStackTrace();
+//                    throw new RuntimeException("FUTURE STAGE ERROR :  " + ExceptionUtils.getStackTrace(e), e);
+//                }
+//                return true;
+//            }));
+//            // M4
+//            completableFutures.add(CompletableFuture.supplyAsync(() -> {
+//                long start = System.currentTimeMillis();
+//                PagingIterable<PaymentInfo> customerPaymentInfoAccounts = daoPayment.findAllByAccountNumber(input);
+//                return customerPaymentInfoAccounts;
+//            }).thenApply(customerPaymentInfoAccounts -> {
+//                long totalStart = System.currentTimeMillis();
+//                try {
+//                    //mapData(input,customerPaymentInfoAccounts, resultMap);
+//                } catch (Exception e) {
+//                    // TODO Auto-generated catch block
+//                    //e.printStackTrace();
+//                    throw new RuntimeException("FUTURE STAGE ERROR :  " + ExceptionUtils.getStackTrace(e), e);
+//                }
+//                return true;
+//            }));
+////            // M5
+////            completableFutures.add(CompletableFuture.supplyAsync(() -> {
+////                long start = System.currentTimeMillis();
+////                PagingIterable<CentralizedView> customerCentralizedView = customerCentralizedViewDao.findAllByAccountNumber(input);
+////                return customerCentralizedView;
+////            }).thenApply(customerCentralizedView -> {
+////                long totalStart = System.currentTimeMillis();
+////                try {
+////                    //mapAssociatedAccountData(input,customerAssociatedAccounts, resultMap);
+////                } catch (Exception e) {
+////                    // TODO Auto-generated catch block
+////                    //e.printStackTrace();
+////                    throw new RuntimeException("FUTURE STAGE ERROR :  " + ExceptionUtils.getStackTrace(e), e);
+////                }
+////                return true;
+////            }));
+//        });
+//        try {
+//            @SuppressWarnings("unchecked")
+//            CompletableFuture<Boolean> completableFutureArr[] = new CompletableFuture[completableFutures.size()];
+//            CompletableFuture<Void> allFutures = CompletableFuture.allOf(completableFutures.toArray(completableFutureArr));
+//        } catch (Exception e) {
+////            e.error("THROWING FUTURE Exception EXCEPTION " + ExceptionUtils.getStackTrace(e));
+//            throw e;
+//        }
+//
+//    }
 
     @Test
     public void mappedDutyTaxTest() {
